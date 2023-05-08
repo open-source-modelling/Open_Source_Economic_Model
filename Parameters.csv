@@ -1,0 +1,9 @@
+Parameter_name,Parameter_value
+EIOPA_param_file,Param_no_VA.csv
+EIOPA_curves_file,Curves_no_VA.csv
+country,Slovenia
+n_proj_years,50
+Precision,0.0000000001
+Tau,0.0001
+compounding,-1
+Modelling_Date,29/04/2023
