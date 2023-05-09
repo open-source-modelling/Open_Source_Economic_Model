@@ -6,7 +6,7 @@
 
 </br>
 
-Proof of concept for an integrated asset-liability model. This is a developing repository and the algorithms are most probably not tested and full of bugs
+Proof of concept for an integrated asset-liability model. This is a developing repository.
 
  - Prototype projection and calibration imports the EIOPA curve, calculates the forward rates and uses them to project the spot curve forward.
  A separate instance of the Smith-Wilson algorithm is calibrated to each of the "forward" spot rates using a modified bisection algorithm.
