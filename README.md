@@ -13,8 +13,10 @@ Proof of concept for an integrated asset-liability model. This is a developing r
  
  - Main script v2 creates an example of a zero coupoin bond from input data. The ZeroCouponBond class then generates the bond's cash flows togetehr with dates at which the cash flows are paid. The bond is then proced using the imported EIOPA curve using the Smith-Wilson algorithm to calculate the yield at each time-point. With the introduction of a specific modelling date, the cash-flows are modified and the bond is priced usign the yield curve.
  
- ToDo:
- - Module simulating cash outflows from some common types of "life" policies
- - Model that tradies and simulates the evolution of the economy and the functioning of the company
- - Aggregation of the balance sheet and the income statement
+ Future modules:
+ - Module simulating cash outflows from some common types of "life" policies.
+ - Model that tradies and simulates the evolution of the economy and the functioning of the company.
+ - Aggregation of the balance sheet and the income statement.
+
+For suggestions,comments or inquiries: gregor@osmodelling.com
  
