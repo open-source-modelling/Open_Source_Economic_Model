@@ -13,8 +13,8 @@ class ZeroCouponBond:
         self.zspread = zspread
         self.coupondates = []
         self.notionaldates =[]
-        self.couponsize = []
-        self.notionalsize = []
+        self.couponcfs = []
+        self.notionalcfs = []
 
     def createcashflows(self):
         """
@@ -38,56 +38,81 @@ class ZeroCouponBond:
 
         """       
         # Produce array of dates when coupons are paid out
-        startyear = self.issuedate.year
-        endyear = self.maturitydate.year
-        month =  self.issuedate.month
-        day = self.issuedate.day
+       
+        nAssets = self.issuedate.size
+        
         # Missing what if date is 31,30
         # Missing other frequencies
-        coupondate = np.array([]) 
-        if self.frequency == 1:
-            for selectedyear in range(startyear,endyear+1):
-                coupondate = np.append(coupondate,dt.date(selectedyear,month,day))
-        elif self.frequency == 2:
-            #todo
-            print("Not completed")
-        else:
-            #todo
-            print("Not completed")
-        
-        # Notional payoff date is equal to maturity
-        self.notionaldates = np.array([self.maturitydate])
         
         # Cash flow of each coupon
         couponsize = self.notional*self.couponrate
-        self.couponcf = np.ones_like(coupondate)*couponsize
-        
-        # Cash flow of the principal payback
-        self.notionalcf  = np.array([self.notional])
-        self.coupondates = coupondate
 
-class BondPrices:
+        self.couponcfs = []
+        self.coupondates = []
+        self.notionaldates = []
+        self.notionalcfs = []
+        for iBond in range(0,nAssets):
+            startyear = self.issuedate[iBond].year
+            endyear   = self.maturitydate[iBond].year
+            month     = self.issuedate[iBond].month
+            day       = self.issuedate[iBond].day
+            
+            coupondateone = np.array([])
+            
+            if self.frequency[iBond] == 1:
+                for selectedyear in range(startyear,endyear+1): # Creates array of dates for selected ZCB
+                    coupondateone = np.append(coupondateone,dt.date(selectedyear,month,day))
+            elif self.frequency[iBond] == 2:
+                #todo
+                print("Not completed")
+            else:
+                #todo
+                print("Not completed")
+            
+            self.couponcfs.append(np.ones_like(coupondateone)*couponsize[iBond])
+            self.coupondates.append(coupondateone)
+
+            # Notional payoff date is equal to maturity
+            self.notionaldates.append(np.array([self.maturitydate[iBond]]))
+       
+            # Cash flow of the principal payback
+            self.notionalcfs.append(np.array(self.notional[iBond]))
+
+class ZeroCouponBondPriced:
     def __init__(self, modellingdate,zspread,compounding):
         self.modellingdate = modellingdate
         self.compounding = compounding
         self.marketprice = 0
         self.bookprice = 0
         self.zspread = zspread
+        self.coupondatefrac = []
+        self.notionaldatefrac =[]
+        self.couponcfs = []
+        self.notionalcfs = []
+
+
+
         
     def refactordates(self,cfdate,modellingdate):
         # other counting conventions
-        datenew = (cfdate-modellingdate)
-        print(datenew)
-        datefrac = np.array([])
-        datesconsidered = np.array([])
-        counter = 0
-        for onedate in datenew:
-            if onedate.days>0:
-                datefrac = np.append(datefrac,onedate.days/365.25)
-                datesconsidered = np.append(datesconsidered,int(counter))
-            counter+=1
+        nAsset = len(cfdate)
+        datefracout = []
+        datesconsideredout = []
+        for iAsset in range(0,nAsset):
+            datenew = (cfdate[iAsset]-modellingdate)
+            datefrac = np.array([])
+            datesconsidered = np.array([])
+            counter = 0
+            for onedate in datenew:
+                if onedate.days>0:
+                    datefrac = np.append(datefrac,onedate.days/365.25)
+                    datesconsidered = np.append(datesconsidered,int(counter))
+                counter+=1
 
-        return [datesconsidered.astype(int),datefrac]
+            datefracout.append(datefrac)
+            datesconsideredout.append(datesconsidered.astype(int))
+            
+        return [datesconsideredout,datefracout]
 
     def disctorates(self, disc, timefrac, compounding):
         """
@@ -156,6 +181,12 @@ class BondPrices:
         return disc   
 
     def PriceBond(self, couponrates,notionalrates,couponmaturities, notionalmaturities,couponcf,notionalcf):
-        MV_CP = self.ratestodics(couponmaturities,couponrates,  self.compounding) * couponcf
-        MV_NOT = self.ratestodics(notionalmaturities,notionalrates,  self.compounding) * notionalcf
-        self.marketprice = sum(MV_CP)+ MV_NOT
+        nAsset = len(couponrates)
+        self.marketprice = []
+
+        for iAsset in range(0,nAsset):
+            MV_CP = self.ratestodics(couponmaturities[iAsset],couponrates[iAsset], self.compounding) * couponcf[iAsset]
+            MV_NOT = self.ratestodics(notionalmaturities[iAsset],notionalrates[iAsset],  self.compounding) * notionalcf[iAsset]
+            MV = np.sum(MV_CP)+MV_NOT
+            self.marketprice.append(np.array(MV))
+            #self.marketprice.append(np.sum(np.sum(MV_CP,MV_NOT)))
