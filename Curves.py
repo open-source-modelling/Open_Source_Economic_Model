@@ -1,15 +1,20 @@
 import numpy as np
+import pandas as pd
 
 class Curves:
-    def __init__(self, M_Obs, r_Obs,ufr,Precision,Tau,alpha):
+    def __init__(self, ufr, Precision, Tau, InitialDate, Country):
     
-        self.M_Obs = M_Obs
-        self.r_Obs = r_Obs
+        self.InitialDate = InitialDate
+        self.Country = Country
+        self.StartDate = pd.DataFrame(data=None)
+        self.FwdRates = pd.DataFrame(data=None)
+        self.M_Obs = pd.DataFrame(data=None)
+        self.r_Obs = pd.DataFrame(data=None)
         self.ufr = ufr
         self.Precision = Precision
         self.Tau = Tau
-        self.alpha = alpha
-        self.b = None
+        self.alpha = pd.DataFrame(data=None)
+        self.b = pd.DataFrame(data=None)
 
     def SWHeart(self, u, v, alpha):
     # SWHEART Calculate the heart of the Wilson function.
