@@ -89,9 +89,6 @@ class ZeroCouponBondPriced:
         self.notionaldatefrac =[]
         self.couponcfs = []
         self.notionalcfs = []
-
-
-
         
     def refactordates(self,cfdate,modellingdate):
         # other counting conventions
