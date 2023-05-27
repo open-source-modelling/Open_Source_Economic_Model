@@ -1,3 +1,12 @@
+<div align="center">
+  <a href="https://github.com/qnity" target="_blank">
+    <picture>
+      <img src="images/OSM_logo.jpeg" width=280 alt="Logo"/>
+    </picture>
+  </a>
+</div>
+
+
 <h1 align="center" style="border-botom: none">
   <b>
     🐍 Asset Liability Model POC 🐍     
