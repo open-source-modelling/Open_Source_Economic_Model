@@ -2,7 +2,7 @@ import numpy as np
 import datetime as dt
 
 class ZeroCouponBond:
-    def __init__(self,issuedate, maturitydate, frequency, notional, couponrate, recovrate, defprob, zspread):
+    def __init__(self,issuedate, maturitydate, frequency, notional, couponrate, recovrate, defprob, sspread, zspread):
         self.issuedate = issuedate
         self.maturitydate = maturitydate
         self.frequency = frequency
@@ -10,6 +10,7 @@ class ZeroCouponBond:
         self.couponrate = couponrate
         self.notional = notional
         self.defprob = defprob
+        self.sspread = sspread
         self.zspread = zspread
         self.coupondates = []
         self.notionaldates =[]
@@ -79,12 +80,13 @@ class ZeroCouponBond:
             self.notionalcfs.append(np.array(self.notional[iBond]))
 
 class ZeroCouponBondPriced:
-    def __init__(self, modellingdate,zspread,compounding):
+    def __init__(self, modellingdate,compounding):
         self.modellingdate = modellingdate
         self.compounding = compounding
         self.marketprice = 0
         self.bookprice = 0
-        self.zspread = zspread
+        self.sspread = []
+        self.zspread = []
         self.coupondatefrac = []
         self.notionaldatefrac =[]
         self.couponcfs = []
@@ -146,7 +148,6 @@ class ZeroCouponBondPriced:
 
         return rates
 
-
     def ratestodics(self, rates,timefrac,compounding):
         """
         Converts discount rates to discount factors using a selected compounding convention.
@@ -177,13 +178,21 @@ class ZeroCouponBondPriced:
 
         return disc   
 
-    def PriceBond(self, couponrates,notionalrates,couponmaturities, notionalmaturities,couponcf,notionalcf):
+    def PriceBond(self, couponrates,notionalrates,couponmaturities, notionalmaturities,couponcf,notionalcf,sSpread,zSpread):
         nAsset = len(couponrates)
         self.marketprice = []
 
         for iAsset in range(0,nAsset):
-            MV_CP = self.ratestodics(couponmaturities[iAsset],couponrates[iAsset], self.compounding) * couponcf[iAsset]
-            MV_NOT = self.ratestodics(notionalmaturities[iAsset],notionalrates[iAsset],  self.compounding) * notionalcf[iAsset]
+            MV_CP = self.ratestodics(couponmaturities[iAsset],couponrates[iAsset]+sSpread[iAsset]+zSpread[iAsset], self.compounding) * couponcf[iAsset]
+            MV_NOT = self.ratestodics(notionalmaturities[iAsset],notionalrates[iAsset]+sSpread[iAsset]+zSpread[iAsset],  self.compounding) * notionalcf[iAsset]
             MV = np.sum(MV_CP)+MV_NOT
             self.marketprice.append(np.array(MV))
-            #self.marketprice.append(np.sum(np.sum(MV_CP,MV_NOT)))
+
+
+    def OpenPriceBond(self, couponrates,notionalrates,couponmaturities, notionalmaturities,couponcf,notionalcf,sSpread,zSpread):
+
+        MV_CP = self.ratestodics(couponmaturities,couponrates + sSpread + zSpread, self.compounding) * couponcf
+        MV_NOT = self.ratestodics(notionalmaturities,notionalrates + sSpread + zSpread,  self.compounding) * notionalcf
+        MV = np.sum(MV_CP) + MV_NOT
+
+        return MV

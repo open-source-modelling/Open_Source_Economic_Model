@@ -1,0 +1,997 @@
+﻿NACE,NACE code text,sSpread
+A,"Agriculture, forestry and fishing",0.01
+A1,"Crop and animal production, hunting and related service activities",0.01
+A1.1,Growing of non-perennial crops,0.01
+A1.1.1,"Growing of cereals (except rice), leguminous crops and oil seeds",0.01
+A1.1.2,Growing of rice,0.01
+A1.1.3,"Growing of vegetables and melons, roots and tubers",0.01
+A1.1.4,Growing of sugar cane,0.01
+A1.1.5,Growing of tobacco,0.01
+A1.1.6,Growing of fibre crops,0.01
+A1.1.9,Growing of other non-perennial crops,0.01
+A1.2,Growing of perennial crops,0.01
+A1.2.1,Growing of grapes,0.01
+A1.2.2,Growing of tropical and subtropical fruits,0.01
+A1.2.3,Growing of citrus fruits,0.01
+A1.2.4,Growing of pome fruits and stone fruits,0.01
+A1.2.5,Growing of other tree and bush fruits and nuts,0.01
+A1.2.6,Growing of oleaginous fruits,0.01
+A1.2.7,Growing of beverage crops,0.01
+A1.2.8,"Growing of spices, aromatic, drug and pharmaceutical crops",0.01
+A1.2.9,Growing of other perennial crops,0.01
+A1.3,Plant propagation,0.01
+A1.3.0,Plant propagation,0.01
+A1.4,Animal production,0.01
+A1.4.1,Raising of dairy cattle,0.01
+A1.4.2,Raising of other cattle and buffaloes,0.01
+A1.4.3,Raising of horses and other equines,0.01
+A1.4.4,Raising of camels and camelids,0.01
+A1.4.5,Raising of sheep and goats,0.01
+A1.4.6,Raising of swine/pigs,0.01
+A1.4.7,Raising of poultry,0.01
+A1.4.9,Raising of other animals,0.01
+A1.5,Mixed farming,0.01
+A1.5.0,Mixed farming,0.01
+A1.6,Support activities to agriculture and post-harvest crop activities,0.01
+A1.6.1,Support activities for crop production,0.01
+A1.6.2,Support activities for animal production,0.01
+A1.6.3,Post-harvest crop activities,0.01
+A1.6.4,Seed processing for propagation,0.01
+A1.7,"Hunting, trapping and related service activities",0.01
+A1.7.0,"Hunting, trapping and related service activities",0.01
+A2,Forestry and logging,0.01
+A2.1,Silviculture and other forestry activities,0.01
+A2.1.0,Silviculture and other forestry activities,0.01
+A2.2,Logging,0.01
+A2.2.0,Logging,0.01
+A2.3,Gathering of wild growing non-wood products,0.01
+A2.3.0,Gathering of wild growing non-wood products,0.01
+A2.4,Support services to forestry,0.01
+A2.4.0,Support services to forestry,0.01
+A3,Fishing and aquaculture,0.01
+A3.1,Fishing,0.01
+A3.1.1,Marine fishing,0.01
+A3.1.2,Freshwater fishing,0.01
+A3.2,Aquaculture,0.01
+A3.2.1,Marine aquaculture,0.01
+A3.2.2,Freshwater aquaculture,0.01
+B,Mining and quarrying,0.01
+B5,Mining of coal and lignite,0.01
+B5.1,Mining of hard coal,0.01
+B5.1.0,Mining of hard coal,0.01
+B5.2,Mining of lignite,0.01
+B5.2.0,Mining of lignite,0.01
+B6,Extraction of crude petroleum and natural gas,0.01
+B6.1,Extraction of crude petroleum,0.01
+B6.1.0,Extraction of crude petroleum,0.01
+B6.2,Extraction of natural gas,0.01
+B6.2.0,Extraction of natural gas,0.01
+B7,Mining of metal ores,0.01
+B7.1,Mining of iron ores,0.01
+B7.1.0,Mining of iron ores,0.01
+B7.2,Mining of non-ferrous metal ores,0.01
+B7.2.1,Mining of uranium and thorium ores,0.01
+B7.2.9,Mining of other non-ferrous metal ores,0.01
+B8,Other mining and quarrying,0.01
+B8.1,"Quarrying of stone, sand and clay",0.01
+B8.1.1,"Quarrying of ornamental and building stone, limestone, gypsum, chalk and slate",0.01
+B8.1.2,Operation of gravel and sand pits; mining of clays and kaolin,0.01
+B8.9,Mining and quarrying n.e.c.,0.01
+B8.9.1,Mining of chemical and fertiliser minerals,0.01
+B8.9.2,Extraction of peat,0.01
+B8.9.3,Extraction of salt,0.01
+B8.9.9,Other mining and quarrying n.e.c.,0.01
+B9,Mining support service activities,0.01
+B9.1,Support activities for petroleum and natural gas extraction,0.01
+B9.1.0,Support activities for petroleum and natural gas extraction,0.01
+B9.9,Support activities for other mining and quarrying,0.01
+B9.9.0,Support activities for other mining and quarrying,0.01
+C,Manufacturing,0.01
+C10,Manufacture of food products,0.01
+C10.1,Processing and preserving of meat and production of meat products,0.01
+C10.1.1,Processing and preserving of meat,0.01
+C10.1.2,Processing and preserving of poultry meat,0.01
+C10.1.3,Production of meat and poultry meat products,0.01
+C10.2,"Processing and preserving of fish, crustaceans and molluscs",0.01
+C10.2.0,"Processing and preserving of fish, crustaceans and molluscs",0.01
+C10.3,Processing and preserving of fruit and vegetables,0.01
+C10.3.1,Processing and preserving of potatoes,0.01
+C10.3.2,Manufacture of fruit and vegetable juice,0.01
+C10.3.9,Other processing and preserving of fruit and vegetables,0.01
+C10.4,Manufacture of vegetable and animal oils and fats,0.01
+C10.4.1,Manufacture of oils and fats,0.01
+C10.4.2,Manufacture of margarine and similar edible fats,0.01
+C10.5,Manufacture of dairy products,0.01
+C10.5.1,Operation of dairies and cheese making,0.01
+C10.5.2,Manufacture of ice cream,0.01
+C10.6,"Manufacture of grain mill products, starches and starch products",0.01
+C10.6.1,Manufacture of grain mill products,0.01
+C10.6.2,Manufacture of starches and starch products,0.01
+C10.7,Manufacture of bakery and farinaceous products,0.01
+C10.7.1,Manufacture of bread; manufacture of fresh pastry goods and cakes,0.01
+C10.7.2,Manufacture of rusks and biscuits; manufacture of preserved pastry goods and cakes,0.01
+C10.7.3,"Manufacture of macaroni, noodles, couscous and similar farinaceous products",0.01
+C10.8,Manufacture of other food products,0.01
+C10.8.1,Manufacture of sugar,0.01
+C10.8.2,"Manufacture of cocoa, chocolate and sugar confectionery",0.01
+C10.8.3,Processing of tea and coffee,0.01
+C10.8.4,Manufacture of condiments and seasonings,0.01
+C10.8.5,Manufacture of prepared meals and dishes,0.01
+C10.8.6,Manufacture of homogenised food preparations and dietetic food,0.01
+C10.8.9,Manufacture of other food products n.e.c.,0.01
+C10.9,Manufacture of prepared animal feeds,0.01
+C10.9.1,Manufacture of prepared feeds for farm animals,0.01
+C10.9.2,Manufacture of prepared pet foods,0.01
+C11,Manufacture of beverages,0.01
+C11.0,Manufacture of beverages,0.01
+C11.0.1,"Distilling, rectifying and blending of spirits",0.01
+C11.0.2,Manufacture of wine from grape,0.01
+C11.0.3,Manufacture of cider and other fruit wines,0.01
+C11.0.4,Manufacture of other non-distilled fermented beverages,0.01
+C11.0.5,Manufacture of beer,0.01
+C11.0.6,Manufacture of malt,0.01
+C11.0.7,Manufacture of soft drinks; production of mineral waters and other bottled waters,0.01
+C12,Manufacture of tobacco products,0.01
+C12.0,Manufacture of tobacco products,0.01
+C12.0.0,Manufacture of tobacco products,0.01
+C13,Manufacture of textiles,0.01
+C13.1,Preparation and spinning of textile fibres,0.01
+C13.1.0,Preparation and spinning of textile fibres,0.01
+C13.2,Weaving of textiles,0.01
+C13.2.0,Weaving of textiles,0.01
+C13.3,Finishing of textiles,0.01
+C13.3.0,Finishing of textiles,0.01
+C13.9,Manufacture of other textiles,0.01
+C13.9.1,Manufacture of knitted and crocheted fabrics,0.01
+C13.9.2,"Manufacture of made-up textile articles, except apparel",0.01
+C13.9.3,Manufacture of carpets and rugs,0.01
+C13.9.4,"Manufacture of cordage, rope, twine and netting",0.01
+C13.9.5,"Manufacture of non-wovens and articles made from non-wovens, except apparel",0.01
+C13.9.6,Manufacture of other technical and industrial textiles,0.01
+C13.9.9,Manufacture of other textiles n.e.c.,0.01
+C14,Manufacture of wearing apparel,0.01
+C14.1,"Manufacture of wearing apparel, except fur apparel",0.01
+C14.1.1,Manufacture of leather clothes,0.01
+C14.1.2,Manufacture of workwear,0.01
+C14.1.3,Manufacture of other outerwear,0.01
+C14.1.4,Manufacture of underwear,0.01
+C14.1.9,Manufacture of other wearing apparel and accessories,0.01
+C14.2,Manufacture of articles of fur,0.01
+C14.2.0,Manufacture of articles of fur,0.01
+C14.3,Manufacture of knitted and crocheted apparel,0.01
+C14.3.1,Manufacture of knitted and crocheted hosiery,0.01
+C14.3.9,Manufacture of other knitted and crocheted apparel,0.01
+C15,Manufacture of leather and related products,0.01
+C15.1,"Tanning and dressing of leather; manufacture of luggage, handbags, saddlery and harness; dressing and dyeing of fur",0.01
+C15.1.1,Tanning and dressing of leather; dressing and dyeing of fur,0.01
+C15.1.2,"Manufacture of luggage, handbags and the like, saddlery and harness",0.01
+C15.2,Manufacture of footwear,0.01
+C15.2.0,Manufacture of footwear,0.01
+C16,"Manufacture of wood and of products of wood and cork, except furniture; manufacture of articles of straw and plaiting materials",0.01
+C16.1,Sawmilling and planing of wood,0.01
+C16.1.0,Sawmilling and planing of wood,0.01
+C16.2,"Manufacture of products of wood, cork, straw and plaiting materials",0.01
+C16.2.1,Manufacture of veneer sheets and wood-based panels,0.01
+C16.2.2,Manufacture of assembled parquet floors,0.01
+C16.2.3,Manufacture of other builders' carpentry and joinery,0.01
+C16.2.4,Manufacture of wooden containers,0.01
+C16.2.9,"Manufacture of other products of wood; manufacture of articles of cork, straw and plaiting materials",0.01
+C17,Manufacture of paper and paper products,0.01
+C17.1,"Manufacture of pulp, paper and paperboard",0.01
+C17.1.1,Manufacture of pulp,0.01
+C17.1.2,Manufacture of paper and paperboard,0.01
+C17.2,Manufacture of articles of paper and paperboard,0.01
+C17.2.1,Manufacture of corrugated paper and paperboard and of containers of paper and paperboard,0.01
+C17.2.2,Manufacture of household and sanitary goods and of toilet requisites,0.01
+C17.2.3,Manufacture of paper stationery,0.01
+C17.2.4,Manufacture of wallpaper,0.01
+C17.2.9,Manufacture of other articles of paper and paperboard,0.01
+C18,Printing and reproduction of recorded media,0.01
+C18.1,Printing and service activities related to printing,0.01
+C18.1.1,Printing of newspapers,0.01
+C18.1.2,Other printing,0.01
+C18.1.3,Pre-press and pre-media services,0.01
+C18.1.4,Binding and related services,0.01
+C18.2,Reproduction of recorded media,0.01
+C18.2.0,Reproduction of recorded media,0.01
+C19,Manufacture of coke and refined petroleum products,0.01
+C19.1,Manufacture of coke oven products,0.01
+C19.1.0,Manufacture of coke oven products,0.01
+C19.2,Manufacture of refined petroleum products,0.01
+C19.2.0,Manufacture of refined petroleum products,0.01
+C20,Manufacture of chemicals and chemical products,0.01
+C20.1,"Manufacture of basic chemicals, fertilisers and nitrogen compounds, plastics and synthetic rubber in primary forms",0.01
+C20.1.1,Manufacture of industrial gases,0.01
+C20.1.2,Manufacture of dyes and pigments,0.01
+C20.1.3,Manufacture of other inorganic basic chemicals,0.01
+C20.1.4,Manufacture of other organic basic chemicals,0.01
+C20.1.5,Manufacture of fertilisers and nitrogen compounds,0.01
+C20.1.6,Manufacture of plastics in primary forms,0.01
+C20.1.7,Manufacture of synthetic rubber in primary forms,0.01
+C20.2,Manufacture of pesticides and other agrochemical products,0.01
+C20.2.0,Manufacture of pesticides and other agrochemical products,0.01
+C20.3,"Manufacture of paints, varnishes and similar coatings, printing ink and mastics",0.01
+C20.3.0,"Manufacture of paints, varnishes and similar coatings, printing ink and mastics",0.01
+C20.4,"Manufacture of soap and detergents, cleaning and polishing preparations, perfumes and toilet preparations",0.01
+C20.4.1,"Manufacture of soap and detergents, cleaning and polishing preparations",0.01
+C20.4.2,Manufacture of perfumes and toilet preparations,0.01
+C20.5,Manufacture of other chemical products,0.01
+C20.5.1,Manufacture of explosives,0.01
+C20.5.2,Manufacture of glues,0.01
+C20.5.3,Manufacture of essential oils,0.01
+C20.5.9,Manufacture of other chemical products n.e.c.,0.01
+C20.6,Manufacture of man-made fibres,0.01
+C20.6.0,Manufacture of man-made fibres,0.01
+C21,Manufacture of basic pharmaceutical products and pharmaceutical preparations,0.01
+C21.1,Manufacture of basic pharmaceutical products,0.01
+C21.1.0,Manufacture of basic pharmaceutical products,0.01
+C21.2,Manufacture of pharmaceutical preparations,0.01
+C21.2.0,Manufacture of pharmaceutical preparations,0.01
+C22,Manufacture of rubber and plastic products,0.01
+C22.1,Manufacture of rubber products,0.01
+C22.1.1,Manufacture of rubber tyres and tubes; retreading and rebuilding of rubber tyres,0.01
+C22.1.9,Manufacture of other rubber products,0.01
+C22.2,Manufacture of plastics products,0.01
+C22.2.1,"Manufacture of plastic plates, sheets, tubes and profiles",0.01
+C22.2.2,Manufacture of plastic packing goods,0.01
+C22.2.3,Manufacture of builders’ ware of plastic,0.01
+C22.2.9,Manufacture of other plastic products,0.01
+C23,Manufacture of other non-metallic mineral products,0.01
+C23.1,Manufacture of glass and glass products,0.01
+C23.1.1,Manufacture of flat glass,0.01
+C23.1.2,Shaping and processing of flat glass,0.01
+C23.1.3,Manufacture of hollow glass,0.01
+C23.1.4,Manufacture of glass fibres,0.01
+C23.1.9,"Manufacture and processing of other glass, including technical glassware",0.01
+C23.2,Manufacture of refractory products,0.01
+C23.2.0,Manufacture of refractory products,0.01
+C23.3,Manufacture of clay building materials,0.01
+C23.3.1,Manufacture of ceramic tiles and flags,0.01
+C23.3.2,"Manufacture of bricks, tiles and construction products, in baked clay",0.01
+C23.4,Manufacture of other porcelain and ceramic products,0.01
+C23.4.1,Manufacture of ceramic household and ornamental articles,0.01
+C23.4.2,Manufacture of ceramic sanitary fixtures,0.01
+C23.4.3,Manufacture of ceramic insulators and insulating fittings,0.01
+C23.4.4,Manufacture of other technical ceramic products,0.01
+C23.4.9,Manufacture of other ceramic products,0.01
+C23.5,"Manufacture of cement, lime and plaster",0.01
+C23.5.1,Manufacture of cement,0.01
+C23.5.2,Manufacture of lime and plaster,0.01
+C23.6,"Manufacture of articles of concrete, cement and plaster",0.01
+C23.6.1,Manufacture of concrete products for construction purposes,0.01
+C23.6.2,Manufacture of plaster products for construction purposes,0.01
+C23.6.3,Manufacture of ready-mixed concrete,0.01
+C23.6.4,Manufacture of mortars,0.01
+C23.6.5,Manufacture of fibre cement,0.01
+C23.6.9,"Manufacture of other articles of concrete, plaster and cement",0.01
+C23.7,"Cutting, shaping and finishing of stone",0.01
+C23.7.0,"Cutting, shaping and finishing of stone",0.01
+C23.9,Manufacture of abrasive products and non-metallic mineral products n.e.c.,0.01
+C23.9.1,Production of abrasive products,0.01
+C23.9.9,Manufacture of other non-metallic mineral products n.e.c.,0.01
+C24,Manufacture of basic metals,0.01
+C24.1,Manufacture of basic iron and steel and of ferro-alloys,0.01
+C24.1.0,Manufacture of basic iron and steel and of ferro-alloys,0.01
+C24.2,"Manufacture of tubes, pipes, hollow profiles and related fittings, of steel",0.01
+C24.2.0,"Manufacture of tubes, pipes, hollow profiles and related fittings, of steel",0.01
+C24.3,Manufacture of other products of first processing of steel,0.01
+C24.3.1,Cold drawing of bars,0.01
+C24.3.2,Cold rolling of narrow strip,0.01
+C24.3.3,Cold forming or folding,0.01
+C24.3.4,Cold drawing of wire,0.01
+C24.4,Manufacture of basic precious and other non-ferrous metals,0.01
+C24.4.1,Precious metals production,0.01
+C24.4.2,Aluminium production,0.01
+C24.4.3,"Lead, zinc and tin production",0.01
+C24.4.4,Copper production,0.01
+C24.4.5,Other non-ferrous metal production,0.01
+C24.4.6,Processing of nuclear fuel,0.01
+C24.5,Casting of metals,0.01
+C24.5.1,Casting of iron,0.01
+C24.5.2,Casting of steel,0.01
+C24.5.3,Casting of light metals,0.01
+C24.5.4,Casting of other non-ferrous metals,0.01
+C25,"Manufacture of fabricated metal products, except machinery and equipment",0.01
+C25.1,Manufacture of structural metal products,0.01
+C25.1.1,Manufacture of metal structures and parts of structures,0.01
+C25.1.2,Manufacture of doors and windows of metal,0.01
+C25.2,"Manufacture of tanks, reservoirs and containers of metal",0.01
+C25.2.1,Manufacture of central heating radiators and boilers,0.01
+C25.2.9,"Manufacture of other tanks, reservoirs and containers of metal",0.01
+C25.3,"Manufacture of steam generators, except central heating hot water boilers",0.01
+C25.3.0,"Manufacture of steam generators, except central heating hot water boilers",0.01
+C25.4,Manufacture of weapons and ammunition,0.01
+C25.4.0,Manufacture of weapons and ammunition,0.01
+C25.5,"Forging, pressing, stamping and roll-forming of metal; powder metallurgy",0.01
+C25.5.0,"Forging, pressing, stamping and roll-forming of metal; powder metallurgy",0.01
+C25.6,Treatment and coating of metals; machining,0.01
+C25.6.1,Treatment and coating of metals,0.01
+C25.6.2,Machining,0.01
+C25.7,"Manufacture of cutlery, tools and general hardware",0.01
+C25.7.1,Manufacture of cutlery,0.01
+C25.7.2,Manufacture of locks and hinges,0.01
+C25.7.3,Manufacture of tools,0.01
+C25.9,Manufacture of other fabricated metal products,0.01
+C25.9.1,Manufacture of steel drums and similar containers,0.01
+C25.9.2,Manufacture of light metal packaging,0.01
+C25.9.3,"Manufacture of wire products, chain and springs",0.01
+C25.9.4,Manufacture of fasteners and screw machine products,0.01
+C25.9.9,Manufacture of other fabricated metal products n.e.c.,0.01
+C26,"Manufacture of computer, electronic and optical products",0.01
+C26.1,Manufacture of electronic components and boards,0.01
+C26.1.1,Manufacture of electronic components,0.01
+C26.1.2,Manufacture of loaded electronic boards,0.01
+C26.2,Manufacture of computers and peripheral equipment,0.01
+C26.2.0,Manufacture of computers and peripheral equipment,0.01
+C26.3,Manufacture of communication equipment,0.01
+C26.3.0,Manufacture of communication equipment,0.01
+C26.4,Manufacture of consumer electronics,0.01
+C26.4.0,Manufacture of consumer electronics,0.01
+C26.5,"Manufacture of instruments and appliances for measuring, testing and navigation; watches and clocks",0.01
+C26.5.1,"Manufacture of instruments and appliances for measuring, testing and navigation",0.01
+C26.5.2,Manufacture of watches and clocks,0.01
+C26.6,"Manufacture of irradiation, electromedical and electrotherapeutic equipment",0.01
+C26.6.0,"Manufacture of irradiation, electromedical and electrotherapeutic equipment",0.01
+C26.7,Manufacture of optical instruments and photographic equipment,0.01
+C26.7.0,Manufacture of optical instruments and photographic equipment,0.01
+C26.8,Manufacture of magnetic and optical media,0.01
+C26.8.0,Manufacture of magnetic and optical media,0.01
+C27,Manufacture of electrical equipment,0.01
+C27.1,"Manufacture of electric motors, generators, transformers and electricity distribution and control apparatus",0.01
+C27.1.1,"Manufacture of electric motors, generators and transformers",0.01
+C27.1.2,Manufacture of electricity distribution and control apparatus,0.01
+C27.2,Manufacture of batteries and accumulators,0.01
+C27.2.0,Manufacture of batteries and accumulators,0.01
+C27.3,Manufacture of wiring and wiring devices,0.01
+C27.3.1,Manufacture of fibre optic cables,0.01
+C27.3.2,Manufacture of other electronic and electric wires and cables,0.01
+C27.3.3,Manufacture of wiring devices,0.01
+C27.4,Manufacture of electric lighting equipment,0.01
+C27.4.0,Manufacture of electric lighting equipment,0.01
+C27.5,Manufacture of domestic appliances,0.01
+C27.5.1,Manufacture of electric domestic appliances,0.01
+C27.5.2,Manufacture of non-electric domestic appliances,0.01
+C27.9,Manufacture of other electrical equipment,0.01
+C27.9.0,Manufacture of other electrical equipment,0.01
+C28,Manufacture of machinery and equipment n.e.c.,0.01
+C28.1,Manufacture of general-purpose machinery,0.01
+C28.1.1,"Manufacture of engines and turbines, except aircraft, vehicle and cycle engines",0.01
+C28.1.2,Manufacture of fluid power equipment,0.01
+C28.1.3,Manufacture of other pumps and compressors,0.01
+C28.1.4,Manufacture of other taps and valves,0.01
+C28.1.5,"Manufacture of bearings, gears, gearing and driving elements",0.01
+C28.2,Manufacture of other general-purpose machinery,0.01
+C28.2.1,"Manufacture of ovens, furnaces and furnace burners",0.01
+C28.2.2,Manufacture of lifting and handling equipment,0.01
+C28.2.3,Manufacture of office machinery and equipment (except computers and peripheral equipment),0.01
+C28.2.4,Manufacture of power-driven hand tools,0.01
+C28.2.5,Manufacture of non-domestic cooling and ventilation equipment,0.01
+C28.2.9,Manufacture of other general-purpose machinery n.e.c.,0.01
+C28.3,Manufacture of agricultural and forestry machinery,0.01
+C28.3.0,Manufacture of agricultural and forestry machinery,0.01
+C28.4,Manufacture of metal forming machinery and machine tools,0.01
+C28.4.1,Manufacture of metal forming machinery,0.01
+C28.4.9,Manufacture of other machine tools,0.01
+C28.9,Manufacture of other special-purpose machinery,0.01
+C28.9.1,Manufacture of machinery for metallurgy,0.01
+C28.9.2,"Manufacture of machinery for mining, quarrying and construction",0.01
+C28.9.3,"Manufacture of machinery for food, beverage and tobacco processing",0.01
+C28.9.4,"Manufacture of machinery for textile, apparel and leather production",0.01
+C28.9.5,Manufacture of machinery for paper and paperboard production,0.01
+C28.9.6,Manufacture of plastics and rubber machinery,0.01
+C28.9.9,Manufacture of other special-purpose machinery n.e.c.,0.01
+C29,"Manufacture of motor vehicles, trailers and semi-trailers",0.01
+C29.1,Manufacture of motor vehicles,0.01
+C29.1.0,Manufacture of motor vehicles,0.01
+C29.2,Manufacture of bodies (coachwork) for motor vehicles; manufacture of trailers and semi-trailers,0.01
+C29.2.0,Manufacture of bodies (coachwork) for motor vehicles; manufacture of trailers and semi-trailers,0.01
+C29.3,Manufacture of parts and accessories for motor vehicles,0.01
+C29.3.1,Manufacture of electrical and electronic equipment for motor vehicles,0.01
+C29.3.2,Manufacture of other parts and accessories for motor vehicles,0.01
+C30,Manufacture of other transport equipment,0.01
+C30.1,Building of ships and boats,0.01
+C30.1.1,Building of ships and floating structures,0.01
+C30.1.2,Building of pleasure and sporting boats,0.01
+C30.2,Manufacture of railway locomotives and rolling stock,0.01
+C30.2.0,Manufacture of railway locomotives and rolling stock,0.01
+C30.3,Manufacture of air and spacecraft and related machinery,0.01
+C30.3.0,Manufacture of air and spacecraft and related machinery,0.01
+C30.4,Manufacture of military fighting vehicles,0.01
+C30.4.0,Manufacture of military fighting vehicles,0.01
+C30.9,Manufacture of transport equipment n.e.c.,0.01
+C30.9.1,Manufacture of motorcycles,0.01
+C30.9.2,Manufacture of bicycles and invalid carriages,0.01
+C30.9.9,Manufacture of other transport equipment n.e.c.,0.01
+C31,Manufacture of furniture,0.01
+C31.0,Manufacture of furniture,0.01
+C31.0.1,Manufacture of office and shop furniture,0.01
+C31.0.2,Manufacture of kitchen furniture,0.01
+C31.0.3,Manufacture of mattresses,0.01
+C31.0.9,Manufacture of other furniture,0.01
+C32,Other manufacturing,0.01
+C32.1,"Manufacture of jewellery, bijouterie and related articles",0.01
+C32.1.1,Striking of coins,0.01
+C32.1.2,Manufacture of jewellery and related articles,0.01
+C32.1.3,Manufacture of imitation jewellery and related articles,0.01
+C32.2,Manufacture of musical instruments,0.01
+C32.2.0,Manufacture of musical instruments,0.01
+C32.3,Manufacture of sports goods,0.01
+C32.3.0,Manufacture of sports goods,0.01
+C32.4,Manufacture of games and toys,0.01
+C32.4.0,Manufacture of games and toys,0.01
+C32.5,Manufacture of medical and dental instruments and supplies,0.01
+C32.5.0,Manufacture of medical and dental instruments and supplies,0.01
+C32.9,Manufacturing n.e.c.,0.01
+C32.9.1,Manufacture of brooms and brushes,0.01
+C32.9.9,Other manufacturing n.e.c.,0.01
+C33,Repair and installation of machinery and equipment,0.01
+C33.1,"Repair of fabricated metal products, machinery and equipment",0.01
+C33.1.1,Repair of fabricated metal products,0.01
+C33.1.2,Repair of machinery,0.01
+C33.1.3,Repair of electronic and optical equipment,0.01
+C33.1.4,Repair of electrical equipment,0.01
+C33.1.5,Repair and maintenance of ships and boats,0.01
+C33.1.6,Repair and maintenance of aircraft and spacecraft,0.01
+C33.1.7,Repair and maintenance of other transport equipment,0.01
+C33.1.9,Repair of other equipment,0.01
+C33.2,Installation of industrial machinery and equipment,0.01
+C33.2.0,Installation of industrial machinery and equipment,0.01
+D,"Electricity, gas, steam and air conditioning supply",0.01
+D35,"Electricity, gas, steam and air conditioning supply",0.01
+D35.1,"Electric power generation, transmission and distribution",0.01
+D35.1.1,Production of electricity,0.01
+D35.1.2,Transmission of electricity,0.01
+D35.1.3,Distribution of electricity,0.01
+D35.1.4,Trade of electricity,0.01
+D35.2,Manufacture of gas; distribution of gaseous fuels through mains,0.01
+D35.2.1,Manufacture of gas,0.01
+D35.2.2,Distribution of gaseous fuels through mains,0.01
+D35.2.3,Trade of gas through mains,0.01
+D35.3,Steam and air conditioning supply,0.01
+D35.3.0,Steam and air conditioning supply,0.01
+E,Water supply; sewerage; waste managment and remediation activities,0.01
+E36,"Water collection, treatment and supply",0.01
+E36.0,"Water collection, treatment and supply",0.01
+E36.0.0,"Water collection, treatment and supply",0.01
+E37,Sewerage,0.01
+E37.0,Sewerage,0.01
+E37.0.0,Sewerage,0.01
+E38,"Waste collection, treatment and disposal activities; materials recovery",0.01
+E38.1,Waste collection,0.01
+E38.1.1,Collection of non-hazardous waste,0.01
+E38.1.2,Collection of hazardous waste,0.01
+E38.2,Waste treatment and disposal,0.01
+E38.2.1,Treatment and disposal of non-hazardous waste,0.01
+E38.2.2,Treatment and disposal of hazardous waste,0.01
+E38.3,Materials recovery,0.01
+E38.3.1,Dismantling of wrecks,0.01
+E38.3.2,Recovery of sorted materials,0.01
+E39,Remediation activities and other waste management services,0.01
+E39.0,Remediation activities and other waste management services,0.01
+E39.0.0,Remediation activities and other waste management services,0.01
+F,Construction,0.01
+F41,Construction of buildings,0.01
+F41.1,Development of building projects,0.01
+F41.1.0,Development of building projects,0.01
+F41.2,Construction of residential and non-residential buildings,0.01
+F41.2.0,Construction of residential and non-residential buildings,0.01
+F42,Civil engineering,0.01
+F42.1,Construction of roads and railways,0.01
+F42.1.1,Construction of roads and motorways,0.01
+F42.1.2,Construction of railways and underground railways,0.01
+F42.1.3,Construction of bridges and tunnels,0.01
+F42.2,Construction of utility projects,0.01
+F42.2.1,Construction of utility projects for fluids,0.01
+F42.2.2,Construction of utility projects for electricity and telecommunications,0.01
+F42.9,Construction of other civil engineering projects,0.01
+F42.9.1,Construction of water projects,0.01
+F42.9.9,Construction of other civil engineering projects n.e.c.,0.01
+F43,Specialised construction activities,0.01
+F43.1,Demolition and site preparation,0.01
+F43.1.1,Demolition,0.01
+F43.1.2,Site preparation,0.01
+F43.1.3,Test drilling and boring,0.01
+F43.2,"Electrical, plumbing and other construction installation activities",0.01
+F43.2.1,Electrical installation,0.01
+F43.2.2,"Plumbing, heat and air-conditioning installation",0.01
+F43.2.9,Other construction installation,0.01
+F43.3,Building completion and finishing,0.01
+F43.3.1,Plastering,0.01
+F43.3.2,Joinery installation,0.01
+F43.3.3,Floor and wall covering,0.01
+F43.3.4,Painting and glazing,0.01
+F43.3.9,Other building completion and finishing,0.01
+F43.9,Other specialised construction activities,0.01
+F43.9.1,Roofing activities,0.01
+F43.9.9,Other specialised construction activities n.e.c.,0.01
+G,Wholesale and retail trade; repair of motor vehicles and motorcycles,0.01
+G45,Wholesale and retail trade and repair of motor vehicles and motorcycles,0.01
+G45.1,Sale of motor vehicles,0.01
+G45.1.1,Sale of cars and light motor vehicles,0.01
+G45.1.9,Sale of other motor vehicles,0.01
+G45.2,Maintenance and repair of motor vehicles,0.01
+G45.2.0,Maintenance and repair of motor vehicles,0.01
+G45.3,Sale of motor vehicle parts and accessories,0.01
+G45.3.1,Wholesale trade of motor vehicle parts and accessories,0.01
+G45.3.2,Retail trade of motor vehicle parts and accessories,0.01
+G45.4,"Sale, maintenance and repair of motorcycles and related parts and accessories",0.01
+G45.4.0,"Sale, maintenance and repair of motorcycles and related parts and accessories",0.01
+G46,"Wholesale trade, except of motor vehicles and motorcycles",0.01
+G46.1,Wholesale on a fee or contract basis,0.01
+G46.1.1,"Agents involved in the sale of agricultural raw materials, live animals, textile raw materials and semi-finished goods",0.01
+G46.1.2,"Agents involved in the sale of fuels, ores, metals and industrial chemicals",0.01
+G46.1.3,Agents involved in the sale of timber and building materials,0.01
+G46.1.4,"Agents involved in the sale of machinery, industrial equipment, ships and aircraft",0.01
+G46.1.5,"Agents involved in the sale of furniture, household goods, hardware and ironmongery",0.01
+G46.1.6,"Agents involved in the sale of textiles, clothing, fur, footwear and leather goods",0.01
+G46.1.7,"Agents involved in the sale of food, beverages and tobacco",0.01
+G46.1.8,Agents specialised in the sale of other particular products,0.01
+G46.1.9,Agents involved in the sale of a variety of goods,0.01
+G46.2,Wholesale of agricultural raw materials and live animals,0.01
+G46.2.1,"Wholesale of grain, unmanufactured tobacco, seeds and animal feeds",0.01
+G46.2.2,Wholesale of flowers and plants,0.01
+G46.2.3,Wholesale of live animals,0.01
+G46.2.4,"Wholesale of hides, skins and leather",0.01
+G46.3,"Wholesale of food, beverages and tobacco",0.01
+G46.3.1,Wholesale of fruit and vegetables,0.01
+G46.3.2,Wholesale of meat and meat products,0.01
+G46.3.3,"Wholesale of dairy products, eggs and edible oils and fats",0.01
+G46.3.4,Wholesale of beverages,0.01
+G46.3.5,Wholesale of tobacco products,0.01
+G46.3.6,Wholesale of sugar and chocolate and sugar confectionery,0.01
+G46.3.7,"Wholesale of coffee, tea, cocoa and spices",0.01
+G46.3.8,"Wholesale of other food, including fish, crustaceans and molluscs",0.01
+G46.3.9,"Non-specialised wholesale of food, beverages and tobacco",0.01
+G46.4,Wholesale of household goods,0.01
+G46.4.1,Wholesale of textiles,0.01
+G46.4.2,Wholesale of clothing and footwear,0.01
+G46.4.3,Wholesale of electrical household appliances,0.01
+G46.4.4,Wholesale of china and glassware and cleaning materials,0.01
+G46.4.5,Wholesale of perfume and cosmetics,0.01
+G46.4.6,Wholesale of pharmaceutical goods,0.01
+G46.4.7,"Wholesale of furniture, carpets and lighting equipment",0.01
+G46.4.8,Wholesale of watches and jewellery,0.01
+G46.4.9,Wholesale of other household goods,0.01
+G46.5,Wholesale of information and communication equipment,0.01
+G46.5.1,"Wholesale of computers, computer peripheral equipment and software",0.01
+G46.5.2,Wholesale of electronic and telecommunications equipment and parts,0.01
+G46.6,"Wholesale of other machinery, equipment and supplies",0.01
+G46.6.1,"Wholesale of agricultural machinery, equipment and supplies",0.01
+G46.6.2,Wholesale of machine tools,0.01
+G46.6.3,"Wholesale of mining, construction and civil engineering machinery",0.01
+G46.6.4,Wholesale of machinery for the textile industry and of sewing and knitting machines,0.01
+G46.6.5,Wholesale of office furniture,0.01
+G46.6.6,Wholesale of other office machinery and equipment,0.01
+G46.6.9,Wholesale of other machinery and equipment,0.01
+G46.7,Other specialised wholesale,0.01
+G46.7.1,"Wholesale of solid, liquid and gaseous fuels and related products",0.01
+G46.7.2,Wholesale of metals and metal ores,0.01
+G46.7.3,"Wholesale of wood, construction materials and sanitary equipment",0.01
+G46.7.4,"Wholesale of hardware, plumbing and heating equipment and supplies",0.01
+G46.7.5,Wholesale of chemical products,0.01
+G46.7.6,Wholesale of other intermediate products,0.01
+G46.7.7,Wholesale of waste and scrap,0.01
+G46.9,Non-specialised wholesale trade,0.01
+G46.9.0,Non-specialised wholesale trade,0.01
+G47,"Retail trade, except of motor vehicles and motorcycles",0.01
+G47.1,Retail sale in non-specialised stores,0.01
+G47.1.1,"Retail sale in non-specialised stores with food, beverages or tobacco predominating",0.01
+G47.1.9,Other retail sale in non-specialised stores,0.01
+G47.2,"Retail sale of food, beverages and tobacco in specialised stores",0.01
+G47.2.1,Retail sale of fruit and vegetables in specialised stores,0.01
+G47.2.2,Retail sale of meat and meat products in specialised stores,0.01
+G47.2.3,"Retail sale of fish, crustaceans and molluscs in specialised stores",0.01
+G47.2.4,"Retail sale of bread, cakes, flour confectionery and sugar confectionery in specialised stores",0.01
+G47.2.5,Retail sale of beverages in specialised stores,0.01
+G47.2.6,Retail sale of tobacco products in specialised stores,0.01
+G47.2.9,Other retail sale of food in specialised stores,0.01
+G47.3,Retail sale of automotive fuel in specialised stores,0.01
+G47.3.0,Retail sale of automotive fuel in specialised stores,0.01
+G47.4,Retail sale of information and communication equipment in specialised stores,0.01
+G47.4.1,"Retail sale of computers, peripheral units and software in specialised stores",0.01
+G47.4.2,Retail sale of telecommunications equipment in specialised stores,0.01
+G47.4.3,Retail sale of audio and video equipment in specialised stores,0.01
+G47.5,Retail sale of other household equipment in specialised stores,0.01
+G47.5.1,Retail sale of textiles in specialised stores,0.01
+G47.5.2,"Retail sale of hardware, paints and glass in specialised stores",0.01
+G47.5.3,"Retail sale of carpets, rugs, wall and floor coverings in specialised stores",0.01
+G47.5.4,Retail sale of electrical household appliances in specialised stores,0.01
+G47.5.9,"Retail sale of furniture, lighting equipment and other household articles in specialised stores",0.01
+G47.6,Retail sale of cultural and recreation goods in specialised stores,0.01
+G47.6.1,Retail sale of books in specialised stores,0.01
+G47.6.2,Retail sale of newspapers and stationery in specialised stores,0.01
+G47.6.3,Retail sale of music and video recordings in specialised stores,0.01
+G47.6.4,Retail sale of sporting equipment in specialised stores,0.01
+G47.6.5,Retail sale of games and toys in specialised stores,0.01
+G47.7,Retail sale of other goods in specialised stores,0.01
+G47.7.1,Retail sale of clothing in specialised stores,0.01
+G47.7.2,Retail sale of footwear and leather goods in specialised stores,0.01
+G47.7.3,Dispensing chemist in specialised stores,0.01
+G47.7.4,Retail sale of medical and orthopaedic goods in specialised stores,0.01
+G47.7.5,Retail sale of cosmetic and toilet articles in specialised stores,0.01
+G47.7.6,"Retail sale of flowers, plants, seeds, fertilisers, pet animals and pet food in specialised stores",0.01
+G47.7.7,Retail sale of watches and jewellery in specialised stores,0.01
+G47.7.8,Other retail sale of new goods in specialised stores,0.01
+G47.7.9,Retail sale of second-hand goods in stores,0.01
+G47.8,Retail sale via stalls and markets,0.01
+G47.8.1,"Retail sale via stalls and markets of food, beverages and tobacco products",0.01
+G47.8.2,"Retail sale via stalls and markets of textiles, clothing and footwear",0.01
+G47.8.9,Retail sale via stalls and markets of other goods,0.01
+G47.9,"Retail trade not in stores, stalls or markets",0.01
+G47.9.1,Retail sale via mail order houses or via Internet,0.01
+G47.9.9,"Other retail sale not in stores, stalls or markets",0.01
+H,Transporting and storage,0.01
+H49,Land transport and transport via pipelines,0.01
+H49.1,"Passenger rail transport, interurban",0.01
+H49.1.0,"Passenger rail transport, interurban",0.01
+H49.2,Freight rail transport,0.01
+H49.2.0,Freight rail transport,0.01
+H49.3,Other passenger land transport,0.01
+H49.3.1,Urban and suburban passenger land transport,0.01
+H49.3.2,Taxi operation,0.01
+H49.3.9,Other passenger land transport n.e.c.,0.01
+H49.4,Freight transport by road and removal services,0.01
+H49.4.1,Freight transport by road,0.01
+H49.4.2,Removal services,0.01
+H49.5,Transport via pipeline,0.01
+H49.5.0,Transport via pipeline,0.01
+H50,Water transport,0.01
+H50.1,Sea and coastal passenger water transport,0.01
+H50.1.0,Sea and coastal passenger water transport,0.01
+H50.2,Sea and coastal freight water transport,0.01
+H50.2.0,Sea and coastal freight water transport,0.01
+H50.3,Inland passenger water transport,0.01
+H50.3.0,Inland passenger water transport,0.01
+H50.4,Inland freight water transport,0.01
+H50.4.0,Inland freight water transport,0.01
+H51,Air transport,0.01
+H51.1,Passenger air transport,0.01
+H51.1.0,Passenger air transport,0.01
+H51.2,Freight air transport and space transport,0.01
+H51.2.1,Freight air transport,0.01
+H51.2.2,Space transport,0.01
+H52,Warehousing and support activities for transportation,0.01
+H52.1,Warehousing and storage,0.01
+H52.1.0,Warehousing and storage,0.01
+H52.2,Support activities for transportation,0.01
+H52.2.1,Service activities incidental to land transportation,0.01
+H52.2.2,Service activities incidental to water transportation,0.01
+H52.2.3,Service activities incidental to air transportation,0.01
+H52.2.4,Cargo handling,0.01
+H52.2.9,Other transportation support activities,0.01
+H53,Postal and courier activities,0.01
+H53.1,Postal activities under universal service obligation,0.01
+H53.1.0,Postal activities under universal service obligation,0.01
+H53.2,Other postal and courier activities,0.01
+H53.2.0,Other postal and courier activities,0.01
+I,Accommodation and food service activities,0.01
+I55,Accommodation,0.01
+I55.1,Hotels and similar accommodation,0.01
+I55.1.0,Hotels and similar accommodation,0.01
+I55.2,Holiday and other short-stay accommodation,0.01
+I55.2.0,Holiday and other short-stay accommodation,0.01
+I55.3,"Camping grounds, recreational vehicle parks and trailer parks",0.01
+I55.3.0,"Camping grounds, recreational vehicle parks and trailer parks",0.01
+I55.9,Other accommodation,0.01
+I55.9.0,Other accommodation,0.01
+I56,Food and beverage service activities,0.01
+I56.1,Restaurants and mobile food service activities,0.01
+I56.1.0,Restaurants and mobile food service activities,0.01
+I56.2,Event catering and other food service activities,0.01
+I56.2.1,Event catering activities,0.01
+I56.2.9,Other food service activities,0.01
+I56.3,Beverage serving activities,0.01
+I56.3.0,Beverage serving activities,0.01
+J,Information and communication,0.01
+J58,Publishing activities,0.01
+J58.1,"Publishing of books, periodicals and other publishing activities",0.01
+J58.1.1,Book publishing,0.01
+J58.1.2,Publishing of directories and mailing lists,0.01
+J58.1.3,Publishing of newspapers,0.01
+J58.1.4,Publishing of journals and periodicals,0.01
+J58.1.9,Other publishing activities,0.01
+J58.2,Software publishing,0.01
+J58.2.1,Publishing of computer games,0.01
+J58.2.9,Other software publishing,0.01
+J59,"Motion picture, video and television programme production, sound recording and music publishing activities",0.01
+J59.1,"Motion picture, video and television programme activities",0.01
+J59.1.1,"Motion picture, video and television programme production activities",0.01
+J59.1.2,"Motion picture, video and television programme post-production activities",0.01
+J59.1.3,"Motion picture, video and television programme distribution activities",0.01
+J59.1.4,Motion picture projection activities,0.01
+J59.2,Sound recording and music publishing activities,0.01
+J59.2.0,Sound recording and music publishing activities,0.01
+J60,Programming and broadcasting activities,0.01
+J60.1,Radio broadcasting,0.01
+J60.1.0,Radio broadcasting,0.01
+J60.2,Television programming and broadcasting activities,0.01
+J60.2.0,Television programming and broadcasting activities,0.01
+J61,Telecommunications,0.01
+J61.1,Wired telecommunications activities,0.01
+J61.1.0,Wired telecommunications activities,0.01
+J61.2,Wireless telecommunications activities,0.01
+J61.2.0,Wireless telecommunications activities,0.01
+J61.3,Satellite telecommunications activities,0.01
+J61.3.0,Satellite telecommunications activities,0.01
+J61.9,Other telecommunications activities,0.01
+J61.9.0,Other telecommunications activities,0.01
+J62,"Computer programming, consultancy and related activities",0.01
+J62.0,"Computer programming, consultancy and related activities",0.01
+J62.0.1,Computer programming activities,0.01
+J62.0.2,Computer consultancy activities,0.01
+J62.0.3,Computer facilities management activities,0.01
+J62.0.9,Other information technology and computer service activities,0.01
+J63,Information service activities,0.01
+J63.1,"Data processing, hosting and related activities; web portals",0.01
+J63.1.1,"Data processing, hosting and related activities",0.01
+J63.1.2,Web portals,0.01
+J63.9,Other information service activities,0.01
+J63.9.1,News agency activities,0.01
+J63.9.9,Other information service activities n.e.c.,0.01
+K,Financial and insurance activities,0.01
+K64,"Financial service activities, except insurance and pension funding",0.01
+K64.1,Monetary intermediation,0.01
+K64.1.1,Central banking,0.01
+K64.1.9,Other monetary intermediation,0.01
+K64.2,Activities of holding companies,0.01
+K64.2.0,Activities of holding companies,0.01
+K64.3,"Trusts, funds and similar financial entities",0.01
+K64.3.0,"Trusts, funds and similar financial entities",0.01
+K64.9,"Other financial service activities, except insurance and pension funding",0.01
+K64.9.1,Financial leasing,0.01
+K64.9.2,Other credit granting,0.01
+K64.9.9,"Other financial service activities, except insurance and pension funding n.e.c.",0.01
+K65,"Insurance, reinsurance and pension funding, except compulsory social security",0.01
+K65.1,Insurance,0.01
+K65.1.1,Life insurance,0.01
+K65.1.2,Non-life insurance,0.01
+K65.2,Reinsurance,0.01
+K65.2.0,Reinsurance,0.01
+K65.3,Pension funding,0.01
+K65.3.0,Pension funding,0.01
+K66,Activities auxiliary to financial services and insurance activities,0.01
+K66.1,"Activities auxiliary to financial services, except insurance and pension funding",0.01
+K66.1.1,Administration of financial markets,0.01
+K66.1.2,Security and commodity contracts brokerage,0.01
+K66.1.9,"Other activities auxiliary to financial services, except insurance and pension funding",0.01
+K66.2,Activities auxiliary to insurance and pension funding,0.01
+K66.2.1,Risk and damage evaluation,0.01
+K66.2.2,Activities of insurance agents and brokers,0.01
+K66.2.9,Other activities auxiliary to insurance and pension funding,0.01
+K66.3,Fund management activities,0.01
+K66.3.0,Fund management activities,0.01
+L,Real estate activities,0.01
+L68,Real estate activities,0.01
+L68.1,Buying and selling of own real estate,0.01
+L68.1.0,Buying and selling of own real estate,0.01
+L68.2,Renting and operating of own or leased real estate,0.01
+L68.2.0,Renting and operating of own or leased real estate,0.01
+L68.3,Real estate activities on a fee or contract basis,0.01
+L68.3.1,Real estate agencies,0.01
+L68.3.2,Management of real estate on a fee or contract basis,0.01
+M,"Professional, scientific and technical activities",0.01
+M69,Legal and accounting activities,0.01
+M69.1,Legal activities,0.01
+M69.1.0,Legal activities,0.01
+M69.2,"Accounting, bookkeeping and auditing activities; tax consultancy",0.01
+M69.2.0,"Accounting, bookkeeping and auditing activities; tax consultancy",0.01
+M70,Activities of head offices; management consultancy activities,0.01
+M70.1,Activities of head offices,0.01
+M70.1.0,Activities of head offices,0.01
+M70.2,Management consultancy activities,0.01
+M70.2.1,Public relations and communication activities,0.01
+M70.2.2,Business and other management consultancy activities,0.01
+M71,Architectural and engineering activities; technical testing and analysis,0.01
+M71.1,Architectural and engineering activities and related technical consultancy,0.01
+M71.1.1,Architectural activities,0.01
+M71.1.2,Engineering activities and related technical consultancy,0.01
+M71.2,Technical testing and analysis,0.01
+M71.2.0,Technical testing and analysis,0.01
+M72,Scientific research and development,0.01
+M72.1,Research and experimental development on natural sciences and engineering,0.01
+M72.1.1,Research and experimental development on biotechnology,0.01
+M72.1.9,Other research and experimental development on natural sciences and engineering,0.01
+M72.2,Research and experimental development on social sciences and humanities,0.01
+M72.2.0,Research and experimental development on social sciences and humanities,0.01
+M73,Advertising and market research,0.01
+M73.1,Advertising,0.01
+M73.1.1,Advertising agencies,0.01
+M73.1.2,Media representation,0.01
+M73.2,Market research and public opinion polling,0.01
+M73.2.0,Market research and public opinion polling,0.01
+M74,"Other professional, scientific and technical activities",0.01
+M74.1,Specialised design activities,0.01
+M74.1.0,Specialised design activities,0.01
+M74.2,Photographic activities,0.01
+M74.2.0,Photographic activities,0.01
+M74.3,Translation and interpretation activities,0.01
+M74.3.0,Translation and interpretation activities,0.01
+M74.9,"Other professional, scientific and technical activities n.e.c.",0.01
+M74.9.0,"Other professional, scientific and technical activities n.e.c.",0.01
+M75,Veterinary activities,0.01
+M75.0,Veterinary activities,0.01
+M75.0.0,Veterinary activities,0.01
+N,Administrative and support service activities,0.01
+N77,Rental and leasing activities,0.01
+N77.1,Renting and leasing of motor vehicles,0.01
+N77.1.1,Renting and leasing of cars and light motor vehicles,0.01
+N77.1.2,Renting and leasing of trucks,0.01
+N77.2,Renting and leasing of personal and household goods,0.01
+N77.2.1,Renting and leasing of recreational and sports goods,0.01
+N77.2.2,Renting of video tapes and disks,0.01
+N77.2.9,Renting and leasing of other personal and household goods,0.01
+N77.3,"Renting and leasing of other machinery, equipment and tangible goods",0.01
+N77.3.1,Renting and leasing of agricultural machinery and equipment,0.01
+N77.3.2,Renting and leasing of construction and civil engineering machinery and equipment,0.01
+N77.3.3,Renting and leasing of office machinery and equipment (including computers),0.01
+N77.3.4,Renting and leasing of water transport equipment,0.01
+N77.3.5,Renting and leasing of air transport equipment,0.01
+N77.3.9,"Renting and leasing of other machinery, equipment and tangible goods n.e.c.",0.01
+N77.4,"Leasing of intellectual property and similar products, except copyrighted works",0.01
+N77.4.0,"Leasing of intellectual property and similar products, except copyrighted works",0.01
+N78,Employment activities,0.01
+N78.1,Activities of employment placement agencies,0.01
+N78.1.0,Activities of employment placement agencies,0.01
+N78.2,Temporary employment agency activities,0.01
+N78.2.0,Temporary employment agency activities,0.01
+N78.3,Other human resources provision,0.01
+N78.3.0,Other human resources provision,0.01
+N79,"Travel agency, tour operator and other reservation service and related activities",0.01
+N79.1,Travel agency and tour operator activities,0.01
+N79.1.1,Travel agency activities,0.01
+N79.1.2,Tour operator activities,0.01
+N79.9,Other reservation service and related activities,0.01
+N79.9.0,Other reservation service and related activities,0.01
+N80,Security and investigation activities,0.01
+N80.1,Private security activities,0.01
+N80.1.0,Private security activities,0.01
+N80.2,Security systems service activities,0.01
+N80.2.0,Security systems service activities,0.01
+N80.3,Investigation activities,0.01
+N80.3.0,Investigation activities,0.01
+N81,Services to buildings and landscape activities,0.01
+N81.1,Combined facilities support activities,0.01
+N81.1.0,Combined facilities support activities,0.01
+N81.2,Cleaning activities,0.01
+N81.2.1,General cleaning of buildings,0.01
+N81.2.2,Other building and industrial cleaning activities,0.01
+N81.2.9,Other cleaning activities,0.01
+N81.3,Landscape service activities,0.01
+N81.3.0,Landscape service activities,0.01
+N82,"Office administrative, office support and other business support activities",0.01
+N82.1,Office administrative and support activities,0.01
+N82.1.1,Combined office administrative service activities,0.01
+N82.1.9,"Photocopying, document preparation and other specialised office support activities",0.01
+N82.2,Activities of call centres,0.01
+N82.2.0,Activities of call centres,0.01
+N82.3,Organisation of conventions and trade shows,0.01
+N82.3.0,Organisation of conventions and trade shows,0.01
+N82.9,Business support service activities n.e.c.,0.01
+N82.9.1,Activities of collection agencies and credit bureaus,0.01
+N82.9.2,Packaging activities,0.01
+N82.9.9,Other business support service activities n.e.c.,0.01
+O,Public administration and defence; compulsory social security,0.01
+O84,Public administration and defence; compulsory social security,0.01
+O84.1,Administration of the State and the economic and social policy of the community,0.01
+O84.1.1,General public administration activities,0.01
+O84.1.2,"Regulation of the activities of providing health care, education, cultural services and other social services, excluding social security",0.01
+O84.1.3,Regulation of and contribution to more efficient operation of businesses,0.01
+O84.2,Provision of services to the community as a whole,0.01
+O84.2.1,Foreign affairs,0.01
+O84.2.2,Defence activities,0.01
+O84.2.3,Justice and judicial activities,0.01
+O84.2.4,Public order and safety activities,0.01
+O84.2.5,Fire service activities,0.01
+O84.3,Compulsory social security activities,0.01
+O84.3.0,Compulsory social security activities,0.01
+P,Education,0.01
+P85,Education,0.01
+P85.1,Pre-primary education,0.01
+P85.1.0,Pre-primary education,0.01
+P85.2,Primary education,0.01
+P85.2.0,Primary education,0.01
+P85.3,Secondary education,0.01
+P85.3.1,General secondary education,0.01
+P85.3.2,Technical and vocational secondary education,0.01
+P85.4,Higher education,0.01
+P85.4.1,Post-secondary non-tertiary education,0.01
+P85.4.2,Tertiary education,0.01
+P85.5,Other education,0.01
+P85.5.1,Sports and recreation education,0.01
+P85.5.2,Cultural education,0.01
+P85.5.3,Driving school activities,0.01
+P85.5.9,Other education n.e.c.,0.01
+P85.6,Educational support activities,0.01
+P85.6.0,Educational support activities,0.01
+Q,Human health and social work activities,0.01
+Q86,Human health activities,0.01
+Q86.1,Hospital activities,0.01
+Q86.1.0,Hospital activities,0.01
+Q86.2,Medical and dental practice activities,0.01
+Q86.2.1,General medical practice activities,0.01
+Q86.2.2,Specialist medical practice activities,0.01
+Q86.2.3,Dental practice activities,0.01
+Q86.9,Other human health activities,0.01
+Q86.9.0,Other human health activities,0.01
+Q87,Residential care activities,0.01
+Q87.1,Residential nursing care activities,0.01
+Q87.1.0,Residential nursing care activities,0.01
+Q87.2,"Residential care activities for mental retardation, mental health and substance abuse",0.01
+Q87.2.0,"Residential care activities for mental retardation, mental health and substance abuse",0.01
+Q87.3,Residential care activities for the elderly and disabled,0.01
+Q87.3.0,Residential care activities for the elderly and disabled,0.01
+Q87.9,Other residential care activities,0.01
+Q87.9.0,Other residential care activities,0.01
+Q88,Social work activities without accommodation,0.01
+Q88.1,Social work activities without accommodation for the elderly and disabled,0.01
+Q88.1.0,Social work activities without accommodation for the elderly and disabled,0.01
+Q88.9,Other social work activities without accommodation,0.01
+Q88.9.1,Child day-care activities,0.01
+Q88.9.9,Other social work activities without accommodation n.e.c.,0.01
+R,"Arts, entertainment and recreation",0.01
+R90,"Creative, arts and entertainment activities",0.01
+R90.0,"Creative, arts and entertainment activities",0.01
+R90.0.1,Performing arts,0.01
+R90.0.2,Support activities to performing arts,0.01
+R90.0.3,Artistic creation,0.01
+R90.0.4,Operation of arts facilities,0.01
+R91,"Libraries, archives, museums and other cultural activities",0.01
+R91.0,"Libraries, archives, museums and other cultural activities",0.01
+R91.0.1,Library and archives activities,0.01
+R91.0.2,Museums activities,0.01
+R91.0.3,Operation of historical sites and buildings and similar visitor attractions,0.01
+R91.0.4,Botanical and zoological gardens and nature reserves activities,0.01
+R92,Gambling and betting activities,0.01
+R92.0,Gambling and betting activities,0.01
+R92.0.0,Gambling and betting activities,0.01
+R93,Sports activities and amusement and recreation activities,0.01
+R93.1,Sports activities,0.01
+R93.1.1,Operation of sports facilities,0.01
+R93.1.2,Activities of sport clubs,0.01
+R93.1.3,Fitness facilities,0.01
+R93.1.9,Other sports activities,0.01
+R93.2,Amusement and recreation activities,0.01
+R93.2.1,Activities of amusement parks and theme parks,0.01
+R93.2.9,Other amusement and recreation activities,0.01
+S,Other services activities,0.01
+S94,Activities of membership organisations,0.01
+S94.1,"Activities of business, employers and professional membership organisations",0.01
+S94.1.1,Activities of business and employers membership organisations,0.01
+S94.1.2,Activities of professional membership organisations,0.01
+S94.2,Activities of trade unions,0.01
+S94.2.0,Activities of trade unions,0.01
+S94.9,Activities of other membership organisations,0.01
+S94.9.1,Activities of religious organisations,0.01
+S94.9.2,Activities of political organisations,0.01
+S94.9.9,Activities of other membership organisations n.e.c.,0.01
+S95,Repair of computers and personal and household goods,0.01
+S95.1,Repair of computers and communication equipment,0.01
+S95.1.1,Repair of computers and peripheral equipment,0.01
+S95.1.2,Repair of communication equipment,0.01
+S95.2,Repair of personal and household goods,0.01
+S95.2.1,Repair of consumer electronics,0.01
+S95.2.2,Repair of household appliances and home and garden equipment,0.01
+S95.2.3,Repair of footwear and leather goods,0.01
+S95.2.4,Repair of furniture and home furnishings,0.01
+S95.2.5,"Repair of watches, clocks and jewellery",0.01
+S95.2.9,Repair of other personal and household goods,0.01
+S96,Other personal service activities,0.01
+S96.0,Other personal service activities,0.01
+S96.0.1,Washing and (dry-)cleaning of textile and fur products,0.01
+S96.0.2,Hairdressing and other beauty treatment,0.01
+S96.0.3,Funeral and related activities,0.01
+S96.0.4,Physical well-being activities,0.01
+S96.0.9,Other personal service activities n.e.c.,0.01
+T,Activities of households as employers; undifferentiated goods - and services - producing activities of households for own use,0.01
+T97,Activities of households as employers of domestic personnel,0.01
+T97.0,Activities of households as employers of domestic personnel,0.01
+T97.0.0,Activities of households as employers of domestic personnel,0.01
+T98,Undifferentiated goods- and services-producing activities of private households for own use,0.01
+T98.1,Undifferentiated goods-producing activities of private households for own use,0.01
+T98.1.0,Undifferentiated goods-producing activities of private households for own use,0.01
+T98.2,Undifferentiated service-producing activities of private households for own use,0.01
+T98.2.0,Undifferentiated service-producing activities of private households for own use,0.01
+U,Activities of extraterritorial organisations and bodies,0.01
+U99,Activities of extraterritorial organisations and bodies,0.01
+U99.0,Activities of extraterritorial organisations and bodies,0.01
+U99.0.0,Activities of extraterritorial organisations and bodies,0.01
