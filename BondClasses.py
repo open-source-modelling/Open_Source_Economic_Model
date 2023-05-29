@@ -2,7 +2,7 @@ import numpy as np
 import datetime as dt
 
 class ZeroCouponBond:
-    def __init__(self,issuedate, maturitydate, frequency, notional, couponrate, recovrate, defprob, sspread, zspread):
+    def __init__(self,issuedate, maturitydate, frequency, notional, couponrate, recovrate, defprob, sspread, zspread,marketprice):
         self.issuedate = issuedate
         self.maturitydate = maturitydate
         self.frequency = frequency
@@ -12,6 +12,7 @@ class ZeroCouponBond:
         self.defprob = defprob
         self.sspread = sspread
         self.zspread = zspread
+        self.marketprice = marketprice
         self.coupondates = []
         self.notionaldates =[]
         self.couponcfs = []
@@ -83,7 +84,7 @@ class ZeroCouponBondPriced:
     def __init__(self, modellingdate,compounding):
         self.modellingdate = modellingdate
         self.compounding = compounding
-        self.marketprice = 0
+        self.marketprice = []
         self.bookprice = 0
         self.sspread = []
         self.zspread = []
