@@ -2,13 +2,13 @@ import numpy as np
 import datetime as dt
 
 class Equity:
-    def __init__(self, nace, issuedate, issuername, dividendyield, frequency, marketprice):
+    def __init__(self, nace, issuedate, issuername, dividendyield, frequency, marketprice,terminalvalue):
         self.nace = nace
         self.issuedate = issuedate
-        self.issuername = issuername 
-        self.dividendyield = dividendyield 
+        self.issuername = issuername
         self.frequency = frequency
-        self.marketprice = marketprice 
+        self.marketprice = marketprice
+        self.terminalvalue = terminalvalue
         self.growthrate = []
         self.terminalvalue = []
         self.dividenddates = []
@@ -17,11 +17,14 @@ class Equity:
         self.terminalcfs = []
 
 class EquityPriced:
-    def __init__(self, modellingdate,compounding, enddate):
+    def __init__(self, modellingdate,compounding, enddate, dividendyield, marketprice, terminalvalue):
         self.modellingdate = modellingdate
         self.compounding = compounding
         self.enddate = enddate
-        self.marketprice = []
+        self.dividendyield = dividendyield 
+        self.growthrate = []
+        self.marketprice = marketprice 
+        self.terminalvalue = self.terminalvalue = terminalvalue
         self.bookprice = []
         self.dividenddatefrac = []
         self.terminaldatefrac =[]
@@ -56,36 +59,36 @@ class EquityPriced:
         # Missing what if date is 31,30
         # Missing other frequencies
         
-        # Cash flow of each coupon
-        couponsize = self.notional*self.couponrate
+        # Cash flow of each dividend
+        dividendsize = self.marketprice*self.dividendyield
 
-        self.couponcfs = []
-        self.coupondates = []
-        self.notionaldates = []
-        self.notionalcfs = []
-        for iBond in range(0,nAssets):
-            startyear = self.issuedate[iBond].year
-            endyear   = self.maturitydate[iBond].year
-            month     = self.issuedate[iBond].month
-            day       = self.issuedate[iBond].day
+        self.dividendcfs = []
+        self.dividenddates = []
+        self.terminaldates = []
+        self.terminalcfs = []
+        for iEquity in range(0,nAssets):
+            startyear = self.issuedate[iEquity].year
+            endyear   = self.maturitydate[iEquity].year
+            month     = self.issuedate[iEquity].month
+            day       = self.issuedate[iEquity].day
             
             coupondateone = np.array([])
             
-            if self.frequency[iBond] == 1:
+            if self.frequency[iEquity] == 1:
                 for selectedyear in range(startyear,endyear+1): # Creates array of dates for selected ZCB
-                    coupondateone = np.append(coupondateone,dt.date(selectedyear,month,day))
-            elif self.frequency[iBond] == 2:
+                    dividenddateone = np.append(dividenddateone,dt.date(selectedyear,month,day))
+            elif self.frequency[iEquity] == 2:
                 #todo
                 print("Not completed")
             else:
                 #todo
                 print("Not completed")
             
-            self.couponcfs.append(np.ones_like(coupondateone)*couponsize[iBond])
-            self.coupondates.append(coupondateone)
+            self.dividendcfs.append(np.ones_like(dividenddateone)*dividendsize[iEquity])
+            self.dividenddates.append(dividenddateone)
 
-            # Notional payoff date is equal to maturity
-            self.notionaldates.append(np.array([self.maturitydate[iBond]]))
+            # Terminal payoff date is equal to maturity
+            self.terminaldates.append(np.array([self.maturitydate[iEquity]]))
        
             # Cash flow of the principal payback
-            self.notionalcfs.append(np.array(self.notional[iBond]))
+            self.terminalcfs.append(np.array(self.terminal[iEquity]))
