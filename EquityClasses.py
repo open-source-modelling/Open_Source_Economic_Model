@@ -3,14 +3,32 @@ import datetime as dt
 
 class Equity:
     def __init__(self, nace, issuedate, issuername, dividendyield, frequency, marketprice,terminalvalue):
+        """
+        Equity class saves 
+        
+        Properties
+        ----------
+        nace
+        issuedate        
+        frequency
+        marketprice
+        dividendyield
+        terminalvalue
+        growthrate
+        dividenddates
+        terminaldates
+        dividendcfs
+        terminalcfs        
+
+        """
         self.nace = nace
         self.issuedate = issuedate
         self.issuername = issuername
         self.frequency = frequency
         self.marketprice = marketprice
+        self.dividendyield = dividendyield
         self.terminalvalue = terminalvalue
         self.growthrate = []
-        self.terminalvalue = []
         self.dividenddates = []
         self.terminaldates =[]
         self.dividendcfs = []
@@ -18,13 +36,34 @@ class Equity:
 
 class EquityPriced:
     def __init__(self, modellingdate,compounding, enddate, dividendyield, marketprice, terminalvalue):
+        """
+        Equity class saves 
+        
+        Properties
+        ----------
+        modellingdate
+        compounding
+        enddate
+        dividendyield
+        growthrate
+        marketprice
+        terminalvalue
+        bookprice
+        dividenddatefrac
+        terminaldatefrac
+        dividendcfs
+        terminalcfs
+        """
+
+
+
         self.modellingdate = modellingdate
         self.compounding = compounding
         self.enddate = enddate
         self.dividendyield = dividendyield 
         self.growthrate = []
         self.marketprice = marketprice 
-        self.terminalvalue = self.terminalvalue = terminalvalue
+        self.terminalvalue = terminalvalue
         self.bookprice = []
         self.dividenddatefrac = []
         self.terminaldatefrac =[]
