@@ -1,7 +1,7 @@
 import numpy as np
 import datetime as dt
 
-class ZeroCouponBond:
+class CorporateBond:
     def __init__(self,issuedate, maturitydate, frequency, notional, couponrate, recovrate, defprob, sspread, zspread,marketprice):
         self.issuedate = issuedate
         self.maturitydate = maturitydate
@@ -80,7 +80,7 @@ class ZeroCouponBond:
             # Cash flow of the principal payback
             self.notionalcfs.append(np.array(self.notional[iBond]))
 
-class ZeroCouponBondPriced:
+class CorporateBondPriced:
     def __init__(self, modellingdate,compounding):
         self.modellingdate = modellingdate
         self.compounding = compounding
