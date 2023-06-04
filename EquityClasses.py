@@ -16,6 +16,7 @@ class Equity:
         terminalvalue
         growthrate
         dividenddates
+        dividendfrac
         terminaldates
         dividendcfs
         terminalcfs        
@@ -30,6 +31,7 @@ class Equity:
         self.terminalvalue = terminalvalue
         self.growthrate = []
         self.dividenddates = []
+        self.dividendfrac = []
         self.terminaldates =[]
         self.dividendcfs = []
         self.terminalcfs = []
@@ -105,6 +107,7 @@ class EquityPriced:
         self.dividenddates = []
         self.terminaldates = []
         self.terminalcfs = []
+
         for iEquity in range(0,nAssets):
             startyear = self.issuedate[iEquity].year
             endyear   = self.maturitydate[iEquity].year
