@@ -17,7 +17,7 @@
 
 Proof of concept for an integrated asset-liability model. 
 
-- AL Methodology describes the methodology used in the OSAL model.
+- POC_OSAL_Documentation_draft describes the methodology used in the OSAL model.
 
  - PROTOTYPE CALIBRATION AND PROJECTION imports the EIOPA curve, calculates the forward rates and uses them to project the spot curve forward.
  A separate instance of the Smith-Wilson algorithm is calibrated to each of the "forward" spot rates using a modified bisection algorithm.
