@@ -9,7 +9,7 @@
 
 <h1 align="center" style="border-botom: none">
   <b>
-    🐍 Asset Liability Model POC 🐍     
+    🐍 Open Source Asset Liability (OSAL) 🐍     
   </b>
 </h1>
 
@@ -17,7 +17,7 @@
 
 Proof of concept for an integrated asset-liability model. 
 
-- POC_OSAL_Documentation_draft describes the methodology used in the OSAL model.
+- OSAL_POC_Documentation_draft describes the methodology used in the OSAL model.
 
  - PROTOTYPE CALIBRATION AND PROJECTION imports the EIOPA curve, calculates the forward rates and uses them to project the spot curve forward.
  A separate instance of the Smith-Wilson algorithm is calibrated to each of the "forward" spot rates using a modified bisection algorithm.
