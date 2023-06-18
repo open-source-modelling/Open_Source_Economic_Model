@@ -24,7 +24,7 @@ Proof of concept for an integrated asset-liability model.
  
  - PROTOTYPE BOND PRICING creates an example of a bond from input data. The ZeroCouponBond class then generates the bond's cash flows togetehr with dates at which the cash flows are paid. The bond is then proced using the imported EIOPA curve using the Smith-Wilson algorithm to calculate the yield at each time-point. With the introduction of a specific modelling date, the cash-flows are modified and the bond is priced usign the yield curve.
  
- - PROTOTYPE EQUITY PRICING creates an example of the treatment of an equity. ToDo
+ - PROTOTYPE EQUITY PRICING creates an example of the treatment of an equity. Equity is assumed to have dividend payments and a terminal value. In the risk neutral setting, the Gordon Growth model is used to calculate the growth rate such that the terminal value of the equity and the dividends, discounted with the risk free rate are equal to the market value.
  
  Future modules:
  - Module simulating cash outflows from some common types of "life" policies.
