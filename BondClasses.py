@@ -18,6 +18,56 @@ class CorporateBond:
         self.couponcfs = []
         self.notionalcfs = []
 
+
+    def createcashflowdates(self):
+        """
+        Create the vector of dates at which the coupons and the principal are paid out.
+
+        Needs numpy as np and datetime as dt
+        
+        Parameters
+        ----------
+        self : CorporateBond class instance
+            The CorporateBond instance with populated initial portfolio.
+
+        Returns
+        -------
+        CorporateBond.coupondates
+            An array of datetimes, containing all the dates at which the coupons are paid out.
+        CorporateBond.notionaldates
+            An array of datetimes, containing the dates at which the principal is paid out
+        """       
+
+        nAssets = self.issuedate.size
+
+        for iBond in range(0,nAssets):
+            issuedate = self.issuedate[iBond]
+            enddate   = self.maturitydate[iBond]
+
+            dates = np.array([])
+            thisdate = issuedate
+
+            while thisdate <= enddate: # Coupon payment dates
+                if self.frequency == 1:
+                    thisdate = dt.date(thisdate.year + 1, thisdate.month, thisdate.day)
+                    if thisdate <=enddate:
+                        dates = np.append(dates,thisdate)
+                    else:
+                        #return dates
+                        break
+                elif self.frequency == 2:
+                    thisdate = thisdate + dt.timedelta(days=182)
+                    if thisdate <= enddate:
+                        dates = np.append(dates, thisdate)
+                    else:
+                        break                
+
+            self.coupondates.append(dates)
+            
+            # Notional payoff date is equal to maturity
+            self.notionaldates.append(np.array([self.maturitydate[iBond]]))
+
+
     def createcashflows(self):
         """
         Convert information about the zero coupon bonds into a series of cash flows and a series of dates at which the cash flows are paid.
