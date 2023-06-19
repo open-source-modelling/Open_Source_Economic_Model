@@ -41,6 +41,7 @@ class CorporateBond:
         nAssets = self.issuedate.size
 
         for iBond in range(0,nAssets):
+            
             issuedate = self.issuedate[iBond]
             enddate   = self.maturitydate[iBond]
 
@@ -66,6 +67,41 @@ class CorporateBond:
             
             # Notional payoff date is equal to maturity
             self.notionaldates.append(np.array([self.maturitydate[iBond]]))
+
+    def refactordates(self, MD):
+        # other counting conventions MISSING
+        
+        nAssets = self.issuedate.size # Number of assets in the bond portfolio
+    
+        datefracout = np.array([]) # this will save the date fractions of coupons for the portfolio
+        datesconsideredout = np.array([]) # this will save if a bond is already expired before the modelling date in the portfolio
+        
+        for iAsset in range(0,nAssets):
+            datenew = (self.coupondates[iAsset]-MD) # calculate the time difference between the coupondate and modelling date
+            datefrac = np.array([]) # this will save date fractions of coupons of a single asset
+            datesconsidered = np.array([]) # this will save the boolean, if the coupon date is after the modelling date
+            counter = 0
+            for onedate in datenew: # for each coupon date
+                
+                if onedate.days>0: # coupon date is after the modelling date
+                    datefrac = np.append(datefrac,onedate.days/365.25) # append date fraction
+                    datesconsidered = np.append(datesconsidered,int(counter)) # append "is after modelling date" flag
+                counter+=1
+                # else skip
+
+
+            
+            # Calculate if the notional date is before the modelling date
+            datenewnot = (self.notionaldates[iAsset]-MD)
+            if datenewnot.days >0: # 
+
+            datefracoutnot = np.append(datefracout,datefrac)
+            datesconsideredout = np.append(datesconsideredout,datesconsidered.astype(int))
+        self.coupondatefrac = datefracout
+
+
+        return [datesconsideredout, datefracout]
+
 
 
     def createcashflows(self):
