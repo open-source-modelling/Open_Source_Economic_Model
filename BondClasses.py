@@ -17,8 +17,11 @@ class CorporateBond:
         self.notionaldates =[]
         self.couponcfs = []
         self.notionalcfs = []
-
-
+        self.notionaldatesfrac = []
+        self.coupondatesfrac = []
+        self.datesconsidered = []
+        self.datesconsiderednot = []
+        
     def createcashflowdates(self):
         """
         Create the vector of dates at which the coupons and the principal are paid out.
@@ -69,39 +72,83 @@ class CorporateBond:
             self.notionaldates.append(np.array([self.maturitydate[iBond]]))
 
     def refactordates(self, MD):
+        """
+        Create the vector of dates at which the coupons and the principal are paid out.
+
+        Needs numpy as np and datetime as dt
+        
+        Parameters
+        ----------
+        self : CorporateBond class instance
+            The CorporateBond instance with populated initial portfolio and cash flow dates projected
+
+        Returns
+        -------
+        CorporateBond.coupondatesfrac
+            An array of date fractions, containing all the coupon date fractions at which the coupons are paid out compared to the modelling date.
+        CorporateBond.datesconsidered
+            An array of integers, containing the index of the coupon dates that are paid out after the modelling date.
+
+        CorporateBond.notionaldatesfrac
+            An array of date fractions, containing the date fractions at which the notional amount is paid out if the amount is after the modelling date
+        CorporateBond.datesconsiderednot
+            An array of integers , if the notional amount is paid after the modelling date and empty if not.
+        """       
+
         # other counting conventions MISSING
         
         nAssets = self.issuedate.size # Number of assets in the bond portfolio
-    
+
+        # Data structures list of lists for coupon payments    
         datefracout = np.array([]) # this will save the date fractions of coupons for the portfolio
-        datesconsideredout = np.array([]) # this will save if a bond is already expired before the modelling date in the portfolio
-        
-        for iAsset in range(0,nAssets):
-            datenew = (self.coupondates[iAsset]-MD) # calculate the time difference between the coupondate and modelling date
+        datesconsideredout = np.array([]) # this will save if a cash flow is already expired before the modelling date in the portfolio
+
+        # Data structure list of lists for notional amount repayment
+        datefracoutnot = np.array([]) # this will save the date fractions of notional amount repayment for the portfolio
+        datesconsideredoutnot = np.array([]) # this will save if a bond is already expired before the modelling date in the portfolio
+
+        for iAsset in range(0,nAssets): # For each bond in the current portfolio
+
+            # Reset objects for the next asset
             datefrac = np.array([]) # this will save date fractions of coupons of a single asset
             datesconsidered = np.array([]) # this will save the boolean, if the coupon date is after the modelling date
-            counter = 0
-            for onedate in datenew: # for each coupon date
+
+            datefracout = np.array([]) # this will save the fractions of the year that each cash flow of each asset has compared to the modelling date
+            datesconsiderednot = np.array([]) # this will save the boolean, if the maturity date is after the modelling date
+
+            counter = 0 # Counter of future coupon cash flows initialized to 0
+            
+            datenew = (self.coupondates[iAsset]-MD) # calculate the time difference between the coupondate and modelling date
+
+            for onedate in datenew: # for each coupon date of the selected bond
                 
                 if onedate.days>0: # coupon date is after the modelling date
                     datefrac = np.append(datefrac,onedate.days/365.25) # append date fraction
                     datesconsidered = np.append(datesconsidered,int(counter)) # append "is after modelling date" flag
                 counter+=1
                 # else skip
-
-
+            datefracout = np.append(datefracout,datefrac) # append what fraction of the date is each cash flow compared to the modelling date
+            datesconsideredout = np.append(datesconsideredout,datesconsidered.astype(int)) # append which cash flows are after the modelling date 
             
-            # Calculate if the notional date is before the modelling date
-            datenewnot = (self.notionaldates[iAsset]-MD)
-            if datenewnot.days >0: # 
+            # Calculate if the maturity date is before the modelling date
+            datenewnot = (self.notionaldates[iAsset]-MD) # calculate the time difference between the maturity date and modelling date
 
-            datefracoutnot = np.append(datefracout,datefrac)
-            datesconsideredout = np.append(datesconsideredout,datesconsidered.astype(int))
-        self.coupondatefrac = datefracout
+            if datenewnot.days >0: # if maturity date is after modelling date
+                datefracnot = np.append(datefracnot,datenewnot.days/365.25) # append date fraction
+                datesconsiderednot = np.append(datesconsiderednot,int(1)) # append "is after modelling date" flag
+            #else skip
+            datefracoutnot = np.append(datefracoutnot,datefrac) # append what fraction of the date is each cash flow compared to the modelling date
+            datesconsideredoutnot = np.append(datesconsideredoutnot,datesconsiderednot.astype(int)) # append which cash flows are after the modelling date 
+            
+        # Save coupon related data structures into the object
+        self.coupondatesfrac = datefracout
+        self.datesconsidered = datesconsidered
 
+        # Save notional amount related data structures into the object
+        self.notionaldatesfrac = datefracnot
+        self.datesconsiderednot = datesconsiderednot
 
-        return [datesconsideredout, datefracout]
-
+        return [datefracout, datesconsidered, datefracnot, datesconsiderednot] # return all generated data structures (for now)
 
 
     def createcashflows(self):
@@ -111,19 +158,15 @@ class CorporateBond:
         Needs numpy as np
         Parameters
         ----------
-        Disc : numpy.ndarray
-            An array of discount factors.
-        Ttime : numpy.ndarray
-            An array of time differences between the start and end of each period.
-        Compounding : int
-            Compounding frequency. Set to -1 for continuous compounding, 0 for simple compounding and 
-            n (positive integer) for n times per year compounding.
-
+        self : CorporateBond class instance
+            The CorporateBond instance with populated initial portfolio, cash flow dates projected and the modelling date selected
+        
         Returns
         -------
         numpy.ndarray
             An array of rates calculated using the specified compounding frequency.
 
+            #STILL TO COVERT INTO CASHFLOW AND NOTIONAL ONLY FOR CONSIDERED CASH FLOWS
         """       
         # Produce array of dates when coupons are paid out
        
@@ -166,7 +209,7 @@ class CorporateBond:
             # Cash flow of the principal payback
             self.notionalcfs.append(np.array(self.notional[iBond]))
 
-class CorporateBondPriced:
+class CorporateBondPriced: # TO BE CONSILIDATED INTO THE BOND CLASS
     def __init__(self, modellingdate,compounding):
         self.modellingdate = modellingdate
         self.compounding = compounding
