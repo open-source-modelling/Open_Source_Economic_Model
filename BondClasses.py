@@ -2,7 +2,7 @@ import numpy as np
 import datetime as dt
 
 class CorporateBond:
-    def __init__(self,issuedate, maturitydate, frequency, notional, couponrate, recovrate, defprob, sspread, zspread,marketprice):
+    def __init__(self,issuedate, maturitydate, frequency, notional, couponrate, recovrate, defprob, sspread, zspread,marketprice, compounding):
         self.issuedate = issuedate
         self.maturitydate = maturitydate
         self.frequency = frequency
@@ -21,6 +21,7 @@ class CorporateBond:
         self.coupondatesfrac = []
         self.datesconsidered = []
         self.datesconsiderednot = []
+        self.compounding = compounding
         
     def createcashflowdates(self):
         """
@@ -150,8 +151,125 @@ class CorporateBond:
 
         return [alldatefrac, alldatesconsidered, allnotionaldatefrac, allnotionaldatesconsidered] # return all generated data structures (for now)
 
+    def createcashflowsnew(self):
+        """
+        Convert information about the zero coupon bonds into a series of cash flows and a series of dates at which the cash flows are paid.
 
-    def createcashflows(self):
+        Needs numpy as np
+        Parameters
+        ----------
+        self : CorporateBond class instance
+            The CorporateBond instance with populated initial portfolio, cash flow dates projected and the modelling date selected
+        
+        Returns
+        -------
+        numpy.ndarray
+            An array of rates calculated using the specified compounding frequency.
+
+            #STILL TO COVERT INTO CASHFLOW AND NOTIONAL ONLY FOR CONSIDERED CASH FLOWS
+        """       
+        nAssets = self.issuedate.size
+        
+        # Missing what if date is 31,30
+        # Missing other frequencies
+
+        # Data structures list of lists for coupon payments    
+        allcashflows = [] # this will save the date fractions of coupons for the portfolio
+
+        # Data structure list of lists for notional amount repayment
+        allnotionalcashflows = [] # this will save the date fractions of notional amount repayment for the portfolio
+
+        # Cash flow of each coupon
+        couponsize = self.notional*self.couponrate
+
+        for iBond in range(0,nAssets):
+
+            # Reset objects for the next asset
+            assetcashflows = np.array([]) # this will save date fractions of coupons of a single asset
+            assetnotionalcashflows = np.array([])
+
+            for coupon in self.coupondatesfrac[iBond]:
+                    assetcashflows = np.append(assetcashflows, couponsize[iBond]) # append date fraction
+            
+            allcashflows.append(assetcashflows)
+            
+            assetnotionalcashflows = np.append(assetnotionalcashflows,self.notional[iBond]) # append date fraction
+
+            allnotionalcashflows.append(assetnotionalcashflows)
+        self.couponcfs = allcashflows
+        self.notionalcfs = allnotionalcashflows
+        return [allcashflows, allnotionalcashflows]
+
+    def disctorates(self, disc, timefrac, compounding):
+        """
+        Convert discount factors to continuously compounded rates or rates compounded annually.
+
+        Needs numpy as np
+        Parameters
+        ----------
+        Disc : numpy.ndarray
+            An array of discount factors.
+        Ttime : numpy.ndarray
+            An array of time differences between the start and end of each period.
+        Compounding : int
+            Compounding frequency. Set to -1 for continuous compounding, 0 for simple compounding and 
+            n (positive integer) for n times per year compounding.
+
+        Returns
+        -------
+        numpy.ndarray
+            An array of rates calculated using the specified compounding frequency.
+
+        """
+        
+        # Case where a time is devided by zero error
+        disc[timefrac == 0] = 1
+        timefrac[timefrac == 0] = 1
+
+        if compounding == -1: # Continious time convention
+            rates = -np.log(disc) / timefrac
+        elif compounding == 0: 
+            rates = (disc - 1) / timefrac
+        else:
+            rates = (disc ** (-1 / (timefrac * compounding)) - 1) * compounding
+
+        return rates
+
+    def ratestodics(self, rates,timefrac,compounding):
+        """
+        Converts discount rates to discount factors using a selected compounding convention.
+
+        Needs numpy as np
+        Parameters
+        ----------
+        rates : numpy.ndarray
+            An array of discount rates.
+        ttime : numpy.ndarray
+            An array of time differences between the start and end of each period.
+        compounding : int
+            Compounding frequency. Set to -1 for continuous compounding, 0 for simple compounding and 
+            n (positive integer) for n times per year compounding.
+
+        Returns
+        -------
+        numpy.ndarray
+            An array of discount factors calculated using the specified compounding frequency.
+
+        """
+        if compounding == -1: # Continious time convention
+            disc = np.exp(-rates * timefrac)
+        elif compounding == 0: 
+            disc = (1 + rates * timefrac)**(-1)
+        else:
+            disc = (1+ rates/compounding) ** (-timefrac*compounding)
+
+        return disc   
+
+
+
+
+
+    #def createcashflows(self):
         """
         Convert information about the zero coupon bonds into a series of cash flows and a series of dates at which the cash flows are paid.
 
@@ -170,44 +288,44 @@ class CorporateBond:
         """       
         # Produce array of dates when coupons are paid out
        
-        nAssets = self.issuedate.size
+    #    nAssets = self.issuedate.size
         
         # Missing what if date is 31,30
         # Missing other frequencies
         
         # Cash flow of each coupon
-        couponsize = self.notional*self.couponrate
+    #    couponsize = self.notional*self.couponrate
 
-        self.couponcfs = []
-        self.coupondates = []
-        self.notionaldates = []
-        self.notionalcfs = []
-        for iBond in range(0,nAssets):
-            startyear = self.issuedate[iBond].year
-            endyear   = self.maturitydate[iBond].year
-            month     = self.issuedate[iBond].month
-            day       = self.issuedate[iBond].day
+    #    self.couponcfs = []
+    #    self.coupondates = []
+    #    self.notionaldates = []
+    #    self.notionalcfs = []
+    #    for iBond in range(0,nAssets):
+    #        startyear = self.issuedate[iBond].year
+    #        endyear   = self.maturitydate[iBond].year
+    #        month     = self.issuedate[iBond].month
+    #        day       = self.issuedate[iBond].day
             
-            coupondateone = np.array([])
+    #        coupondateone = np.array([])
             
-            if self.frequency[iBond] == 1:
-                for selectedyear in range(startyear,endyear+1): # Creates array of dates for selected ZCB
-                    coupondateone = np.append(coupondateone,dt.date(selectedyear,month,day))
-            elif self.frequency[iBond] == 2:
-                #todo
-                print("Not completed")
-            else:
-                #todo
-                print("Not completed")
-            
-            self.couponcfs.append(np.ones_like(coupondateone)*couponsize[iBond])
-            self.coupondates.append(coupondateone)
+    #        if self.frequency[iBond] == 1:
+    #            for selectedyear in range(startyear,endyear+1): # Creates array of dates for selected ZCB
+    #                coupondateone = np.append(coupondateone,dt.date(selectedyear,month,day))
+    #        elif self.frequency[iBond] == 2:
+    #            #todo
+    #            print("Not completed")
+    #        else:
+    #            #todo
+    #            print("Not completed")
+    #        
+    #        self.couponcfs.append(np.ones_like(coupondateone)*couponsize[iBond])
+    #        self.coupondates.append(coupondateone)
 
-            # Notional payoff date is equal to maturity
-            self.notionaldates.append(np.array([self.maturitydate[iBond]]))
-       
-            # Cash flow of the principal payback
-            self.notionalcfs.append(np.array(self.notional[iBond]))
+    #        # Notional payoff date is equal to maturity
+    #        self.notionaldates.append(np.array([self.maturitydate[iBond]]))
+    #   
+    #        # Cash flow of the principal payback
+    #        self.notionalcfs.append(np.array(self.notional[iBond]))
 
 class CorporateBondPriced: # TO BE CONSILIDATED INTO THE BOND CLASS
     def __init__(self, modellingdate,compounding):
