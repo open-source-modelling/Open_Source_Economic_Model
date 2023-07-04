@@ -265,7 +265,25 @@ class CorporateBond:
 
         return disc   
 
+    def PriceBond(self, couponrates,notionalrates,couponmaturities, notionalmaturities,couponcf,notionalcf,sSpread,zSpread):
+        nAsset = len(couponrates)
+        self.marketprice = []
 
+        for iAsset in range(0,nAsset):
+            # Add to skip if empty
+            MV_CP = self.ratestodics(couponmaturities[iAsset],couponrates[iAsset]+sSpread[iAsset]+zSpread[iAsset], self.compounding) * couponcf[iAsset]
+            MV_NOT = self.ratestodics(notionalmaturities[iAsset],notionalrates[iAsset]+sSpread[iAsset]+zSpread[iAsset],  self.compounding) * notionalcf[iAsset]
+            MV = np.sum(MV_CP)+MV_NOT
+            self.marketprice.append(np.array(MV))
+
+
+    def OpenPriceBond(self, couponrates,notionalrates,couponmaturities, notionalmaturities,couponcf,notionalcf,sSpread,zSpread):
+
+        MV_CP = self.ratestodics(couponmaturities,couponrates + sSpread + zSpread, self.compounding) * couponcf
+        MV_NOT = self.ratestodics(notionalmaturities,notionalrates + sSpread + zSpread,  self.compounding) * notionalcf
+        MV = np.sum(MV_CP) + MV_NOT
+
+        return MV
 
 
 
@@ -361,7 +379,7 @@ class CorporateBondPriced: # TO BE CONSILIDATED INTO THE BOND CLASS
             
         return [datesconsideredout,datefracout]
 
-    def disctorates(self, disc, timefrac, compounding):
+#    def disctorates(self, disc, timefrac, compounding):
         """
         Convert discount factors to continuously compounded rates or rates compounded annually.
 
@@ -384,19 +402,19 @@ class CorporateBondPriced: # TO BE CONSILIDATED INTO THE BOND CLASS
         """
         
         # Case where a time is devided by zero error
-        disc[timefrac == 0] = 1
-        timefrac[timefrac == 0] = 1
+#        disc[timefrac == 0] = 1
+#        timefrac[timefrac == 0] = 1
 
-        if compounding == -1: # Continious time convention
-            rates = -np.log(disc) / timefrac
-        elif compounding == 0: 
-            rates = (disc - 1) / timefrac
-        else:
-            rates = (disc ** (-1 / (timefrac * compounding)) - 1) * compounding
+#        if compounding == -1: # Continious time convention
+#            rates = -np.log(disc) / timefrac
+#        elif compounding == 0: 
+#            rates = (disc - 1) / timefrac
+#        else:
+#            rates = (disc ** (-1 / (timefrac * compounding)) - 1) * compounding
+#
+#        return rates
 
-        return rates
-
-    def ratestodics(self, rates,timefrac,compounding):
+#    def ratestodics(self, rates,timefrac,compounding):
         """
         Converts discount rates to discount factors using a selected compounding convention.
 
@@ -417,14 +435,14 @@ class CorporateBondPriced: # TO BE CONSILIDATED INTO THE BOND CLASS
             An array of discount factors calculated using the specified compounding frequency.
 
         """
-        if compounding == -1: # Continious time convention
-            disc = np.exp(-rates * timefrac)
-        elif compounding == 0: 
-            disc = (1 + rates * timefrac)**(-1)
-        else:
-            disc = (1+ rates/compounding) ** (-timefrac*compounding)
+#        if compounding == -1: # Continious time convention
+#            disc = np.exp(-rates * timefrac)
+#        elif compounding == 0: 
+#            disc = (1 + rates * timefrac)**(-1)
+#        else:
+#            disc = (1+ rates/compounding) ** (-timefrac*compounding)
 
-        return disc   
+#        return disc   
 
     def PriceBond(self, couponrates,notionalrates,couponmaturities, notionalmaturities,couponcf,notionalcf,sSpread,zSpread):
         nAsset = len(couponrates)
