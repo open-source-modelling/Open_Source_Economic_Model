@@ -1,0 +1,4 @@
+﻿Asset_ID,Asset_Type,NACE,Buy_Date,Dividend_Yield,Frequency,Market_Price, Terminal,Default_Probability
+1,Equity_Share,A1.4.5,3/12/2021,0.03,1,94,1,0.03
+2,Equity_Share,B5.2.0,3/12/2021,0.05,1,92,1,0.03
+3,Equity_Share,B8.9.3,3/12/2019,0.04,1,96,1,0.03
