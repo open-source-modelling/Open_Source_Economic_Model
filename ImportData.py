@@ -1,8 +1,8 @@
 import pandas as pd
 import csv
 from BondClasses import CorpBond
+from EquityClasses import EquityShare
 from datetime import datetime
-
 
 def importSWEiopa(selected_param_file, selected_curves_file, country):
     param_raw = pd.read_csv(selected_param_file, sep=",", index_col=0)
@@ -33,3 +33,19 @@ def GetCorporateBonds(filename) -> CorpBond:
                                  default_probability=float(row["Default_Probability"]),
                                  market_price=float(row["Market_Price"]))
             yield corp_bond
+
+
+
+def GetEquityShare(filename) -> EquityShare:
+    with open(filename, mode="r", encoding="utf-8-sig") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            equity_share = EquityShare(asset_id=int(row["Asset_ID"]),
+                                 nace=row["NACE"],
+                                 issuer=None,
+                                 buy_date=datetime.strptime(row["Buy_Date"], "%d/%m/%Y").date(),
+                                 dividend_yield=float(row["Dividend_Yield"]),
+                                 frequency=int(row["Frequency"]),
+                                 market_price=float(row["Market_Price"]))
+            yield equity_share
+            

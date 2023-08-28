@@ -1,5 +1,110 @@
 import numpy as np
-import datetime as dt
+from datetime import datetime as dt, timedelta
+from datetime import date
+from enum import IntEnum
+from dataclasses import dataclass
+from dateutil.relativedelta import relativedelta
+from typing import List, Dict, Any
+
+
+class Frequency(IntEnum):
+    ANNUAL = 1
+    BIANNUAL = 2
+    TRIANNUAL = 3
+    QUARTERLY = 4
+    MONTHLY = 12
+
+
+@dataclass
+class EquityShare:
+    asset_id: int
+    nace: str
+    issuer: str
+    buy_date: date
+    dividend_yield: float
+    frequency: Frequency
+    market_price: float
+
+    @property
+    def dividend_amount(self) -> float:
+        return self.dividend_yield # Probably needs to be removed
+
+    def generate_dividend_dates(self, modelling_date: date, end_date: date ) -> date:
+        """
+
+        :type modelling_date: date
+        """
+        delta = relativedelta(months=(12 // self.frequency))
+        this_date = self.buy_date - delta
+        while this_date < end_date:  # Coupon payment dates
+            this_date = this_date + delta
+            if this_date < modelling_date: #Not interested in past payments
+                continue
+            if this_date <= end_date:
+                yield this_date # ? What is the advantage of yield here?
+
+class EquitySharePortfolio():
+    def __init__(self, equity_share: dict[int,EquityShare] = None):
+        """
+
+        :type equity_share: dict[int,EquityShare]
+        """
+        self.equity_share = equity_share
+
+    def IsEmpty(self)-> bool:
+        if self.equity_share == None:
+            return True
+        if len(self.equity_share) == 0:
+            return True
+        return False
+
+    def add(self,equity_share: EquityShare) :
+        """
+
+        :type equity_share: EquityShare
+        """
+        if self.equity_share == None:
+            self.equity_share = {equity_share.asset_id: equity_share}
+        else:
+            self.equity_share.update({equity_share.asset_id: equity_share})
+
+
+
+    def create_dividend_dates(self, modelling_date, end_date)->dict:
+        """
+                Create the vector of dates at which the dividends are paid out and the total amounts for
+                all equity shares in the portfolio, for dates on or after the modelling date
+
+                Parameters
+                ----------
+                self : EquitySharePortfolio class instance
+                    The EquitySharePortfolio instance with populated initial portfolio.
+
+                Returns
+                -------
+                EquityShare.coupondates
+                    An array of datetimes, containing all the dates at which the coupons are paid out.
+
+                """
+
+        dividends: dict[date, float] = {}
+        equity_share: EquityShare
+        dividend_date: date
+        for asset_id in self.equity_share:
+            equity_share = self.equity_share[asset_id]
+            dividend_amount = equity_share.dividend_amount
+            for dividend_date in equity_share.generate_dividend_dates(modelling_date, end_date):
+                if dividend_date in dividends:
+                    dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
+                else:
+                    dividends.update({dividend_date:dividend_amount})
+        return dividends
+
+# Missing create cash flows
+
+
+
+
 
 class Equity:
     def __init__(self, nace, issuedate, issuername, dividendyield, frequency, marketprice,terminalvalue,enddate):
@@ -85,8 +190,6 @@ class Equity:
 
             # Notional payoff date is equal to maturity
             self.terminaldates.append(np.array([self.enddate[iEquity]]))
-
-
 
 
 class EquityPriced:
