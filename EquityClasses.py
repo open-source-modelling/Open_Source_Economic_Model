@@ -86,7 +86,7 @@ class EquitySharePortfolio():
                     An array of datetimes, containing all the dates at which the coupons are paid out.
 
                 """
-
+        all_dividends = np.array([])
         dividends: dict[date, float] = {}
         equity_share: EquityShare
         dividend_date: date
@@ -98,7 +98,8 @@ class EquitySharePortfolio():
                     dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
                 else:
                     dividends.update({dividend_date:dividend_amount})
-        return dividends
+            all_dividends = np.appens(all_dividends,[dividends])
+        return all_dividends
 
 ## Create date fractions used in fast capitalizing and discounting
     def create_dividend_fractions(self, modelling_date)->dict:
@@ -152,23 +153,23 @@ class EquitySharePortfolio():
             ) # this will save date fractions of terminal sale of a single equity
             equityterminaldatesconsidered = np.array(
                 []
-            )  # this will save the boolean, if the maturity date is after the modelling date
+            )  # this will save the boolean, if the terminal sale date is after the modelling date
 
-            couponcounter = 0  # Counter of future coupon cash flows initialized to 0
+            dividendcounter = 0  # Counter of future dividend cash flows initialized to 0
 
             datenew = (
                 self.dividend_dates[i_equity] - modelling_date
-            )  # calculate the time difference between the coupondate and modelling date
+            )  # calculate the time difference between the dividend dates and modelling date using vector substraction
 
-            for onecoupondate in datenew:  # for each coupon date of the selected bond
-                if onecoupondate.days > 0:  # coupon date is after the modelling date
+            for one_dividend_date in datenew:  # for each coupon date of the selected bond
+                if one_dividend_date.days > 0:  # coupon date is after the modelling date
                     equitydatefrac = np.append(
-                        equitydatefrac, onecoupondate.days / 365.25
+                        equitydatefrac, one_dividend_date.days / 365.25
                     )  # append date fraction
                     equitydatesconsidered = np.append(
-                        equitydatesconsidered, int(couponcounter)
+                        equitydatesconsidered, int(dividendcounter)
                     )  # append "is after modelling date" flag
-                couponcounter += 1
+                dividendcounter += 1
                 # else skip
             alldatefrac.append(
                 equitydatefrac
@@ -177,33 +178,33 @@ class EquitySharePortfolio():
                 equitydatesconsidered.astype(int)
             )  # append which cash flows are after the modelling date
 
-            # Calculate if the maturity date is before the modelling date
+            # Calculate if the terminal sale date is before the modelling date
             assetcalcnotionaldatefrac = (
-                self.notionaldates[i_equity] - MD
-            )  # calculate the time difference between the maturity date and modelling date
+                self.notionaldates[i_equity] - modelling_date
+            )  # calculate the time difference between the terminal sale date and modelling date
 
             if (
                 assetcalcnotionaldatefrac[0].days > 0
-            ):  # if maturity date is after modelling date
+            ):  # if terminal sale date is after modelling date
                 equityterminaldatefrac = np.append(
-                    equityterminaldatefrac, assetcalcnotionaldatefrac[0].days / 365.25
+                    equityterminaldatefrac, [assetcalcnotionaldatefrac[0].days / 365.25]
                 )  # append date fraction
                 equityterminaldatesconsidered = np.append(
-                    equityterminaldatesconsidered, int(1)
+                    [equityterminaldatesconsidered, int(1)]
                 )  # append "is after modelling date" flag
             # else skip
             alldividenddatefrac.append(
-                equityterminaldatefrac
+                [equityterminaldatefrac]
             )  # append what fraction of the date is each cash flow compared to the modelling date
             alldividenddatesconsidered.append(
-                equityterminaldatesconsidered.astype(int)
+                [equityterminaldatesconsidered.astype(int)]
             )  # append which cash flows are after the modelling date
 
         # Save coupon related data structures into the object
         self.coupondatesfrac = alldatefrac
         self.datesconsidered = alldatesconsidered
 
-        # Save notional amount related data structures into the object
+        # Save terminal sale related data structures into the object
         self.notionaldatesfrac = alldividenddatefrac
         self.datesconsiderednot = alldividenddatesconsidered
 
