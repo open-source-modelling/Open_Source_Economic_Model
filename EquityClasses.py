@@ -1,4 +1,7 @@
 import numpy as np
+import pandas as pd
+import csv
+from datetime import datetime
 from datetime import datetime as dt, timedelta
 from datetime import date
 from enum import IntEnum
@@ -20,28 +23,37 @@ class EquityShare:
     asset_id: int
     nace: str
     issuer: str
-    buy_date: date
+    issue_date: date
     dividend_yield: float
     frequency: Frequency
     market_price: float
+    growth_rate: float
 
     @property
-    def dividend_amount(self) -> float:
-        return self.dividend_yield # Probably needs to be removed
-
-    def generate_dividend_dates(self, modelling_date: date, end_date: date ) -> date:
+    def dividend_amount(self, market_value: float) -> float:
+        return market_value * self.dividend_yield # Probably needs to be removed
+    
+    def terminal_amount(self, market_value: float, growth_rate: float, terminal_rate: float) -> float:
+        return market_value/(terminal_rate-growth_rate)
+    
+    def generate_dividend_dates(self, modelling_date: date, end_date: date) -> date:
         """
-
+        Generator yielding the dividend payment date starting from the first dividend
+        paid after the modelling date. 
+        
         :type modelling_date: date
+        :type end_date: date
+        
         """
         delta = relativedelta(months=(12 // self.frequency))
-        this_date = self.buy_date - delta
+        this_date = self.issue_date - delta
         while this_date < end_date:  # Coupon payment dates
             this_date = this_date + delta
             if this_date < modelling_date: #Not interested in past payments
                 continue
             if this_date <= end_date:
                 yield this_date # ? What is the advantage of yield here?
+
 
 class EquitySharePortfolio():
     def __init__(self, equity_share: dict[int,EquityShare] = None):
@@ -58,7 +70,7 @@ class EquitySharePortfolio():
             return True
         return False
 
-    def add(self,equity_share: EquityShare) :
+    def add(self, equity_share: EquityShare) :
         """
 
         :type equity_share: EquityShare
@@ -70,39 +82,44 @@ class EquitySharePortfolio():
 
 
 
-    def create_dividend_dates(self, modelling_date, end_date)->dict:
+    def create_dividend_dates(self, modelling_date: date, end_date: date)->dict:
         """
-                Create the vector of dates at which the dividends are paid out and the total amounts for
-                all equity shares in the portfolio, for dates on or after the modelling date
+        Create the vector of dates at which the dividends are paid out and the total amounts for
+        all equity shares in the portfolio, for dates on or after the modelling date.
 
-                Parameters
-                ----------
-                self : EquitySharePortfolio class instance
-                    The EquitySharePortfolio instance with populated initial portfolio.
+        Parameters
+        ----------
+        self : EquitySharePortfolio class instance
+            The EquitySharePortfolio instance with populated initial portfolio.
+        :type modelling_date: date
+        :type end_date: date
 
-                Returns
-                -------
-                EquityShare.coupondates
-                    An array of datetimes, containing all the dates at which the coupons are paid out.
+        Returns
+        -------
+        all_dividends
+            An array of arrays of datetimes, containing all the dates at which the coupons are paid out.
 
-                """
+        """
         all_dividends = np.array([])
         dividends: dict[date, float] = {}
         equity_share: EquityShare
         dividend_date: date
         for asset_id in self.equity_share:
-            equity_share = self.equity_share[asset_id]
-            dividend_amount = equity_share.dividend_amount
+            equity_share = self.equity_share[asset_id] # Select one asset position
+            dividend_amount = 0
             for dividend_date in equity_share.generate_dividend_dates(modelling_date, end_date):
-                if dividend_date in dividends:
-                    dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
-                else:
+                if dividend_date in dividends: # If two cash flows on same date
+                    pass
+                    # Do nothing since dividend amounts are calibrated afterwards for equity
+                    #dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
+                else: # New cash flow date
                     dividends.update({dividend_date:dividend_amount})
-            all_dividends = np.appens(all_dividends,[dividends])
+            all_dividends = np.append(all_dividends, np.array(dividends))
         return all_dividends
 
+
 ## Create date fractions used in fast capitalizing and discounting
-    def create_dividend_fractions(self, modelling_date)->dict:
+    def create_dividend_fractions(obj, modelling_date)->dict:
         """
         Create the vector of year fractions at which the dividends are paid out and the total amounts for
         all equity shares in the portfolio, for dates on or after the modelling date
@@ -121,104 +138,127 @@ class EquitySharePortfolio():
 
         # other counting conventions MISSING
 
-        n_equity = len(self.equity_share)  # Number of assets in the bond portfolio
+        n_equity = len(obj.equity_share)  # Number of assets in the bond portfolio
 
         # Data structures list of lists for dividend payments
-        alldatefrac = (
+        all_date_frac = (
             []
         )  # this will save the date fractions of dividends for the portfolio
-        alldatesconsidered = (
+        all_dates_considered = (
             []
         )  # this will save if a cash flow is already expired before the modelling date in the portfolio
 
         # Data structure list of lists for terminal amount repayment
-        alldividenddatefrac = (
+        all_dividend_date_frac = (
             []
         )  # this will save the date fractions of terminal value repayment for the portfolio
-        alldividenddatesconsidered = (
+        all_dividend_dates_considered = (
             []
         )  # this will save if a bond is already expired before the modelling date in the portfolio
 
         for i_equity in range(0, n_equity):  # For each equity in the current portfolio
             # Reset objects for the next asset
-            equitydatefrac = np.array(
+            equity_date_frac = np.array(
                 []
             )  # this will save date fractions of dividends of a single asset
-            equitydatesconsidered = np.array(
+            equity_dates_considered = np.array(
                 []
             )  # this will save the boolean, if the dividend date is after the modelling date
 
-            equityterminaldatefrac = np.array(
+            equity_terminal_date_frac = np.array(
                 []
             ) # this will save date fractions of terminal sale of a single equity
-            equityterminaldatesconsidered = np.array(
+            equity_terminal_dates_considered = np.array(
                 []
             )  # this will save the boolean, if the terminal sale date is after the modelling date
 
-            dividendcounter = 0  # Counter of future dividend cash flows initialized to 0
+            dividend_counter = 0  # Counter of future dividend cash flows initialized to 0
 
-            datenew = (
-                self.dividend_dates[i_equity] - modelling_date
+            date_new = (
+                obj.dividend_dates[i_equity] - modelling_date
             )  # calculate the time difference between the dividend dates and modelling date using vector substraction
 
-            for one_dividend_date in datenew:  # for each coupon date of the selected bond
+            for one_dividend_date in date_new:  # for each coupon date of the selected bond
                 if one_dividend_date.days > 0:  # coupon date is after the modelling date
-                    equitydatefrac = np.append(
-                        equitydatefrac, one_dividend_date.days / 365.25
+                    equity_date_frac = np.append(
+                        equity_date_frac, one_dividend_date.days / 365.25
                     )  # append date fraction
-                    equitydatesconsidered = np.append(
-                        equitydatesconsidered, int(dividendcounter)
+                    equity_dates_considered = np.append(
+                        equity_dates_considered, int(dividend_counter)
                     )  # append "is after modelling date" flag
-                dividendcounter += 1
+                dividend_counter += 1
                 # else skip
-            alldatefrac.append(
-                equitydatefrac
+            all_date_frac.append(
+                equity_date_frac
             )  # append what fraction of the date is each cash flow compared to the modelling date
-            alldatesconsidered.append(
-                equitydatesconsidered.astype(int)
+            all_dates_considered.append(
+                equity_dates_considered.astype(int)
             )  # append which cash flows are after the modelling date
 
             # Calculate if the terminal sale date is before the modelling date
-            assetcalcnotionaldatefrac = (
-                self.notionaldates[i_equity] - modelling_date
+            asset_calc_terminal_date_frac = (
+                obj.terminal_dates[i_equity] - modelling_date
             )  # calculate the time difference between the terminal sale date and modelling date
 
             if (
-                assetcalcnotionaldatefrac[0].days > 0
+                asset_calc_terminal_date_frac[0].days > 0
             ):  # if terminal sale date is after modelling date
-                equityterminaldatefrac = np.append(
-                    equityterminaldatefrac, [assetcalcnotionaldatefrac[0].days / 365.25]
+                equity_terminal_date_frac = np.append(
+                    equity_terminal_date_frac, asset_calc_terminal_date_frac[0].days / 365.25
                 )  # append date fraction
-                equityterminaldatesconsidered = np.append(
-                    [equityterminaldatesconsidered, int(1)]
+                equity_terminal_dates_considered = np.append(
+                    equity_terminal_dates_considered, int(1)
                 )  # append "is after modelling date" flag
             # else skip
-            alldividenddatefrac.append(
-                [equityterminaldatefrac]
+            all_dividend_date_frac.append(
+                equity_terminal_date_frac
             )  # append what fraction of the date is each cash flow compared to the modelling date
-            alldividenddatesconsidered.append(
-                [equityterminaldatesconsidered.astype(int)]
+            all_dividend_dates_considered.append(
+                equity_terminal_dates_considered.astype(int)
             )  # append which cash flows are after the modelling date
 
         # Save coupon related data structures into the object
-        self.coupondatesfrac = alldatefrac
-        self.datesconsidered = alldatesconsidered
+        obj.dividend_dates_frac = all_date_frac
+        obj.dates_considered = all_dates_considered
 
         # Save terminal sale related data structures into the object
-        self.notionaldatesfrac = alldividenddatefrac
-        self.datesconsiderednot = alldividenddatesconsidered
+        obj.terminal_dates_frac = all_dividend_date_frac
+        obj.dates_considerednot = all_dividend_dates_considered
 
         return [
-            alldatefrac,
-            alldatesconsidered,
-            alldividenddatefrac,
-            alldividenddatesconsidered,
+            all_date_frac,
+            all_dates_considered,
+            all_dividend_date_frac,
+            all_dividend_dates_considered,
         ]  # return all generated data structures (for now)
 
+    def create_terminal_cashflow(self, modelling_date: date, end_date: date) -> dict:
+        """
+        self : EquitySharePortfolio class instance
+            The EquitySharePortfolio instance with populated initial portfolio.
+        :type modelling_date: date
+        :type end_date: date
 
+        :rtype: dict
+        """
+        all_terminals = np.array([])
+        terminals: dict[date, float] = {}
+        equity_share: EquityShare
+        terminal_date: date
 
-
-
+        for asset_id in self.equity_share:
+            equity_share = self.equity_share[asset_id]
+            
+            terminal_amount = 0
+            terminal_date = end_date
+            if terminal_date in terminals:
+                pass
+                # Do nothing since dividend amounts are calibrated afterwards for equity
+                #terminals[terminal_date] = terminal_amount + terminals[terminal_date]
+            else:
+                terminals.update({terminal_date:terminal_amount})
+            all_terminals = np.append(all_terminals,np.array(terminals))
+        return all_terminals
 
 
 # Calculate terminal value given growth rate, ultimate forward rate and vector of cash flows
