@@ -36,16 +36,22 @@ def GetCorporateBonds(filename) -> CorpBond:
 
 
 
-def GetEquityShare(filename) -> EquityShare:
+def GetEquityShare(filename:str) -> EquityShare:
+    """
+    :type filename: str
+    """
+
     with open(filename, mode="r", encoding="utf-8-sig") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             equity_share = EquityShare(asset_id=int(row["Asset_ID"]),
-                                 nace=row["NACE"],
-                                 issuer=None,
-                                 buy_date=datetime.strptime(row["Buy_Date"], "%d/%m/%Y").date(),
-                                 dividend_yield=float(row["Dividend_Yield"]),
-                                 frequency=int(row["Frequency"]),
-                                 market_price=float(row["Market_Price"]))
+                             nace=row["NACE"],
+                             issuer=None,
+                             issue_date=datetime.strptime(row["Issue_Date"], "%d/%m/%Y").date(),
+                             dividend_yield=float(row["Dividend_Yield"]),
+                             frequency=int(row["Frequency"]),
+                             market_price=float(row["Market_Price"]),
+                             growth_rate= float(row["Growth_Rate"]))
             yield equity_share
+            
             
