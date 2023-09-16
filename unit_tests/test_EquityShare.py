@@ -60,3 +60,20 @@ def test_dividend_dates(equity_share):
     assert dividend_dates[0] == datetime.date(2023, 9, 1)
     assert dividend_dates[1] == datetime.date(2023, 12, 1)
     assert dividend_dates[-1] <= end_date
+
+def test_dividend_amount(equity_share):
+    market_value = 100.0
+    dividend = equity_share.dividend_amount(equity_share,market_value=market_value)
+    manual_calulation_dividend = market_value* 0.03
+    assert dividend == manual_calulation_dividend
+
+def test_terminal_amount_calculation(equity_share):
+    """
+    Uses the Gordon growth model formula to calculate the terminal value of a stock
+    """
+    growth_rate = 0.05
+    terminal_rate = 0.02
+    market_value = 100
+    gordon_manual = market_value/(terminal_rate-growth_rate)
+    gordon_calc = equity_share.terminal_amount(market_value, growth_rate, terminal_rate)
+    assert gordon_calc == gordon_manual
