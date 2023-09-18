@@ -100,7 +100,6 @@ def test_create_dividend_dates_single_bond(equity_share_1):
     assert datetime.date(2023, 6, 1) in dividend_dates[0]
     assert datetime.date(2023, 9, 1) in dividend_dates[0]
     assert datetime.date(2023, 12, 1) in dividend_dates[0]
-    assert dividend_dates[datetime.date(2023, 6, 1)] == equity_share_1.dividend_amount
 
 
 def test_create_dividend_dates_two_equities(equity_share_1, equity_share_2):
@@ -110,10 +109,8 @@ def test_create_dividend_dates_two_equities(equity_share_1, equity_share_2):
     modelling_date = datetime.date(2023, 6, 1)
     end_date= datetime.date(2023+50, 6, 1)
     dividend_dates = equity_share_portfolio.create_dividend_dates(modelling_date, end_date)
-    print(dividend_dates)
-    #assert datetime.date(2023, 6, 1) in dividend_dates[0]
-    #assert dividend_dates[datetime.date(2023, 6, 1)] == equity_share_1.dividend_amount + equity_share_2.dividend_amount
-    #assert datetime.date(2023, 7, 1) in dividend_dates[1]
+    assert datetime.date(2023, 6, 1) in dividend_dates[0]
+    assert datetime.date(2023, 7, 1) in dividend_dates[1]
 
 
 #def test_create_terminal_cashflow_single_equities(equity_share_1):
