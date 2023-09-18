@@ -31,10 +31,11 @@ class EquityShare:
 
     @property
     def dividend_amount(self, market_value: float) -> float:
-        return market_value * self.dividend_yield # Probably needs to be removed
+        return market_value*self.dividend_yield # Probably needs to be removed
     
     def terminal_amount(self, market_value: float, growth_rate: float, terminal_rate: float) -> float:
         return market_value/(terminal_rate-growth_rate)
+    
     
     def generate_dividend_dates(self, modelling_date: date, end_date: date) -> date:
         """
@@ -100,7 +101,7 @@ class EquitySharePortfolio():
             An array of arrays of datetimes, containing all the dates at which the coupons are paid out.
 
         """
-        all_dividends = np.array([])
+        all_dividends = []
         dividends: dict[date, float] = {}
         equity_share: EquityShare
         dividend_date: date
@@ -114,8 +115,38 @@ class EquitySharePortfolio():
                     #dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
                 else: # New cash flow date
                     dividends.update({dividend_date:dividend_amount})
-            all_dividends = np.append(all_dividends, np.array(dividends))
+            all_dividends.append(dividends)
         return all_dividends
+
+    def create_terminal_dates(self, terminal_date: date) -> dict:
+        """
+        self : EquitySharePortfolio class instance
+            The EquitySharePortfolio instance with populated initial portfolio.
+        :type modelling_date: date
+        :type end_date: date
+
+        :rtype: dict
+        """
+        all_terminals = []
+        terminals: dict[date, float] = {}
+        equity_share: EquityShare
+        terminal_date: date
+
+        for asset_id in self.equity_share:
+            equity_share = self.equity_share[asset_id]
+            
+            terminal_amount = 0
+            if terminal_date in terminals:
+                pass
+                # Do nothing since dividend amounts are calibrated afterwards for equity
+                #terminals[terminal_date] = terminal_amount + terminals[terminal_date]
+            else:
+                terminals.update({terminal_date:terminal_amount})
+            all_terminals.append(terminals)
+        return all_terminals
+
+
+
 
 
 ## Create date fractions used in fast capitalizing and discounting
