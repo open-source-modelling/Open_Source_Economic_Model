@@ -112,6 +112,19 @@ def test_create_dividend_dates_two_equities(equity_share_1, equity_share_2):
     assert datetime.date(2023, 6, 1) in dividend_dates[0]
     assert datetime.date(2023, 7, 1) in dividend_dates[1]
 
+def test_generate_market_value_one_equity(equity_share_1):
+    modelling_date = datetime.date(2023, 6, 1)
+    system_time = datetime.date(2024, 6, 1)
+    #end_date= datetime.date(2023+50, 6, 1)
+    equity_share_portfolio = EquitySharePortfolio()
+    equity_share_portfolio.add(equity_share_1)
+    #dividend_dates = equity_share_portfolio.create_dividend_dates(modelling_date, end_date)
+    market_value = equity_share_1.generate_market_value(modelling_date, system_time, equity_share_1.market_price, equity_share_1.growth_rate)
+    t_manual = (system_time-modelling_date).days/365.5
+    market_value_manual = equity_share_1.market_price*(1+ equity_share_1.growth_rate)**t_manual
+    assert market_value == market_value_manual 
+
+
 
 #def test_create_terminal_cashflow_single_equities(equity_share_1):
 #    equity_share_portfolio = EquitySharePortfolio()

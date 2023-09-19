@@ -62,9 +62,9 @@ def test_dividend_dates(equity_share):
     assert dividend_dates[-1] <= end_date
 
 def test_dividend_amount(equity_share):
-    market_value = 100.0
-    dividend = equity_share.dividend_amount(equity_share,market_value=market_value)
-    manual_calulation_dividend = market_value* 0.03
+    market_price = 100.0
+    dividend = equity_share.dividend_amount(current_market_price=market_price)
+    manual_calulation_dividend = market_price* 0.03
     assert dividend == manual_calulation_dividend
 
 def test_terminal_amount_calculation(equity_share):
