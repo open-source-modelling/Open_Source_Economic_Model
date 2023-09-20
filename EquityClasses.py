@@ -141,15 +141,9 @@ class EquitySharePortfolio():
 
         for asset_id in self.equity_share:
             equity_share = self.equity_share[asset_id]
-            terminal_amount = 0
-            if terminal_date in terminals:
-                pass
-                # Do nothing since dividend amounts are calibrated afterwards for equity
-                #terminals[terminal_date] = terminal_amount + terminals[terminal_date]
-            else:
-                market_price = equity_share.generate_market_value(modelling_date, terminal_date, equity_share.market_price, equity_share.growth_rate)
-                terminal_amount = equity_share.terminal_amount(market_price, equity_share.growth_rate, terminal_rate)
-                terminals.update({terminal_date:terminal_amount})
+            market_price = equity_share.generate_market_value(modelling_date, terminal_date, equity_share.market_price, equity_share.growth_rate)
+            terminal_amount = equity_share.terminal_amount(market_price, equity_share.growth_rate, terminal_rate)
+            terminals.update({terminal_date:terminal_amount})
             all_terminals.append(terminals)
         return all_terminals
 
