@@ -29,12 +29,17 @@ class EquityShare:
     market_price: float
     growth_rate: float
 
-    @property
-    def dividend_amount(self, market_value: float) -> float:
-        return market_value*self.dividend_yield # Probably needs to be removed
+    #@property Look into what property does
+    def dividend_amount(self, current_market_price: float) -> float:
+        out = current_market_price*self.dividend_yield
+        return out 
     
-    def terminal_amount(self, market_value: float, growth_rate: float, terminal_rate: float) -> float:
-        return market_value/(terminal_rate-growth_rate)
+    def terminal_amount(self, market_price: float, growth_rate: float, terminal_rate: float) -> float:
+        return market_price/(terminal_rate-growth_rate)
+    
+    def generate_market_value(self, modelling_date: date, evaluated_date: date, market_price: float, growth_rate:float):
+        t = (evaluated_date-modelling_date).days/365.5
+        return market_price * (1 + growth_rate) ** t
     
     
     def generate_dividend_dates(self, modelling_date: date, end_date: date) -> date:
@@ -114,11 +119,13 @@ class EquitySharePortfolio():
                     # Do nothing since dividend amounts are calibrated afterwards for equity
                     #dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
                 else: # New cash flow date
+                    market_price = equity_share.generate_market_value(modelling_date, dividend_date, equity_share.market_price, equity_share.growth_rate)
+                    dividend_amount = equity_share.dividend_amount(current_market_price=market_price)
                     dividends.update({dividend_date:dividend_amount})
             all_dividends.append(dividends)
         return all_dividends
 
-    def create_terminal_dates(self, terminal_date: date) -> dict:
+    def create_terminal_dates(self, modelling_date:date, terminal_date: date, terminal_rate: float) -> dict:
         """
         self : EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated initial portfolio.
@@ -134,18 +141,17 @@ class EquitySharePortfolio():
 
         for asset_id in self.equity_share:
             equity_share = self.equity_share[asset_id]
-            
             terminal_amount = 0
             if terminal_date in terminals:
                 pass
                 # Do nothing since dividend amounts are calibrated afterwards for equity
                 #terminals[terminal_date] = terminal_amount + terminals[terminal_date]
             else:
+                market_price = equity_share.generate_market_value(modelling_date, terminal_date, equity_share.market_price, equity_share.growth_rate)
+                terminal_amount = equity_share.terminal_amount(market_price, equity_share.growth_rate, terminal_rate)
                 terminals.update({terminal_date:terminal_amount})
             all_terminals.append(terminals)
         return all_terminals
-
-
 
 
 
@@ -263,7 +269,7 @@ class EquitySharePortfolio():
             all_dividend_dates_considered,
         ]  # return all generated data structures (for now)
 
-    def create_terminal_cashflow(self, modelling_date: date, end_date: date) -> dict:
+    def create_tecrminal_cashflow(self, modelling_date: date, end_date: date) -> dict:
         """
         self : EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated initial portfolio.
