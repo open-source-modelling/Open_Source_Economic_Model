@@ -153,8 +153,33 @@ def test_generate_terminal_value_one_equity(equity_share_1):
     terminal_manual_1 = equity_share_1.market_price*(1+ equity_share_1.growth_rate)**t_manual_1 / (ufr-equity_share_1.growth_rate)
     assert terminal_value_1[0][end_date] == terminal_manual_1 
 
+def test_create_dividend_fractions(equity_share_1, equity_share_2):
+    modelling_date = datetime.date(2023, 6, 1)
+    equity_share_portfolio = EquitySharePortfolio()
+    equity_share_portfolio.add(equity_share_1)
+    equity_share_portfolio.add(equity_share_2)
+    dividend_array = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12), datetime.date(2023+50, 6, 1))
+    [all_date_frac, all_dates_considered] = equity_share_portfolio.create_dividend_fractions(modelling_date,dividend_array)
+    assert all_date_frac[0][all_dates_considered[0][0]]>= 0
+    assert all_date_frac[1][all_dates_considered[1][0]]>= 0
+    assert all_date_frac[0][all_dates_considered[0][-1]]<= 50
+    assert all_date_frac[1][all_dates_considered[1][-1]]<= 50
 
-
+def test_create_terminal_fractions(equity_share_1, equity_share_2):
+    modelling_date = datetime.date(2023, 6, 1)
+    ufr = 0.05
+    equity_share_portfolio = EquitySharePortfolio()
+    equity_share_portfolio.add(equity_share_1)
+    equity_share_portfolio.add(equity_share_2)
+    terminal_array = equity_share_portfolio.create_terminal_dates(modelling_date=datetime.date(2023, 6, 1), terminal_date=datetime.date(2023+50, 6, 1),terminal_rate=ufr)
+    [all_terminal_date_frac, all_terminal_dates_considered] = equity_share_portfolio.create_terminal_fractions(modelling_date, terminal_array)
+    print(terminal_array)
+    print(all_terminal_date_frac)
+    print(all_terminal_dates_considered)
+    assert all_terminal_date_frac[0]>= 0
+    assert all_terminal_date_frac[1]>= 0
+    assert all_terminal_date_frac[0]<= 50.1 # Could be slightly higher than 50 due to daycount convention
+    assert all_terminal_date_frac[1]<= 50.1 # Could be slightly higher than 50 due to daycount convention
 
 
 #def test_create_terminal_cashflow_single_equities(equity_share_1):
