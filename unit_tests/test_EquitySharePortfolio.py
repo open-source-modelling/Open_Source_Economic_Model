@@ -186,13 +186,13 @@ def test_unique_dates_profile_one_equity(equity_share_1):
     unique_list = equity_share_portfolio.unique_dates_profile(dividend_array)
     assert len(unique_list) == len(list(dividend_array[0].keys()))
 
-#def test_unique_dates_profile_two_equities(equity_share_1,equity_share_2):
-#    equity_share_portfolio = EquitySharePortfolio()
-#    equity_share_portfolio.add(equity_share_1)
-#    equity_share_portfolio.add(equity_share_2)
-#    dividend_array = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12), datetime.date(2023+50, 6, 1))
-#    unique_list = equity_share_portfolio.unique_dates_profile(dividend_array)
-#    #print(unique_list)
+def test_unique_dates_profile_two_equities(equity_share_1,equity_share_2):
+    equity_share_portfolio = EquitySharePortfolio()
+    equity_share_portfolio.add(equity_share_1)
+    equity_share_portfolio.add(equity_share_2)
+    dividend_array = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12), datetime.date(2023+50, 6, 1))
+    unique_list = equity_share_portfolio.unique_dates_profile(dividend_array)
+    assert len(unique_list) <= (len(list(dividend_array[0].keys()))+len(list(dividend_array[1].keys())))
 
 def test_unique_dates_profile_one_equity_terminal(equity_share_1):
     ufr = 0.05
