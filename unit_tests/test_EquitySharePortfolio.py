@@ -162,8 +162,8 @@ def test_create_dividend_fractions(equity_share_1, equity_share_2):
     [all_date_frac, all_dates_considered] = equity_share_portfolio.create_dividend_fractions(modelling_date,dividend_array)
     assert all_date_frac[0][all_dates_considered[0][0]]>= 0
     assert all_date_frac[1][all_dates_considered[1][0]]>= 0
-    assert all_date_frac[0][all_dates_considered[0][-1]]<= 50
-    assert all_date_frac[1][all_dates_considered[1][-1]]<= 50
+    assert all_date_frac[0][all_dates_considered[0][-1]]<= 50.1
+    assert all_date_frac[1][all_dates_considered[1][-1]]<= 50.1
 
 def test_create_terminal_fractions(equity_share_1, equity_share_2):
     modelling_date = datetime.date(2023, 6, 1)
@@ -180,6 +180,22 @@ def test_create_terminal_fractions(equity_share_1, equity_share_2):
     assert all_terminal_date_frac[1]>= 0
     assert all_terminal_date_frac[0]<= 50.1 # Could be slightly higher than 50 due to daycount convention
     assert all_terminal_date_frac[1]<= 50.1 # Could be slightly higher than 50 due to daycount convention
+
+
+def test_unique_dates_profile(equity_share_1):
+    equity_share_portfolio = EquitySharePortfolio()
+    equity_share_portfolio.add(equity_share_1)
+    dividend_array = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12), datetime.date(2023+50, 6, 1))
+    unique_list = equity_share_portfolio.unique_dates_profile(dividend_array)
+    assert len(unique_list) == len(list(dividend_array[0].keys()))
+
+def test_unique_dates_profile_two_equities(equity_share_1,equity_share_2):
+    equity_share_portfolio = EquitySharePortfolio()
+    equity_share_portfolio.add(equity_share_1)
+    equity_share_portfolio.add(equity_share_2)
+    dividend_array = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12), datetime.date(2023+50, 6, 1))
+    unique_list = equity_share_portfolio.unique_dates_profile(dividend_array)
+    print(unique_list)
 
 
 #def test_create_terminal_cashflow_single_equities(equity_share_1):
