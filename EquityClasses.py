@@ -86,8 +86,6 @@ class EquitySharePortfolio():
         else:
             self.equity_share.update({equity_share.asset_id: equity_share})
 
-
-
     def create_dividend_dates(self, modelling_date: date, end_date: date)->dict:
         """
         Create the vector of dates at which the dividends are paid out and the total amounts for
@@ -146,8 +144,6 @@ class EquitySharePortfolio():
             terminals.update({terminal_date:terminal_amount})
             all_terminals.append(terminals)
         return all_terminals
-
-
 
 ## Create date fractions used in fast capitalizing and discounting
     def create_dividend_fractions(self, modelling_date:date, dividend_array:dict)->dict:
@@ -257,34 +253,52 @@ class EquitySharePortfolio():
             all_dividend_dates_considered,
         ]  # return all generated data structures (for now)
 
+    def unique_dates_profile(self, cashflow_profile:List):
 
-    def create_terminal_cashflow(self, modelling_date: date, end_date: date) -> dict:
-        """
-        self : EquitySharePortfolio class instance
-            The EquitySharePortfolio instance with populated initial portfolio.
-        :type modelling_date: date
-        :type end_date: date
+        # define list of unique dates
+        unique_dates = []
+        for one_dividend_array in cashflow_profile:
+            for one_dividend_date in list(one_dividend_array.keys()):  # for each dividend date of the selected equity
+                if one_dividend_date in unique_dates: # If two cash flows on same date
+                    pass
+                    # Do nothing since dividend amounts are calibrated afterwards for equity
+                    #dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
+                else: # New cash flow date
+                    unique_dates.append(one_dividend_date)
 
-        :rtype: dict
-        """
-        all_terminals = np.array([])
-        terminals: dict[date, float] = {}
-        equity_share: EquityShare
-        terminal_date: date
+        return unique_dates
+    
+#    def cashflow_profile_list_to_matrix(self, cashflow_profile):
+        
 
-        for asset_id in self.equity_share:
-            equity_share = self.equity_share[asset_id]
-            
-            terminal_amount = 0
-            terminal_date = end_date
-            if terminal_date in terminals:
-                pass
-                # Do nothing since dividend amounts are calibrated afterwards for equity
-                #terminals[terminal_date] = terminal_amount + terminals[terminal_date]
-            else:
-                terminals.update({terminal_date:terminal_amount})
-            all_terminals = np.append(all_terminals,np.array(terminals))
-        return all_terminals
+
+#    def create_terminal_cashflow(self, modelling_date: date, end_date: date) -> dict:
+#        """
+#        self : EquitySharePortfolio class instance
+#            The EquitySharePortfolio instance with populated initial portfolio.
+#        :type modelling_date: date
+#        :type end_date: date
+
+#        :rtype: dict
+#        """
+#        all_terminals = np.array([])
+#        terminals: dict[date, float] = {}
+#        equity_share: EquityShare
+#        terminal_date: date
+
+#        for asset_id in self.equity_share:
+#            equity_share = self.equity_share[asset_id]
+#            
+#            terminal_amount = 0
+#            terminal_date = end_date
+#            if terminal_date in terminals:
+#                pass
+#                # Do nothing since dividend amounts are calibrated afterwards for equity
+#                #terminals[terminal_date] = terminal_amount + terminals[terminal_date]
+#            else:
+#                terminals.update({terminal_date:terminal_amount})
+#            all_terminals = np.append(all_terminals,np.array(terminals))
+#        return all_terminals
 
 
 # Calculate terminal value given growth rate, ultimate forward rate and vector of cash flows
