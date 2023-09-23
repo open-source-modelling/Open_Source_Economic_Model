@@ -268,9 +268,26 @@ class EquitySharePortfolio():
 
         return unique_dates
     
-#    def cashflow_profile_list_to_matrix(self, cashflow_profile):
+    def cash_flow_profile_list_to_matrix(self, cash_flow_profile):
         
 
+        unique_dates = self.unique_dates_profile(cash_flow_profile)
+        width = len(unique_dates)
+        height = len(cash_flow_profile) 
+
+        cash_flow_matrix = np.zeros((height,width))
+        row = 0
+        for one_cash_flow_array in cash_flow_profile:
+            count = 0
+            values = list(one_cash_flow_array.values())
+            for one_cash_flow in one_cash_flow_array:
+                column = unique_dates.index(one_cash_flow)
+                cash_flow_matrix[row, column] = values[count]
+                count += 1
+            row +=1
+        return [
+            unique_dates,
+            cash_flow_matrix]
 
 #    def create_terminal_cashflow(self, modelling_date: date, end_date: date) -> dict:
 #        """
