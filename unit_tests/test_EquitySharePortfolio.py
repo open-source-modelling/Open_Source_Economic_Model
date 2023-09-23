@@ -211,6 +211,25 @@ def test_unique_dates_profile_two_equities_terminal(equity_share_1, equity_share
     unique_terminal_list = equity_share_portfolio.unique_dates_profile(terminal_array)
     assert len(unique_terminal_list) == len(list(terminal_array[0].keys()))
 
+#def test_cash_flow_profile_list_to_matrix_one_equity(equity_share_1, equity_share_2):
+#   equity_share_portfolio = EquitySharePortfolio()
+#   equity_share_portfolio.add(equity_share_1)
+#   equity_share_portfolio.add(equity_share_2)
+#   dividend_array = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12), datetime.date(2023+50, 6, 1))    
+#   [a, b] = equity_share_portfolio.cash_flow_profile_list_to_matrix(dividend_array) 
+#   print(a)
+#   print(b.shape)
+
+#def test_cash_flow_profile_list_to_matrix_one_equity_terminal(equity_share_1, equity_share_2):
+#   ufr = 0.05
+#   equity_share_portfolio = EquitySharePortfolio()
+#   equity_share_portfolio.add(equity_share_1)
+#   equity_share_portfolio.add(equity_share_2)
+#   dividend_array = equity_share_portfolio.create_terminal_dates(datetime.date(2023, 6, 12), datetime.date(2023+50, 6, 1), ufr)    
+#   [a, b] = equity_share_portfolio.cash_flow_profile_list_to_matrix(dividend_array) 
+#   print(a)
+#   print(b)
+
 #def test_create_terminal_cashflow_single_equities(equity_share_1):
 #    equity_share_portfolio = EquitySharePortfolio()
 #    equity_share_portfolio.add(equity_share_1)
@@ -219,8 +238,6 @@ def test_unique_dates_profile_two_equities_terminal(equity_share_1, equity_share
 #    terminal_cashflow = equity_share_portfolio.create_terminal_cashflow(modelling_date, end_date)
 #    assert len(terminal_cashflow) == 1
 #    assert terminal_cashflow[equity_share_1.terminal_date] == equity_share_1.notional_amount
-
-
 
 #def test_create_maturity_cashflow_multiple_bonds(corp_bond_1, corp_bond_2):
 #    corporate_bond_portfolio = EquitySharePortfolio()
