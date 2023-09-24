@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pathlib import Path
 import csv
 from datetime import datetime
 from datetime import datetime as dt, timedelta
@@ -8,6 +9,7 @@ from enum import IntEnum
 from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
 from typing import List, Dict, Any
+
 
 
 class Frequency(IntEnum):
@@ -40,8 +42,7 @@ class EquityShare:
     def generate_market_value(self, modelling_date: date, evaluated_date: date, market_price: float, growth_rate:float):
         t = (evaluated_date-modelling_date).days/365.5
         return market_price * (1 + growth_rate) ** t
-    
-    
+        
     def generate_dividend_dates(self, modelling_date: date, end_date: date) -> date:
         """
         Generator yielding the dividend payment date starting from the first dividend
@@ -59,7 +60,6 @@ class EquityShare:
                 continue
             if this_date <= end_date:
                 yield this_date # ? What is the advantage of yield here?
-
 
 class EquitySharePortfolio():
     def __init__(self, equity_share: dict[int,EquityShare] = None):
@@ -86,7 +86,7 @@ class EquitySharePortfolio():
         else:
             self.equity_share.update({equity_share.asset_id: equity_share})
 
-    def create_dividend_dates(self, modelling_date: date, end_date: date)->dict:
+    def create_dividend_dates(self, modelling_date: date, end_date: date)->list:
         """
         Create the vector of dates at which the dividends are paid out and the total amounts for
         all equity shares in the portfolio, for dates on or after the modelling date.
@@ -123,7 +123,7 @@ class EquitySharePortfolio():
             all_dividends.append(dividends)
         return all_dividends
 
-    def create_terminal_dates(self, modelling_date:date, terminal_date: date, terminal_rate: float) -> dict:
+    def create_terminal_dates(self, modelling_date:date, terminal_date: date, terminal_rate: float) -> list:
         """
         self : EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated initial portfolio.
@@ -146,7 +146,7 @@ class EquitySharePortfolio():
         return all_terminals
 
 ## Create date fractions used in fast capitalizing and discounting
-    def create_dividend_fractions(self, modelling_date:date, dividend_array:dict)->dict:
+    def create_dividend_fractions(self, modelling_date:date, dividend_array:list)->dict:
         """
         Create the vector of year fractions at which the dividends are paid out and the total amounts for
         all equity shares in the portfolio, for dates on or after the modelling date
@@ -268,7 +268,7 @@ class EquitySharePortfolio():
 
         return unique_dates
     
-    def cash_flow_profile_list_to_matrix(self, cash_flow_profile):
+    def cash_flow_profile_list_to_matrix(self, cash_flow_profile:list)->list:
         
 
         unique_dates = self.unique_dates_profile(cash_flow_profile)
@@ -288,6 +288,24 @@ class EquitySharePortfolio():
         return [
             unique_dates,
             cash_flow_matrix]
+
+    def save_equity_matrices_to_csv(self, unique_dividend, unique_terminal, dividend_matrix, terminal_matrix, paths):
+
+        filepath_1 = Path(paths.intermediate+'unique_dividend_dates.csv')
+        filepath_2 = Path(paths.intermediate+'unique_terminal_dates.csv')
+        filepath_3 = Path(paths.intermediate+'cashflow_dividend_matrix.csv')
+        filepath_4 = Path(paths.intermediate+'cashflow_terminal_matrix.csv')
+        
+        filepath_1.parent.mkdir(parents=True, exist_ok=True) 
+        filepath_2.parent.mkdir(parents=True, exist_ok=True) 
+        filepath_3.parent.mkdir(parents=True, exist_ok=True) 
+        filepath_4.parent.mkdir(parents=True, exist_ok=True) 
+        
+        pd.DataFrame(unique_dividend).to_csv(filepath_1)
+        pd.DataFrame(unique_terminal).to_csv(filepath_2)
+        pd.DataFrame(dividend_matrix).to_csv(filepath_3)
+        pd.DataFrame(terminal_matrix).to_csv(filepath_4)
+
 
 #    def create_terminal_cashflow(self, modelling_date: date, end_date: date) -> dict:
 #        """
