@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-import csv
-from datetime import datetime
 from datetime import datetime as dt, timedelta
 from datetime import date
 from enum import IntEnum
@@ -251,7 +249,7 @@ class EquitySharePortfolio():
         return [
             all_dividend_date_frac,
             all_dividend_dates_considered,
-        ]  # return all generated data structures (for now)
+        ]
 
     def unique_dates_profile(self, cashflow_profile:List):
 
@@ -305,7 +303,6 @@ class EquitySharePortfolio():
         pd.DataFrame(unique_terminal).to_csv(filepath_2)
         pd.DataFrame(dividend_matrix).to_csv(filepath_3)
         pd.DataFrame(terminal_matrix).to_csv(filepath_4)
-
 
 #    def create_terminal_cashflow(self, modelling_date: date, end_date: date) -> dict:
 #        """
