@@ -1,7 +1,8 @@
 from EquityClasses import Frequency, EquityShare, EquitySharePortfolio
 import pytest
 import datetime
-
+import pandas as pd
+from PathsClasses import Paths
 
 @pytest.fixture
 def equity_share_1() -> EquityShare:
@@ -40,6 +41,10 @@ def equity_share_2() -> EquityShare:
 )
     return equity_share_2
 
+@pytest.fixture
+def paths() -> Paths:
+    paths = Paths()
+    return paths
 
 def test_IsEmpty():
     equity_share_portfolio = EquitySharePortfolio()
@@ -59,13 +64,11 @@ def test_add_to_empty_portfolio(equity_share_1):
     assert equity_share_portfolio.equity_share[equity_share_1.asset_id] == equity_share_1
     assert (equity_share_1.asset_id in equity_share_portfolio.equity_share)
 
-
 def test_add_to_non_empty_portfolio(equity_share_1, equity_share_2):
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
     equity_share_portfolio.add(equity_share_2)
-
-    
+   
     asset_id = 3
     nace = "AB.4"
     issuer= "Test Issuer"
@@ -88,7 +91,6 @@ def test_add_to_non_empty_portfolio(equity_share_1, equity_share_2):
     equity_share_portfolio.add(equity_share_3)
     assert len(equity_share_portfolio.equity_share) == 3
     assert (equity_share_3.asset_id in equity_share_portfolio.equity_share)
-
 
 def test_create_dividend_dates_single_bond(equity_share_1):
     equity_share_portfolio = EquitySharePortfolio()
@@ -141,7 +143,6 @@ def test_generate_market_value_two_equities(equity_share_1, equity_share_2):
     assert market_value_2 == market_value_manual_2 
     assert len(dividend_dates) == 2
 
-
 def test_generate_terminal_value_one_equity(equity_share_1):
     modelling_date = datetime.date(2023, 6, 1)
     end_date= datetime.date(2023+50, 6, 1)
@@ -178,7 +179,6 @@ def test_create_terminal_fractions(equity_share_1, equity_share_2):
     assert all_terminal_date_frac[0]<= 50.1 # Could be slightly higher than 50 due to daycount convention
     assert all_terminal_date_frac[1]<= 50.1 # Could be slightly higher than 50 due to daycount convention
 
-
 def test_unique_dates_profile_one_equity(equity_share_1):
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
@@ -211,6 +211,26 @@ def test_unique_dates_profile_two_equities_terminal(equity_share_1, equity_share
     unique_terminal_list = equity_share_portfolio.unique_dates_profile(terminal_array)
     assert len(unique_terminal_list) == len(list(terminal_array[0].keys()))
 
+def test_save_equity_matrices_to_csv(equity_share_1, equity_share_2, paths):
+    ufr = 0.05
+    equity_share_portfolio = EquitySharePortfolio()
+    equity_share_portfolio.add(equity_share_1)
+    equity_share_portfolio.add(equity_share_2)
+    dividend_array = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12), datetime.date(2023+50, 6, 1))
+    unique_list_dividends = equity_share_portfolio.unique_dates_profile(dividend_array)
+    terminal_array = equity_share_portfolio.create_terminal_dates(datetime.date(2023, 6, 12), datetime.date(2023+50, 6, 1), ufr)
+    unique_terminal_list = equity_share_portfolio.unique_dates_profile(terminal_array)
+    equity_share_portfolio.save_equity_matrices_to_csv(unique_dividend = unique_list_dividends, unique_terminal=unique_terminal_list, dividend_matrix=dividend_array, terminal_matrix=terminal_array, paths =paths)
+    file_1 = pd.read_csv(paths.intermediate+'unique_dividend_dates.csv')
+    file_2 = pd.read_csv(paths.intermediate+'unique_terminal_dates.csv')
+    file_3 = pd.read_csv(paths.intermediate+'cashflow_dividend_matrix.csv')
+    file_4 = pd.read_csv(paths.intermediate+'cashflow_terminal_matrix.csv')
+    assert file_1.size > 1
+    assert file_2.size > 1
+    assert file_3.size > 1
+    assert file_4.size > 1
+     
+
 #def test_cash_flow_profile_list_to_matrix_one_equity(equity_share_1, equity_share_2):
 #   equity_share_portfolio = EquitySharePortfolio()
 #   equity_share_portfolio.add(equity_share_1)
@@ -229,6 +249,9 @@ def test_unique_dates_profile_two_equities_terminal(equity_share_1, equity_share
 #   [a, b] = equity_share_portfolio.cash_flow_profile_list_to_matrix(dividend_array) 
 #   print(a)
 #   print(b)
+
+
+
 
 #def test_create_terminal_cashflow_single_equities(equity_share_1):
 #    equity_share_portfolio = EquitySharePortfolio()
