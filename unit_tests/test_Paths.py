@@ -12,3 +12,6 @@ def test_base_path(paths):
 
 def test_intermediate_path(paths):
     assert os.path.exists(paths.intermediate)
+
+def test_input_path(paths):
+    assert os.path.exists(paths.input)
