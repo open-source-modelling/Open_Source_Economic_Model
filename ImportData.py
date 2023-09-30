@@ -2,6 +2,7 @@ import pandas as pd
 import csv
 from BondClasses import CorpBond
 from EquityClasses import EquityShare
+from SettingsClasses import Settings
 from datetime import datetime
 
 def importSWEiopa(selected_param_file, selected_curves_file, country):
@@ -54,4 +55,23 @@ def GetEquityShare(filename:str) -> EquityShare:
                              growth_rate= float(row["Growth_Rate"]))
             yield equity_share
             
-            
+
+def GetSettings(filename:str) -> Settings:
+    """
+    :type filename: str
+    """
+    with open(filename, mode="r", encoding="utf-8-sig") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            setting = Settings(EIOPA_param_file=row["EIOPA_param_file"],
+                EIOPA_curves_file = row["EIOPA_curves_file"],
+                country = row["country"],
+                run_type = row["run_type"],
+                n_proj_years = row["n_proj_years"],
+                precision = row["Precision"],
+                tau = row["Tau"],
+                compounding = row["compounding"],
+                modelling_date = row["Modelling_Date"])
+            return setting
+
+
