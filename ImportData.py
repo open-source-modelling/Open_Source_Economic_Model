@@ -71,7 +71,7 @@ def GetSettings(filename:str) -> Settings:
                 precision = row["Precision"],
                 tau = row["Tau"],
                 compounding = row["compounding"],
-                modelling_date = row["Modelling_Date"])
+                modelling_date = datetime.strptime(row["Modelling_Date"], '%d/%m/%Y').date())
             return setting
 
 
