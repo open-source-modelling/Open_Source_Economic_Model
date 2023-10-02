@@ -18,7 +18,7 @@ class Settings:
         self.EIOPA_curves_file = EIOPA_curves_file
         self.country = country
         self.run_type = run_type
-        self.n_proj_years = n_proj_years
+        self.n_proj_years = int(n_proj_years)
         self.precision = precision
         self.tau = tau
         self.compounding = compounding
