@@ -17,6 +17,8 @@ end_date = settings.modelling_date + relativedelta(years=settings.n_proj_years)
 
 curves = Curves(extra_param["UFR"]/100, settings.precision, settings.tau, settings.modelling_date , settings.country)
 
+end_date = settings.modelling_date + relativedelta(years=settings.n_proj_years)
+
 # Create generator that contains all equity positions
 equity_input_generator = GetEquityShare(paths.input+"Equity_Portfolio_test.csv")
  
@@ -30,10 +32,8 @@ for equity_share in equity_input_generator:
 dividend_dates = equity_portfolio.create_dividend_dates(settings.modelling_date, end_date)
 terminal_dates = equity_portfolio.create_terminal_dates(modelling_date=settings.modelling_date, terminal_date=end_date, terminal_rate=curves.ufr)
 
-
 [all_date_frac, all_dates_considered] = equity_portfolio.create_dividend_fractions(settings.modelling_date, dividend_dates) 
 [all_dividend_date_frac, all_dividend_dates_considered] = equity_portfolio.create_terminal_fractions(settings.modelling_date, terminal_dates)
-
 
 print(equity_portfolio.equity_share)
 print(settings.modelling_date)
