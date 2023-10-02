@@ -2,17 +2,17 @@ import numpy as np
 import pandas as pd
 
 class Curves:
-    def __init__(self, ufr, Precision, Tau, InitialDate, Country):
+    def __init__(self, ufr, precision, tau, initial_date, country):
     
-        self.InitialDate = InitialDate
-        self.Country = Country
+        self.InitialDate = initial_date
+        self.Country = country
         self.StartDate = pd.DataFrame(data=None)
         self.FwdRates = pd.DataFrame(data=None)
         self.M_Obs = pd.DataFrame(data=None)
         self.r_Obs = pd.DataFrame(data=None)
         self.ufr = ufr
-        self.Precision = Precision
-        self.Tau = Tau
+        self.Precision = precision
+        self.Tau = tau
         self.alpha = pd.DataFrame(data=None)
         self.b = pd.DataFrame(data=None)
 
@@ -33,9 +33,9 @@ class Curves:
     # For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf
 
     
-        u_Mat = np.tile(u, [v.size, 1]).transpose()
-        v_Mat = np.tile(v, [u.size, 1])
-        return 0.5 * (alpha * (u_Mat + v_Mat) + np.exp(-alpha * (u_Mat + v_Mat)) - alpha * np.absolute(u_Mat-v_Mat) - np.exp(-alpha * np.absolute(u_Mat-v_Mat))); # Heart of the Wilson function from paragraph 132
+        u_mat = np.tile(u, [v.size, 1]).transpose()
+        v_mat = np.tile(v, [u.size, 1])
+        return 0.5 * (alpha * (u_mat + v_mat) + np.exp(-alpha * (u_mat + v_mat)) - alpha * np.absolute(u_mat-v_mat) - np.exp(-alpha * np.absolute(u_mat-v_mat))); # Heart of the Wilson function from paragraph 132
 
     def SWCalibrate(self, r, M, ufr, alpha):
     # SWCALIBRATE Calculate the calibration vector using a Smith-Wilson algorithm
@@ -87,14 +87,14 @@ class Curves:
         p = np.exp(-np.log(1+ufr)* M_Target) + np.diag(np.exp(-np.log(1+ufr) * M_Target)) @ H @ Q @ b # Discount pricing function for targeted maturities from paragraph 147
         return p ** (-1/ M_Target) -1 # Convert obtained prices to rates and return prices
 
-    def Galfa(self, M_Obs: np.ndarray, r_Obs: np.ndarray, ufr, alpha, Tau):
+    def Galfa(self, m_obs: np.ndarray, r_obs: np.ndarray, ufr, alpha, tau):
         """
         Calculates the gap at the convergence point between the allowable tolerance Tau and the curve extrapolated using the Smith-Wilson algorithm.
         interpolation and extrapolation of rates.
         
         Args:
-            M_Obs = n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u=[[1], [3]]
-            r_Obs = n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
+            m_obs = n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u=[[1], [3]]
+            r_obs = n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
             ufr =   1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
             alpha = 1 x 1 floating number representing the convergence speed parameter alpha. Ex. alpha = 0.05
             Tau =   1 x 1 floating number representing the allowed difference between ufr and actual curve. Ex. Tau = 0.00001
@@ -120,17 +120,17 @@ class Curves:
         Implemented by Gregor Fabjan from Qnity Consultants on 17/12/2021.
         """
         
-        U = max(M_Obs)                                # Find maximum liquid maturity from input
+        U = max(m_obs)                                # Find maximum liquid maturity from input
         T = max(U + 40, 60)                             # Define the convergence point as defined in paragraph 120 and again in 157
-        C = np.identity(M_Obs.size)                   # Construct cash flow matrix described in paragraph 137 assuming the input is ZCB bonds with notional value of 1
-        d = np.exp(-np.log(1 + ufr) * M_Obs)            # Calculate vector d described in paragraph 138
+        C = np.identity(m_obs.size)                   # Construct cash flow matrix described in paragraph 137 assuming the input is ZCB bonds with notional value of 1
+        d = np.exp(-np.log(1 + ufr) * m_obs)            # Calculate vector d described in paragraph 138
         Q = np.diag(d) @ C                            # Matrix Q described in paragraph 139
-        b = self.SWCalibrate(r_Obs, M_Obs, ufr, alpha)     # Calculate the calibration vector b using the equation from paragraph 149
+        b = self.SWCalibrate(r_obs, m_obs, ufr, alpha)     # Calculate the calibration vector b using the equation from paragraph 149
 
-        K = (1+alpha * M_Obs @ Q@ b) / (np.sinh(alpha * M_Obs.transpose())@ Q@ b) # Calculate kappa as defined in the paragraph 155
-        return( alpha/np.abs(1 - K*np.exp(alpha*T))-Tau) # Size of the gap at the convergence point between the allowable tolerance Tau and the actual curve. Defined in paragraph 158
+        K = (1+alpha * m_obs @ Q@ b) / (np.sinh(alpha * m_obs.transpose())@ Q@ b) # Calculate kappa as defined in the paragraph 155
+        return( alpha/np.abs(1 - K*np.exp(alpha*T))-tau) # Size of the gap at the convergence point between the allowable tolerance Tau and the actual curve. Defined in paragraph 158
 
-    def BisectionAlpha(self, xStart, xEnd, M_Obs, r_Obs, ufr, Tau, Precision, maxIter):
+    def BisectionAlpha(self, x_start, x_end, m_obs, r_obs, ufr, tau, precision, max_iter):
         """
         Bisection root finding algorithm for finding the root of a function. The function here is the allowed difference between the ultimate forward rate and the extrapolated curve using Smith & Wilson.
 
@@ -167,27 +167,27 @@ class Curves:
         Implemented by Gregor Fabjan from Qnity Consultants on 17/12/2021.
         """   
 
-        yStart = self.Galfa(M_Obs, r_Obs, ufr, xStart, Tau) # Check if the initial point is a solution
-        yEnd = self.Galfa(M_Obs, r_Obs, ufr, xEnd, Tau) # Check if the final point is a solution
-        if np.abs(yStart) < Precision:
+        y_start = self.Galfa(m_obs, r_obs, ufr, x_start, tau) # Check if the initial point is a solution
+        y_end = self.Galfa(m_obs, r_obs, ufr, x_end, tau) # Check if the final point is a solution
+        if np.abs(y_start) < precision:
             #self.alpha = xStart # If initial point already satisfies the conditions return start point
-            return xStart
-        if np.abs(yEnd) < Precision:
+            return x_start
+        if np.abs(y_end) < precision:
             #self.alpha = xEnd
-            return xEnd # If final point already satisfies the conditions return end point
-        iIter = 0
-        while iIter <= maxIter:
-            xMid = (xEnd+xStart)/2 # calculate mid-point 
-            yMid = self.Galfa(M_Obs, r_Obs, ufr, xMid, Tau) # What is the solution at midpoint
+            return x_end # If final point already satisfies the conditions return end point
+        i_iter = 0
+        while i_iter <= max_iter:
+            x_mid = (x_end+x_start)/2 # calculate mid-point 
+            y_mid = self.Galfa(m_obs, r_obs, ufr, x_mid, tau) # What is the solution at midpoint
 
-            if (yMid == 0 or (xEnd-xStart)/2 < Precision): # Solution found
+            if (y_mid == 0 or (x_end-x_start)/2 < precision): # Solution found
                 #self.alpha = xMid
-                return xMid
+                return x_mid
             else: # Solution not found
-                iIter += 1
-                if np.sign(yMid) == np.sign(yStart): # If the start point and the middle point have the same sign, then the root must be in the second half of the interval   
-                    xStart = xMid
+                i_iter += 1
+                if np.sign(y_mid) == np.sign(y_start): # If the start point and the middle point have the same sign, then the root must be in the second half of the interval   
+                    x_start = x_mid
                 else: # If the start point and the middle point have a different sign than by mean value theorem the interval must contain at least one root
-                    xEnd = xMid
+                    x_end = x_mid
         #self.alpha = None
         return None
