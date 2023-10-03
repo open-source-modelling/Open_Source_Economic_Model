@@ -4,6 +4,7 @@ from BondClasses import CorpBond
 from EquityClasses import EquityShare
 from SettingsClasses import Settings
 from datetime import datetime
+from CashClass import Cash
 
 def importSWEiopa(selected_param_file, selected_curves_file, country):
     param_raw = pd.read_csv(selected_param_file, sep=",", index_col=0)
@@ -35,8 +36,6 @@ def GetCorporateBonds(filename) -> CorpBond:
                                  market_price=float(row["Market_Price"]))
             yield corp_bond
 
-
-
 def GetEquityShare(filename:str) -> EquityShare:
     """
     :type filename: str
@@ -55,6 +54,18 @@ def GetEquityShare(filename:str) -> EquityShare:
                              growth_rate= float(row["Growth_Rate"]))
             yield equity_share
             
+def GetCash(filename:str) -> Cash:
+    """
+    :type filename: str
+    """
+
+    with open(filename, mode="r", encoding="utf-8-sig") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            cash = Cash(asset_id=int(row["Asset_ID"]),
+                             bank_account=float(row["Bank_Account"]))
+            return cash
+
 
 def GetSettings(filename:str) -> Settings:
     """
