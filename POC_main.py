@@ -1,5 +1,5 @@
 # Main script for POC
-from ImportData import GetEquityShare, GetSettings, importSWEiopa, GetCash
+from ImportData import GetEquityShare, GetSettings, importSWEiopa, GetCash, GetLiability
 from EquityClasses import *
 from PathsClasses import Paths
 from Curves import Curves
@@ -44,7 +44,11 @@ unique_terminal_list = equity_portfolio.unique_dates_profile(terminal_dates)
 # Save equity cash flows matrices
 equity_portfolio.save_equity_matrices_to_csv(unique_dividend = unique_list, unique_terminal=unique_terminal_list, dividend_matrix=dividend_dates, terminal_matrix=terminal_dates, paths =paths)
 
-## Price at modelling date
+# Load liability cashflows
+
+liabilities = GetLiability(paths.input+"Liability_Cashflow.csv")
+
+### Price at modelling date  ###
 
 
 

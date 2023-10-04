@@ -5,6 +5,7 @@ from EquityClasses import EquityShare
 from SettingsClasses import Settings
 from datetime import datetime
 from CashClass import Cash
+from LiabilityClasses import Liability
 
 def importSWEiopa(selected_param_file, selected_curves_file, country):
     param_raw = pd.read_csv(selected_param_file, sep=",", index_col=0)
@@ -65,6 +66,22 @@ def GetCash(filename:str) -> Cash:
             cash = Cash(asset_id=int(row["Asset_ID"]),
                              bank_account=float(row["Bank_Account"]))
             return cash
+
+def GetLiability(filename:str) -> Liability:
+    """
+    :type filename: str
+    """
+    liability_id = 1 # To Remove and abstract away
+    with open(filename, mode="r", encoding="utf-8-sig") as csvfile:
+        reader = csv.DictReader(csvfile)
+        cash_flow_series = []
+        cash_flow_date = []
+        for row in reader:
+            cash_flow_date.append(datetime.strptime(row["Liability_Date"], '%d/%m/%Y').date())
+            cash_flow_series.append(float(row["Liability_Size"]))
+        liabilities = Liability(liability_id=liability_id, cash_flow_dates=cash_flow_date, cash_flow_series=cash_flow_series)
+        return liabilities
+
 
 
 def GetSettings(filename:str) -> Settings:
