@@ -3,6 +3,7 @@ from ImportData import GetEquityShare, GetSettings, importSWEiopa, GetCash, GetL
 from EquityClasses import *
 from PathsClasses import Paths
 from Curves import Curves
+import pandas as pd
 import datetime
 
 paths = Paths() # Object used for folder navigation
@@ -48,16 +49,30 @@ equity_portfolio.save_equity_matrices_to_csv(unique_dividend = unique_list, uniq
 
 liabilities = GetLiability(paths.input+"Liability_Cashflow.csv")
 
-### Price at modelling date  ###
+### Market value at modelling date  ###
+
+asset_keys = equity_portfolio.equity_share.keys()
+
+market_price_tmp = []
+for key in asset_keys:
+    market_price_tmp.append(equity_portfolio.equity_share[key].market_price)
+
+market_price = pd.DataFrame(data=market_price_tmp, index=asset_keys,columns=[settings.modelling_date])
+print(sum(market_price[settings.modelling_date]))
+
+# Amount of cash at modelling date
+print(cash.bank_account)
+
+# Assume liabilities not payed at modelling date
+
+# Move to next period
 
 
 
 
-##
 
 
-print(equity_portfolio.equity_share)
-print(settings.modelling_date)
+
 
 
 
