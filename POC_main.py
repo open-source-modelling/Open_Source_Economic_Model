@@ -66,13 +66,35 @@ print(cash.bank_account)
 # Assume liabilities not payed at modelling date
 
 # Move to next period
+modelling_date_1 = settings.modelling_date + datetime.timedelta(days=365)
+
+# Check what cash flows expire between dates
+print(modelling_date_1)
+
+cash_flows = pd.DataFrame(data=np.zeros((len(dividend_dates),len(unique_list))),columns=unique_list)
+
+# Dataframe of cashflows (clumns are dates, rows, assets)
+counter = 0
+for asset in dividend_dates:
+    keys = asset.keys()
+    for key in keys:
+        cash_flows[key].iloc[counter] = asset[key]         
+    counter+=1
+
+print(cash_flows)
+
+# Which dates are expired
+expired_dates = []
+for date in unique_list:
+    if date <=modelling_date_1:
+        expired_dates.append(date)
+print(expired_dates)
 
 
+# Sum expired cash flows
+print(cash.bank_account)
+for date in expired_dates:
+    cash.bank_account +=sum(cash_flows[date])
+    cash_flows.drop(columns=date)
 
-
-
-
-
-
-
-
+print(cash.bank_account)
