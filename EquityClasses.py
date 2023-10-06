@@ -263,7 +263,7 @@ class EquitySharePortfolio():
                 else: # New cash flow date
                     unique_dates.append(one_dividend_date)
 
-        return unique_dates
+        return sorted(unique_dates)
     
     def cash_flow_profile_list_to_matrix(self, cash_flow_profile:list)->list:
         
