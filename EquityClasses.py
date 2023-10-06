@@ -107,6 +107,7 @@ class EquitySharePortfolio():
         for asset_id in self.equity_share:
             equity_share = self.equity_share[asset_id] # Select one asset position
             dividend_amount = 0
+            dividends = {}
             for dividend_date in equity_share.generate_dividend_dates(modelling_date, end_date):
                 if dividend_date in dividends: # If two cash flows on same date
                     pass
