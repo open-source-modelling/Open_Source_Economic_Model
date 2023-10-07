@@ -135,6 +135,7 @@ class EquitySharePortfolio():
         terminal_date: date
 
         for asset_id in self.equity_share:
+            terminals = {}
             equity_share = self.equity_share[asset_id]
             market_price = equity_share.generate_market_value(modelling_date, terminal_date, equity_share.market_price, equity_share.growth_rate)
             terminal_amount = equity_share.terminal_amount(market_price, equity_share.growth_rate, terminal_rate)
