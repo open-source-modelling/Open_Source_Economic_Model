@@ -98,3 +98,16 @@ for date in expired_dates:
     cash_flows.drop(columns=date)
 
 print(cash.bank_account)
+
+# Dataframe with terminal cash flows
+terminal_cash_flows = pd.DataFrame(data=np.zeros((len(terminal_dates),len(unique_terminal_list))),columns=unique_terminal_list)
+
+# Dataframe of terminal cashflows (clumns are dates, rows, assets)
+counter = 0
+for asset in terminal_dates:
+    keys = asset.keys()
+    for key in keys:
+        terminal_cash_flows[key].iloc[counter] = asset[key]         
+    counter+=1
+
+print(terminal_cash_flows)
