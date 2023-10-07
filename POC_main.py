@@ -111,3 +111,21 @@ for asset in terminal_dates:
     counter+=1
 
 print(terminal_cash_flows)
+
+
+# Which dates are expired
+expired_dates = []
+for date in unique_terminal_list:
+    if date <=modelling_date_1:
+        expired_dates.append(date)
+print(expired_dates)
+
+print(cash.bank_account)
+for date in expired_dates:
+    cash.bank_account +=sum(cash_flows[date])
+    cash_flows.drop(columns=date)
+
+print(cash.bank_account)
+
+
+
