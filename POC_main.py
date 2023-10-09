@@ -50,7 +50,6 @@ equity_portfolio.save_equity_matrices_to_csv(unique_dividend = unique_list, uniq
 liabilities = GetLiability(paths.input+"Liability_Cashflow.csv")
 
 ### Market value at modelling date  ###
-
 asset_keys = equity_portfolio.equity_share.keys()
 
 market_price_tmp = []
@@ -58,10 +57,7 @@ for key in asset_keys:
     market_price_tmp.append(equity_portfolio.equity_share[key].market_price)
 
 market_price = pd.DataFrame(data=market_price_tmp, index=asset_keys,columns=[settings.modelling_date])
-print(sum(market_price[settings.modelling_date]))
-
-# Amount of cash at modelling date
-print(cash.bank_account)
+#print(sum(market_price[settings.modelling_date]))
 
 # Assume liabilities not payed at modelling date
 
@@ -69,63 +65,69 @@ print(cash.bank_account)
 modelling_date_1 = settings.modelling_date + datetime.timedelta(days=365)
 
 # Check what cash flows expire between dates
-print(modelling_date_1)
+#print(modelling_date_1)
 
-cash_flows = pd.DataFrame(data=np.zeros((len(dividend_dates),len(unique_list))),columns=unique_list)
+def create_cashflow_dataframe(cash_flow_dates, unique_dates):
 
-# Dataframe of cashflows (clumns are dates, rows, assets)
-counter = 0
-for asset in dividend_dates:
-    keys = asset.keys()
-    for key in keys:
-        cash_flows[key].iloc[counter] = asset[key]         
-    counter+=1
+    cash_flows = pd.DataFrame(data=np.zeros((len(cash_flow_dates),len(unique_dates))), columns=unique_dates)
+    # Dataframe of cashflows (clumns are dates, rows, assets)
+    counter = 0
+    for asset in cash_flow_dates:
+        keys = asset.keys()
+        for key in keys:
+            cash_flows[key].iloc[counter] = asset[key]         
+        counter+=1
+    return cash_flows
 
-print(cash_flows)
+def calculate_expired_dates(list_of_dates, deadline: date):
+    expired_dates = []
+    for date in list_of_dates:
+        if date <=deadline:
+            expired_dates.append(date)
+    return expired_dates
+
+cash_flows = create_cashflow_dataframe(dividend_dates, unique_list)
 
 # Which dates are expired
-expired_dates = []
-for date in unique_list:
-    if date <=modelling_date_1:
-        expired_dates.append(date)
-print(expired_dates)
 
+expired_dates = calculate_expired_dates(unique_list, modelling_date_1)
 
 # Sum expired cash flows
-print(cash.bank_account)
+#print(cash.bank_account)
 for date in expired_dates:
     cash.bank_account +=sum(cash_flows[date])
     cash_flows.drop(columns=date)
-
-print(cash.bank_account)
 
 # Dataframe with terminal cash flows
-terminal_cash_flows = pd.DataFrame(data=np.zeros((len(terminal_dates),len(unique_terminal_list))),columns=unique_terminal_list)
 
-# Dataframe of terminal cashflows (clumns are dates, rows, assets)
-counter = 0
-for asset in terminal_dates:
-    keys = asset.keys()
-    for key in keys:
-        terminal_cash_flows[key].iloc[counter] = asset[key]         
-    counter+=1
+terminal_cash_flows = create_cashflow_dataframe(terminal_dates, unique_terminal_list)
 
-print(terminal_cash_flows)
-
-
+#print(terminal_cash_flows)
 # Which dates are expired
-expired_dates = []
-for date in unique_terminal_list:
-    if date <=modelling_date_1:
-        expired_dates.append(date)
-print(expired_dates)
 
-print(cash.bank_account)
+expired_dates = calculate_expired_dates(unique_terminal_list, modelling_date_1)
+
+#print(cash.bank_account)
 for date in expired_dates:
     cash.bank_account +=sum(cash_flows[date])
     cash_flows.drop(columns=date)
 
-print(cash.bank_account)
+#print(cash.bank_account)
+
+liability_cash_flows = pd.DataFrame(columns=liabilities.cash_flow_dates)
+liability_cash_flows.loc[-1] = liabilities.cash_flow_series
+
+#print(liability_cash_flows)
+# Which dates are expired
+
+expired_dates = calculate_expired_dates(liabilities.cash_flow_dates, modelling_date_1)
+
+for date in expired_dates:
+    cash.bank_account -=sum(liability_cash_flows[date])
+    liability_cash_flows.drop(columns=date)
+
+
+
 
 
 
