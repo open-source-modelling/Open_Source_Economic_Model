@@ -53,10 +53,14 @@ liabilities = GetLiability(paths.input+"Liability_Cashflow.csv")
 asset_keys = equity_portfolio.equity_share.keys()
 
 market_price_tmp = []
+growth_rate_tmp = []
 for key in asset_keys:
     market_price_tmp.append(equity_portfolio.equity_share[key].market_price)
+    growth_rate_tmp.append(equity_portfolio.equity_share[key].growth_rate)
 
 market_price = pd.DataFrame(data=market_price_tmp, index=asset_keys,columns=[settings.modelling_date])
+growth_rate = pd.DataFrame(data=growth_rate_tmp, index=asset_keys,columns=[settings.modelling_date])
+
 #print(sum(market_price[settings.modelling_date]))
 
 # Assume liabilities not payed at modelling date
@@ -89,7 +93,6 @@ def calculate_expired_dates(list_of_dates, deadline: date):
 cash_flows = create_cashflow_dataframe(dividend_dates, unique_list)
 
 # Which dates are expired
-
 expired_dates = calculate_expired_dates(unique_list, modelling_date_1)
 
 # Sum expired cash flows
@@ -99,12 +102,10 @@ for date in expired_dates:
     cash_flows.drop(columns=date)
 
 # Dataframe with terminal cash flows
-
 terminal_cash_flows = create_cashflow_dataframe(terminal_dates, unique_terminal_list)
 
 #print(terminal_cash_flows)
 # Which dates are expired
-
 expired_dates = calculate_expired_dates(unique_terminal_list, modelling_date_1)
 
 #print(cash.bank_account)
@@ -119,12 +120,25 @@ liability_cash_flows.loc[-1] = liabilities.cash_flow_series
 
 #print(liability_cash_flows)
 # Which dates are expired
-
 expired_dates = calculate_expired_dates(liabilities.cash_flow_dates, modelling_date_1)
 
 for date in expired_dates:
     cash.bank_account -=sum(liability_cash_flows[date])
     liability_cash_flows.drop(columns=date)
+
+# Calculate new market value of portfolio
+
+time_frac = (modelling_date_1 - settings.modelling_date).days/365.5
+print(market_price[settings.modelling_date]* (1+growth_rate[settings.modelling_date])**time_frac)
+market_price[modelling_date_1] = market_price[settings.modelling_date]* (1+growth_rate[settings.modelling_date])**time_frac
+
+total_market_value=sum(market_price[modelling_date_1])
+
+print(total_market_value/cash.bank_account)
+
+
+# Sell/ buy portfolio
+
 
 
 
