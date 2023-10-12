@@ -54,13 +54,17 @@ asset_keys = equity_portfolio.equity_share.keys()
 
 market_price_tmp = []
 growth_rate_tmp = []
+asset_id_tmp = []
 for key in asset_keys:
     market_price_tmp.append(equity_portfolio.equity_share[key].market_price)
     growth_rate_tmp.append(equity_portfolio.equity_share[key].growth_rate)
+    asset_id_tmp.append(equity_portfolio.equity_share[key].asset_id)
 
 market_price = pd.DataFrame(data=market_price_tmp, index=asset_keys,columns=[settings.modelling_date])
 growth_rate = pd.DataFrame(data=growth_rate_tmp, index=asset_keys,columns=[settings.modelling_date])
 
+market_price.index=asset_id_tmp
+growth_rate.index=asset_id_tmp
 #print(sum(market_price[settings.modelling_date]))
 
 # Assume liabilities not payed at modelling date
@@ -134,7 +138,20 @@ market_price[modelling_date_1] = market_price[settings.modelling_date]* (1+growt
 
 total_market_value=sum(market_price[modelling_date_1])
 
-print(total_market_value/cash.bank_account)
+# Buy or sell
+if cash.bank_account<0:
+    #Sell assets
+    percentToSell = min(1,-cash.bank_account/total_market_value)
+    market_price[modelling_date_1] = (1-percentToSell)*market_price[modelling_date_1]
+    cash.bank_account += total_market_value-sum(market_price[modelling_date_1])
+elif cash.bank_account>0:
+    # Buy assets
+    percentToBuy = min(1,cash.bank_account/total_market_value)
+    market_price[modelling_date_1] = (1+percentToBuy)*market_price[modelling_date_1]
+    cash.bank_account += total_market_value- sum(market_price[modelling_date_1])  
+    pass
+else:
+    pass
 
 
 # Sell/ buy portfolio
