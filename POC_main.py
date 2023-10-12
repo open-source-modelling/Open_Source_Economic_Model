@@ -69,8 +69,6 @@ growth_rate = pd.DataFrame(data=growth_rate_tmp, index=asset_keys,columns=[setti
 market_price.index=asset_id_tmp
 growth_rate.index=asset_id_tmp
 
-#Note that assumed liabilities not payed at modelling date
-
 ###### ALM FUNCTIONS #####
 def create_cashflow_dataframe(cash_flow_dates, unique_dates):
 
@@ -134,7 +132,7 @@ for date in expired_dates:
 market_price[modelling_date_1] = market_price[settings.modelling_date]* (1+growth_rate[settings.modelling_date])**time_frac
 
 total_market_value=sum(market_price[modelling_date_1])
-print(cash_flows)
+
 # Buy or sell
 if cash.bank_account<0:
     #Sell assets
@@ -155,13 +153,12 @@ else:
     pass
 
 
-print(cash_flows)
+#print(cash_flows)
 #print(market_price)
 #print(total_market_value)
 #print(sum(market_price[modelling_date_1]))
 #print(total_market_value-sum(market_price[modelling_date_1]))
 #print(cash.bank_account)
-# Sell/ buy portfolio
 
 
 
