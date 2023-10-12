@@ -6,6 +6,9 @@ from Curves import Curves
 import pandas as pd
 import datetime
 
+
+####### PREPARATION OF ENVIRONMENT #######
+
 paths = Paths() # Object used for folder navigation
 
 # Import run parameters
@@ -65,16 +68,8 @@ growth_rate = pd.DataFrame(data=growth_rate_tmp, index=asset_keys,columns=[setti
 
 market_price.index=asset_id_tmp
 growth_rate.index=asset_id_tmp
-#print(sum(market_price[settings.modelling_date]))
 
-# Assume liabilities not payed at modelling date
-
-# Move to next period
-modelling_date_1 = settings.modelling_date + datetime.timedelta(days=365)
-
-# Check what cash flows expire between dates
-#print(modelling_date_1)
-
+###### ALM FUNCTIONS #####
 def create_cashflow_dataframe(cash_flow_dates, unique_dates):
 
     cash_flows = pd.DataFrame(data=np.zeros((len(cash_flow_dates),len(unique_dates))), columns=unique_dates)
@@ -94,35 +89,38 @@ def calculate_expired_dates(list_of_dates, deadline: date):
             expired_dates.append(date)
     return expired_dates
 
+### PREPARE DATA STRUCTURES ### 
 cash_flows = create_cashflow_dataframe(dividend_dates, unique_list)
+# Dataframe with terminal cash flows
+terminal_cash_flows = create_cashflow_dataframe(terminal_dates, unique_terminal_list)
+
+# DataFrame with liabiliy cash flows
+liability_cash_flows = pd.DataFrame(columns=liabilities.cash_flow_dates)
+liability_cash_flows.loc[-1] = liabilities.cash_flow_series
+liability_cash_flows.index = [liabilities.liability_id]
+
+###### MOVE TO NEXT PERIOD #####
+
+# Move modelling time forward
+modelling_date_1 = settings.modelling_date + datetime.timedelta(days=365)
+
+time_frac = (modelling_date_1 - settings.modelling_date).days/365.5
 
 # Which dates are expired
 expired_dates = calculate_expired_dates(unique_list, modelling_date_1)
 
 # Sum expired cash flows
-#print(cash.bank_account)
 for date in expired_dates:
     cash.bank_account +=sum(cash_flows[date])
     cash_flows.drop(columns=date)
 
-# Dataframe with terminal cash flows
-terminal_cash_flows = create_cashflow_dataframe(terminal_dates, unique_terminal_list)
-
-#print(terminal_cash_flows)
 # Which dates are expired
 expired_dates = calculate_expired_dates(unique_terminal_list, modelling_date_1)
 
-#print(cash.bank_account)
 for date in expired_dates:
     cash.bank_account +=sum(cash_flows[date])
     cash_flows.drop(columns=date)
 
-#print(cash.bank_account)
-
-liability_cash_flows = pd.DataFrame(columns=liabilities.cash_flow_dates)
-liability_cash_flows.loc[-1] = liabilities.cash_flow_series
-
-#print(liability_cash_flows)
 # Which dates are expired
 expired_dates = calculate_expired_dates(liabilities.cash_flow_dates, modelling_date_1)
 
@@ -131,9 +129,6 @@ for date in expired_dates:
     liability_cash_flows.drop(columns=date)
 
 # Calculate new market value of portfolio
-
-time_frac = (modelling_date_1 - settings.modelling_date).days/365.5
-print(market_price[settings.modelling_date]* (1+growth_rate[settings.modelling_date])**time_frac)
 market_price[modelling_date_1] = market_price[settings.modelling_date]* (1+growth_rate[settings.modelling_date])**time_frac
 
 total_market_value=sum(market_price[modelling_date_1])
@@ -144,17 +139,26 @@ if cash.bank_account<0:
     percentToSell = min(1,-cash.bank_account/total_market_value)
     market_price[modelling_date_1] = (1-percentToSell)*market_price[modelling_date_1]
     cash.bank_account += total_market_value-sum(market_price[modelling_date_1])
+    cash_flows = cash_flows.multiply((1-percentToSell))
+    terminal_cash_flows = terminal_cash_flows.multiply((1-percentToSell))
+
 elif cash.bank_account>0:
     # Buy assets
     percentToBuy = min(1,cash.bank_account/total_market_value)
     market_price[modelling_date_1] = (1+percentToBuy)*market_price[modelling_date_1]
     cash.bank_account += total_market_value- sum(market_price[modelling_date_1])  
-    pass
+    cash_flows = cash_flows.multiply(1+percentToBuy)
+    terminal_cash_flows = terminal_cash_flows.multiply(1+percentToBuy)
 else:
     pass
 
 
-# Sell/ buy portfolio
+#print(cash_flows)
+#print(market_price)
+#print(total_market_value)
+#print(sum(market_price[modelling_date_1]))
+#print(total_market_value-sum(market_price[modelling_date_1]))
+#print(cash.bank_account)
 
 
 
