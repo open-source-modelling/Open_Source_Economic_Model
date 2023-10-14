@@ -50,6 +50,8 @@ equity_portfolio.save_equity_matrices_to_csv(unique_dividend = unique_list, uniq
 # Load liability cashflows
 liabilities = GetLiability(paths.input+"Liability_Cashflow.csv")
 
+unique_liabilities_list = liabilities.unique_dates_profile(liabilities.cash_flow_dates)
+
 ### Prepare initial data frames ###
 asset_keys = equity_portfolio.equity_share.keys()
 
@@ -89,6 +91,16 @@ def calculate_expired_dates(list_of_dates, deadline: date):
             expired_dates.append(date)
     return expired_dates
 
+def set_dates_of_interest(modelling_date, end_date):
+    next_date_of_interest = modelling_date
+
+    dates_of_interest = []
+    while next_date_of_interest <= end_date:
+        next_date_of_interest = next_date_of_interest + datetime.timedelta(days=365)
+        dates_of_interest.append(next_date_of_interest)
+
+    return pd.Series(dates_of_interest, name="Dates of interest")
+
 ### PREPARE DATA STRUCTURES WITH CASH FLOWS### 
 # Dataframe with dividend cash flows
 cash_flows = create_cashflow_dataframe(dividend_dates, unique_list)
@@ -100,9 +112,19 @@ liability_cash_flows = pd.DataFrame(columns=liabilities.cash_flow_dates)
 liability_cash_flows.loc[-1] = liabilities.cash_flow_series
 liability_cash_flows.index = [liabilities.liability_id]
 
+###### GENERATE VECTOR OF NEXT PERIODS #####
+
 ###### MOVE TO NEXT PERIOD #####
 # Note that from here downward, it goes into the loop by modelling time
 
+dates_of_interest = set_dates_of_interest(settings.modelling_date, end_date)
+dates_of_interest.to_csv(paths.intermediate+"time_steps.csv")
+
+#previous_date_of_interest = settings.modelling_date
+#for date_of_interest in dates_of_interest.values:
+    
+#    print(type(date_of_interest))
+    
 # Move modelling time forward
 modelling_date_1 = settings.modelling_date + datetime.timedelta(days=365)
 time_frac = (modelling_date_1 - settings.modelling_date).days/365.5
@@ -112,19 +134,21 @@ expired_dates = calculate_expired_dates(unique_list, modelling_date_1)
 for date in expired_dates: # Sum expired dividend flows
     cash.bank_account +=sum(cash_flows[date])
     cash_flows.drop(columns=date)
+    unique_list.remove(date)
 
 # Which terminal dates are expired
 expired_dates = calculate_expired_dates(unique_terminal_list, modelling_date_1)
 for date in expired_dates: # Sum expired terminal flows
     cash.bank_account +=sum(cash_flows[date])
     cash_flows.drop(columns=date)
+    unique_terminal_list.remove(date)
 
 # Which liability dates are expired
-expired_dates = calculate_expired_dates(liabilities.cash_flow_dates, modelling_date_1)
+expired_dates = calculate_expired_dates(unique_liabilities_list, modelling_date_1)
 for date in expired_dates: # Sum expired liability flows
     cash.bank_account -=sum(liability_cash_flows[date])
     liability_cash_flows.drop(columns=date)
-
+    unique_liabilities_list.remove(date)
 # Calculate market value of portfolio after stock growth
 market_price[modelling_date_1] = market_price[settings.modelling_date]* (1+growth_rate[settings.modelling_date])**time_frac
 
@@ -148,6 +172,7 @@ elif cash.bank_account>0: # Buy assets
 else: # Remaining cash flow is equal to 0 so no trading needed
     pass
 
+#previous_date_of_interest = date_of_interest
 #print(cash_flows)
 #print(market_price)
 #print(total_market_value)
