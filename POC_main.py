@@ -6,7 +6,6 @@ from Curves import Curves
 import pandas as pd
 import datetime
 
-
 ####### PREPARATION OF ENVIRONMENT #######
 
 paths = Paths() # Object used for folder navigation
@@ -114,65 +113,65 @@ liability_cash_flows.index = [liabilities.liability_id]
 
 ###### GENERATE VECTOR OF NEXT PERIODS #####
 
-###### MOVE TO NEXT PERIOD #####
-# Note that from here downward, it goes into the loop by modelling time
-
 dates_of_interest = set_dates_of_interest(settings.modelling_date, end_date)
 dates_of_interest.to_csv(paths.intermediate+"time_steps.csv")
 
-#previous_date_of_interest = settings.modelling_date
-#for date_of_interest in dates_of_interest.values:
+###### MOVE TO NEXT PERIOD #####
+
+previous_date_of_interest = settings.modelling_date
+
+for date_of_interest in dates_of_interest.values:
     
-#    print(type(date_of_interest))
-    
-# Move modelling time forward
-modelling_date_1 = settings.modelling_date + datetime.timedelta(days=365)
-time_frac = (modelling_date_1 - settings.modelling_date).days/365.5
+    # Move modelling time forward
+    time_frac = (date_of_interest - previous_date_of_interest).days/365.5
 
-# Which dividend dates are expired
-expired_dates = calculate_expired_dates(unique_list, modelling_date_1)
-for date in expired_dates: # Sum expired dividend flows
-    cash.bank_account +=sum(cash_flows[date])
-    cash_flows.drop(columns=date)
-    unique_list.remove(date)
+    # Which dividend dates are expired
+    expired_dates = calculate_expired_dates(unique_list, date_of_interest)
+    for date in expired_dates: # Sum expired dividend flows
+        cash.bank_account +=sum(cash_flows[date])
+        cash_flows.drop(columns=date)
+        unique_list.remove(date)
 
-# Which terminal dates are expired
-expired_dates = calculate_expired_dates(unique_terminal_list, modelling_date_1)
-for date in expired_dates: # Sum expired terminal flows
-    cash.bank_account +=sum(cash_flows[date])
-    cash_flows.drop(columns=date)
-    unique_terminal_list.remove(date)
+    # Which terminal dates are expired
+    expired_dates = calculate_expired_dates(unique_terminal_list, date_of_interest)
+    for date in expired_dates: # Sum expired terminal flows
+        cash.bank_account +=sum(terminal_cash_flows[date])
+        terminal_cash_flows.drop(columns=date)
+        unique_terminal_list.remove(date)
 
-# Which liability dates are expired
-expired_dates = calculate_expired_dates(unique_liabilities_list, modelling_date_1)
-for date in expired_dates: # Sum expired liability flows
-    cash.bank_account -=sum(liability_cash_flows[date])
-    liability_cash_flows.drop(columns=date)
-    unique_liabilities_list.remove(date)
-# Calculate market value of portfolio after stock growth
-market_price[modelling_date_1] = market_price[settings.modelling_date]* (1+growth_rate[settings.modelling_date])**time_frac
+    # Which liability dates are expired
+    expired_dates = calculate_expired_dates(unique_liabilities_list, date_of_interest)
+    for date in expired_dates: # Sum expired liability flows
+        cash.bank_account -=sum(liability_cash_flows[date])
+        liability_cash_flows.drop(columns=date)
+        unique_liabilities_list.remove(date)
 
-total_market_value=sum(market_price[modelling_date_1]) # Total value of portfolio after growth
+    # Calculate market value of portfolio after stock growth
+    market_price[date_of_interest] = market_price[previous_date_of_interest]* (1+growth_rate[settings.modelling_date])**time_frac
 
-#print(total_market_value/initial_market_value-1) # Return of the portfolio
+    total_market_value=sum(market_price[date_of_interest]) # Total value of portfolio after growth
 
-# Trading of assets
-if cash.bank_account<0: # Sell assets   
-    percentToSell = min(1,-cash.bank_account/total_market_value) # How much of the portfolio needs to be sold
-    market_price[modelling_date_1] = (1-percentToSell)*market_price[modelling_date_1] # Sold proportion of existing shares
-    cash.bank_account += total_market_value-sum(market_price[modelling_date_1]) # Add cash to bank account equal to shares sold 
-    cash_flows = cash_flows.multiply((1-percentToSell)) # Adjust future dividend flows for new asset allocation
-    terminal_cash_flows = terminal_cash_flows.multiply((1-percentToSell)) # Adjust terminal cash flows for new asset allocation
-elif cash.bank_account>0: # Buy assets  
-    percentToBuy = min(1,cash.bank_account/total_market_value) # What % of the portfolio is the excess cash
-    market_price[modelling_date_1] = (1+percentToBuy)*market_price[modelling_date_1] # Bought new shares as proportion of existing shares
-    cash.bank_account += total_market_value- sum(market_price[modelling_date_1]) # Bank account reduced for cash spent on buying shares 
-    cash_flows = cash_flows.multiply(1+percentToBuy) # Adjust future dividend flows for new asset allocation
-    terminal_cash_flows = terminal_cash_flows.multiply(1+percentToBuy)# Adjust terminal cash flows for new asset allocation
-else: # Remaining cash flow is equal to 0 so no trading needed
-    pass
+    #print(total_market_value/initial_market_value-1) # Return of the portfolio
 
-#previous_date_of_interest = date_of_interest
+    # Trading of assets
+    if total_market_value<= 0:
+        pass
+    elif cash.bank_account<0: # Sell assets   
+        percentToSell = min(1,-cash.bank_account/total_market_value) # How much of the portfolio needs to be sold
+        market_price[date_of_interest] = (1-percentToSell)*market_price[date_of_interest] # Sold proportion of existing shares
+        cash.bank_account += total_market_value-sum(market_price[date_of_interest]) # Add cash to bank account equal to shares sold 
+        cash_flows = cash_flows.multiply((1-percentToSell)) # Adjust future dividend flows for new asset allocation
+        terminal_cash_flows = terminal_cash_flows.multiply((1-percentToSell)) # Adjust terminal cash flows for new asset allocation
+    elif cash.bank_account>0: # Buy assets  
+        percentToBuy = min(1,cash.bank_account/total_market_value) # What % of the portfolio is the excess cash
+        market_price[date_of_interest] = (1+percentToBuy)*market_price[date_of_interest] # Bought new shares as proportion of existing shares
+        cash.bank_account += total_market_value- sum(market_price[date_of_interest]) # Bank account reduced for cash spent on buying shares 
+        cash_flows = cash_flows.multiply(1+percentToBuy) # Adjust future dividend flows for new asset allocation
+        terminal_cash_flows = terminal_cash_flows.multiply(1+percentToBuy)# Adjust terminal cash flows for new asset allocation
+    else: # Remaining cash flow is equal to 0 so no trading needed
+        pass
+
+    previous_date_of_interest = date_of_interest
 #print(cash_flows)
 #print(market_price)
 #print(total_market_value)
@@ -180,10 +179,3 @@ else: # Remaining cash flow is equal to 0 so no trading needed
 #print(total_market_value-sum(market_price[modelling_date_1]))
 #print(cash.bank_account)
 # Sell/ buy portfolio
-
-
-
-
-
-
-
