@@ -38,8 +38,8 @@ dividend_dates = equity_portfolio.create_dividend_dates(settings.modelling_date,
 terminal_dates = equity_portfolio.create_terminal_dates(modelling_date=settings.modelling_date, terminal_date=end_date, terminal_rate=curves.ufr)
 
 # Calculate date fractions based on modelling date
-[all_date_frac, all_dates_considered] = equity_portfolio.create_dividend_fractions(settings.modelling_date, dividend_dates) 
-[all_dividend_date_frac, all_dividend_dates_considered] = equity_portfolio.create_terminal_fractions(settings.modelling_date, terminal_dates)
+#[all_date_frac, all_dates_considered] = equity_portfolio.create_dividend_fractions(settings.modelling_date, dividend_dates) 
+#[all_dividend_date_frac, all_dividend_dates_considered] = equity_portfolio.create_terminal_fractions(settings.modelling_date, terminal_dates)
 
 unique_list = equity_portfolio.unique_dates_profile(dividend_dates)
 unique_terminal_list = equity_portfolio.unique_dates_profile(terminal_dates)
@@ -54,25 +54,7 @@ unique_liabilities_list = liabilities.unique_dates_profile(liabilities.cash_flow
 
 ### Prepare initial data frames ###
 
-def equity_portfolio_to_dataframe(equity_portfolio):
-    
-    asset_keys = equity_portfolio.equity_share.keys()
-
-    market_price_tmp = []
-    growth_rate_tmp = []
-    asset_id_tmp = []
-    for key in asset_keys:
-        market_price_tmp.append(equity_portfolio.equity_share[key].market_price)
-        growth_rate_tmp.append(equity_portfolio.equity_share[key].growth_rate)
-        asset_id_tmp.append(equity_portfolio.equity_share[key].asset_id)
-
-    market_price = pd.DataFrame(data=market_price_tmp, index=asset_id_tmp,columns=[settings.modelling_date])
-
-    growth_rate = pd.DataFrame(data=growth_rate_tmp, index=asset_id_tmp,columns=[settings.modelling_date])
-
-    return [market_price, growth_rate]
-
-[market_price_df, growth_rate_df]=equity_portfolio_to_dataframe(equity_portfolio)
+[market_price_df, growth_rate_df]=equity_portfolio.init_equity_portfolio_to_dataframe(settings.modelling_date)
 
 previous_market_value= sum(market_price_df[settings.modelling_date]) # Value of the initial portfolio
 
