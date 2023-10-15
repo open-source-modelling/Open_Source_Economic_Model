@@ -229,7 +229,25 @@ def test_save_equity_matrices_to_csv(equity_share_1, equity_share_2, paths):
     assert file_2.size > 1
     assert file_3.size > 1
     assert file_4.size > 1
-     
+
+def test_init_equity_portfolio_to_dataframe(equity_share_1, equity_share_2):
+    modelling_date = datetime.date(2023, 6, 1)
+    equity_share_portfolio = EquitySharePortfolio()
+    equity_share_portfolio.add(equity_share_1)
+    equity_share_portfolio.add(equity_share_2)
+    [market_price, growth_rate] = equity_share_portfolio.init_equity_portfolio_to_dataframe(modelling_date)
+    print("Please print this")
+    print(type(market_price))
+    assert isinstance(market_price, pd.DataFrame)
+    assert isinstance(growth_rate, pd.DataFrame)
+    assert  market_price.columns ==modelling_date 
+    assert  growth_rate.columns == modelling_date
+    assert market_price[modelling_date][equity_share_1.asset_id] ==equity_share_1.market_price
+    assert market_price[modelling_date][equity_share_2.asset_id] ==equity_share_2.market_price
+    assert growth_rate[modelling_date][equity_share_1.asset_id] ==equity_share_1.growth_rate
+    assert growth_rate[modelling_date][equity_share_2.asset_id] ==equity_share_2.growth_rate
+
+
 
 #def test_cash_flow_profile_list_to_matrix_one_equity(equity_share_1, equity_share_2):
 #   equity_share_portfolio = EquitySharePortfolio()
