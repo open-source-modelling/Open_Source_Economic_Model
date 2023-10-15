@@ -36,14 +36,21 @@ Ultimately, OSAL should be able to take as input:
 The OSAL should be able to produce a projection of what would happen to the balance sheet of this company under the assumptions provided as input (In a simplified way). 
 
 ## Methodology
-The development of the OSAL model is still very much an ongoing project. However, a draft of the methodology document can be found in the Documentation folder as [pdf]:(https://github.com/open-source-modelling/Asset_Liability_Model_POC_python/blob/main/Documentation/OSAL_POC_Documentation_draft.pdf) or a [Jupyter notebook]:(https://github.com/open-source-modelling/Asset_Liability_Model_POC_python/blob/main/Documentation/OSAL_POC_Documentation_draft.ipynb).
+The development of the OSAL model is still very much an ongoing project. However, a draft of the methodology document can be found in the [Documentation] folder as [OSAL pdf] or a [OSAL Jupyter notebook].
 Specific deep dives into topics related to the methodology are available as Jupyter notebooks or pdf-s. We found this to be a usefull method to open the floor to feedback. The specific topics are:
- - Yield-curve calibration/projection
- - Equity pricing
- - Fixed income pricing
+ - Yield-curve calibration/projection [Term structure Jupyter notebook]
+ - Equity pricing [Equity pricing Jupyter notebook]
+ - Fixed income pricing [Bond pricing Jupyter notebook]
 
 ## Getting started
 So far, we have produced a simple example that can be ran using the script `POC_main.py`, of a hypothetical portfolio of a few equities and a fixed liability cash flow. This example will grow as more development is committed to the main branch.
 
 ## Ask to the community
 Send us an email at GREGOR@OSMODELLING.COM with feedback, comments, ideas on what we could do better etc. Do you want to help us on this (very niche) open source project?
+
+[Documentation]:https://github.com/open-source-modelling/Asset_Liability_Model_POC_python/tree/main/Documentation
+[OSAL pdf]:https://github.com/open-source-modelling/Asset_Liability_Model_POC_python/blob/main/Documentation/OSAL_POC_Documentation_draft.pdf
+[OSAL Jupyter notebook]:https://github.com/open-source-modelling/Asset_Liability_Model_POC_python/blob/main/Documentation/OSAL_POC_Documentation_draft.ipynb
+[Term structure Jupyter notebook]:https://github.com/open-source-modelling/Asset_Liability_Model_POC_python/blob/main/Documentation/PROTOTYPE%20CALIBRATION%20AND%20PROJECTION.ipynb
+[Equity pricing Jupyter notebook]:https://github.com/open-source-modelling/Asset_Liability_Model_POC_python/blob/main/Documentation/PROTOTYPE%20EQUITY%20PRICING.ipynb
+[Bond pricing Jupyter notebook]: https://github.com/open-source-modelling/Asset_Liability_Model_POC_python/blob/main/Documentation/PROTOTYPE%20BOND%20PRICING.ipynb
