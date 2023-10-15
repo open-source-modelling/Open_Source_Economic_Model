@@ -37,13 +37,14 @@ The OSAL should be able to produce a projection of what would happen to the bala
 
 ## Methodology
 The development of the OSAL model is still very much an ongoing project. However, a draft of the methodology document can be found in the [Documentation] folder as [OSAL pdf] or a [OSAL Jupyter notebook].
-Specific deep dives into topics related to the methodology are available as Jupyter notebooks or pdf-s. We found this to be a usefull method to open the floor to feedback. The specific topics are:
- - Yield-curve calibration/projection [Term structure Jupyter notebook]
+
+Specific deep dives into topics related to the methodology are available as Jupyter notebooks or pdf-s. We found this to be a usefull method to open the floor to feedback. Note that notebooks are currently sparsely maintained. If interested, let us know and we can update the notebook to the latest version. The specific topics are:
+ - Yield-curve calibration/projection [Term structure Jupyter notebook] 
  - Equity pricing [Equity pricing Jupyter notebook]
  - Fixed income pricing [Bond pricing Jupyter notebook]
 
 ## Getting started
-So far, we have produced a simple example that can be ran using the script `POC_main.py`, of a hypothetical portfolio of a few equities and a fixed liability cash flow. This example will grow as more development is committed to the main branch.
+So far, we have produced a simple example that can be ran using the script `POC_main.py`. A hypothetical portfolio of a few equities and a single fixed liability cash flow profile. This example will grow as more development is committed to the main branch.
 
 ## Ask to the community
 Send us an email at GREGOR@OSMODELLING.COM with feedback, comments, ideas on what we could do better etc. Do you want to help us on this (very niche) open source project?
