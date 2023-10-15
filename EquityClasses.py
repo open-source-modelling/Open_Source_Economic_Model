@@ -304,6 +304,23 @@ class EquitySharePortfolio():
         pd.DataFrame(dividend_matrix).to_csv(filepath_3)
         pd.DataFrame(terminal_matrix).to_csv(filepath_4)
 
+    def init_equity_portfolio_to_dataframe(self, modelling_date: date):
+        
+        asset_keys = self.equity_share.keys()
+
+        market_price_tmp = []
+        growth_rate_tmp = []
+        asset_id_tmp = []
+        for key in asset_keys:
+            market_price_tmp.append(self.equity_share[key].market_price)
+            growth_rate_tmp.append(self.equity_share[key].growth_rate)
+            asset_id_tmp.append(self.equity_share[key].asset_id)
+
+        market_price = pd.DataFrame(data=market_price_tmp, index=asset_id_tmp,columns=[modelling_date])
+
+        growth_rate = pd.DataFrame(data=growth_rate_tmp, index=asset_id_tmp,columns=[modelling_date])
+
+        return [market_price, growth_rate]
 #    def create_terminal_cashflow(self, modelling_date: date, end_date: date) -> dict:
 #        """
 #        self : EquitySharePortfolio class instance
