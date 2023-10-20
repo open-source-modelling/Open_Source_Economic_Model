@@ -1,21 +1,14 @@
 import numpy as np
 from datetime import datetime as dt, timedelta
 from datetime import date
-from enum import IntEnum
 from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
 from typing import List, Dict, Any
+from FrequencyClass import Frequency
 
 
-class Frequency(IntEnum):
-    ANNUAL = 1
-    BIANNUAL = 2
-    TRIANNUAL = 3
-    QUARTERLY = 4
-    MONTHLY = 12
 
-
-@dataclass
+@dataclass(frozen=True)
 class CorpBond:
     asset_id: int
     nace: str
@@ -28,6 +21,32 @@ class CorpBond:
     recovery_rate: float
     default_probability: float
     market_price: float
+
+    def __post_init__(self) -> None:
+        if self.asset_id<=0:
+            raise ValueError("Asset ID must be greater than 0")
+        if self.coupon_rate < 0:
+            raise ValueError("Coupon rate cannot be negative")
+        if self.coupon_rate > 1:
+            raise ValueError("Coupon rate cannot be greater than 1")
+        if self.recovery_rate < 0:
+            raise ValueError("Recovery rate cannot be negative")
+        if self.recovery_rate > 1:
+            raise ValueError("Recovery rate cannot be greater than 1")
+        if self.default_probability < 0:
+            raise ValueError("Default probability cannot be negative")
+        if self.default_probability > 1:
+            raise ValueError("Default probability cannot be greater than 1")
+        if self.market_price < 0:
+            raise ValueError("Market price cannot be negative")
+        if self.frequency not in [Frequency.MONTHLY, Frequency.QUARTERLY,Frequency.TRIANNUAL, Frequency.BIANNUAL, Frequency.ANNUAL]:
+            raise ValueError("Frequency must be either Monthly, Quarterly,Triannual, SemiAnnual or Annual")
+        if self.notional_amount <= 0:
+            raise ValueError("Notional amount must be greater than 0")
+        if self.maturity_date <= self.issue_date:
+            raise ValueError("Maturity date cannot be before issue date")
+
+
 
     @property
     def dividend_amount(self) -> float:
@@ -69,7 +88,7 @@ class CorpBondPortfolio():
         self.corporate_bonds = corporate_bonds
 
     def IsEmpty(self)-> bool:
-        if self.corporate_bonds == None:
+        if self.corporate_bonds is None:
             return True
         if len(self.corporate_bonds) == 0:
             return True
@@ -80,14 +99,12 @@ class CorpBondPortfolio():
 
         :type corp_bond: CorpBond
         """
-        if self.corporate_bonds == None:
-            self.corporate_bonds = {corp_bond.asset_id: corp_bond}
-        else:
+        if self.corporate_bonds is not None:
             self.corporate_bonds.update({corp_bond.asset_id: corp_bond})
+        else:
+            self.corporate_bonds = {corp_bond.asset_id: corp_bond}
 
-
-
-    def create_coupon_dates(self, modelling_date)->dict:
+    def create_aggregate_coupon_dates(self, modelling_date)->dict:
         """
                 Create the vector of dates at which the coupons are paid out and the total amounts for
                 all corporate bonds in the portfolio, for dates on or after the modelling date
@@ -109,13 +126,18 @@ class CorpBondPortfolio():
         coupon_date: date
         for asset_id in self.corporate_bonds:
             corp_bond = self.corporate_bonds[asset_id]
-            dividend_amount = corp_bond.dividend_amount
             for coupon_date in corp_bond.generate_coupon_dates(modelling_date):
                 if coupon_date in coupons:
-                    coupons[coupon_date] = dividend_amount + coupons[coupon_date]
+                    coupons[coupon_date] += corp_bond.dividend_amount
                 else:
-                    coupons.update({coupon_date:dividend_amount})
+                    coupons.update({coupon_date:corp_bond.dividend_amount})
         return coupons
+    
+    """
+    def create_coupon_dates(self, modelling_date: date):
+        for corp_bond in self.corporate_bonds.values() :
+            corp_bond.generate_coupon_dates(modelling_date)
+    """
 
     def create_maturity_cashflow(self, modelling_date: date) -> dict:
         """
@@ -128,12 +150,10 @@ class CorpBondPortfolio():
 
         for asset_id in self.corporate_bonds:
             corp_bond = self.corporate_bonds[asset_id]
-            maturity_amount = corp_bond.notional_amount
-            maturity_date = corp_bond.maturity_date
             if maturity_date in maturities:
-                maturities[maturity_date] = maturity_amount + maturities[maturity_date]
+                maturities[maturity_date] += corp_bond.notional_amount
             else:
-                maturities.update({maturity_date:maturity_amount})
+                maturities.update({corp_bond.maturity_date:corp_bond.notional_amount})
         return maturities
 
 class CorporateBond:

@@ -1,17 +1,16 @@
 from PathsClasses import Paths
 import pytest
-import os
 
 @pytest.fixture
 def paths() -> Paths:
-    paths = Paths()
+    paths = Paths(base_folder="Test folder/")
     return paths
 
 def test_base_path(paths):
-    assert os.path.exists(paths.base)
+      assert paths.base == "Test folder/"
 
 def test_intermediate_path(paths):
-    assert os.path.exists(paths.intermediate)
+    assert paths.intermediate == "Test folder/intermediate"
 
 def test_input_path(paths):
-    assert os.path.exists(paths.input)
+    assert paths.input == "Test folder/input"

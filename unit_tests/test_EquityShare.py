@@ -1,5 +1,6 @@
 import datetime
-from EquityClasses import Frequency, EquityShare
+from EquityClasses import EquityShare
+import FrequencyClass
 import pytest
 
 
@@ -10,18 +11,18 @@ def equity_share() -> EquityShare:
     issuer = "Open Source Modelling"
     issue_date = datetime.date(2015, 12, 1)
     dividend_yield = 0.03
-    frequency = Frequency.QUARTERLY
+    frequency = FrequencyClass.Frequency.QUARTERLY
     market_price = 12.6
     growth_rate = 0.01
 
-    equity_share = EquityShare(asset_id = asset_id, nace= nace,
-        issuer= issuer
-        ,issue_date= issue_date
-        ,dividend_yield= dividend_yield
-        ,frequency= frequency
-        ,market_price= market_price
-        ,growth_rate = growth_rate
-    )
+    equity_share = EquityShare(asset_id=asset_id, nace=nace,
+                               issuer=issuer
+                               , issue_date=issue_date
+                               , dividend_yield=dividend_yield
+                               , frequency=frequency
+                               , market_price=market_price
+                               , growth_rate=growth_rate
+                               )
     return equity_share
 
 
@@ -31,18 +32,18 @@ def test_construct():
     issuer = "Open Source Modelling"
     issue_date = datetime.date(2015, 12, 1)
     dividend_yield = 0.03
-    frequency = Frequency.QUARTERLY
+    frequency = FrequencyClass.Frequency.QUARTERLY
     market_price = 12.6
     growth_rate = 0.02
 
-    test_share_1 = EquityShare(asset_id = asset_id, nace= nace,
-        issuer= issuer
-        ,issue_date= issue_date
-        ,dividend_yield= dividend_yield
-        ,frequency= frequency
-        ,market_price= market_price
-        ,growth_rate = growth_rate
-    )
+    test_share_1 = EquityShare(asset_id=asset_id, nace=nace,
+                               issuer=issuer
+                               , issue_date=issue_date
+                               , dividend_yield=dividend_yield
+                               , frequency=frequency
+                               , market_price=market_price
+                               , growth_rate=growth_rate
+                               )
 
     assert test_share_1.asset_id == asset_id
     assert test_share_1.nace == nace
@@ -52,20 +53,23 @@ def test_construct():
     assert test_share_1.frequency == frequency
     assert test_share_1.market_price == market_price
     assert test_share_1.growth_rate == growth_rate
-    
+
+
 def test_dividend_dates(equity_share):
     modelling_date = datetime.date(2023, 7, 24)
-    end_date = datetime.date(2023+49, 12, 31)
-    dividend_dates = list(equity_share.generate_dividend_dates(modelling_date,end_date))
+    end_date = datetime.date(2023 + 49, 12, 31)
+    dividend_dates = list(equity_share.generate_dividend_dates(modelling_date, end_date))
     assert dividend_dates[0] == datetime.date(2023, 9, 1)
     assert dividend_dates[1] == datetime.date(2023, 12, 1)
     assert dividend_dates[-1] <= end_date
 
+
 def test_dividend_amount(equity_share):
-    market_price = 100.0
-    dividend = equity_share.dividend_amount(current_market_price=market_price)
-    manual_calulation_dividend = market_price* 0.03
-    assert dividend == manual_calulation_dividend
+    market_value = 100.0
+    dividend = equity_share.dividend_amount(current_market_price=market_value)
+    manual_calculation_dividend = market_value * 0.03
+    assert dividend == manual_calculation_dividend
+
 
 def test_terminal_amount_calculation(equity_share):
     """
@@ -74,6 +78,6 @@ def test_terminal_amount_calculation(equity_share):
     growth_rate = 0.05
     terminal_rate = 0.02
     market_value = 100
-    gordon_manual = market_value/(terminal_rate-growth_rate)
+    gordon_manual = market_value / (terminal_rate - growth_rate)
     gordon_calc = equity_share.terminal_amount(market_value, growth_rate, terminal_rate)
     assert gordon_calc == gordon_manual

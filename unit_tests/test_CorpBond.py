@@ -1,5 +1,6 @@
 import datetime
-from BondClasses import Frequency, CorpBond
+from BondClasses import CorpBond
+from FrequencyClass import Frequency
 import pytest
 
 

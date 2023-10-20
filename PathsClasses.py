@@ -1,4 +1,5 @@
 class Paths:
-    base = 'C:/Users/grego/Desktop/OSModelling/Products/OSAL/Asset_Liability_Model_POC_python-main/'
-    intermediate = base+'Intermediate/'
-    input = base+'Input/'
+    def __init__(self, base_folder: str):
+        self.base = base_folder
+        self.intermediate = self.base+'Intermediate/'
+        self.input = self.base+'Input/'
