@@ -59,7 +59,10 @@ class EquityShare:
 class EquitySharePortfolio():
     def __init__(self, equity_share: dict[int, EquityShare] = None):
         """
+        Initialize the EquitySharePortfolio instance with the first EquityShare instance
 
+        Parameters
+        ----------        
         :type equity_share: dict[int,EquityShare]
         """
         self.equity_share = equity_share
@@ -73,8 +76,15 @@ class EquitySharePortfolio():
 
     def add(self, equity_share: EquityShare):
         """
+        Add a new EquityShare to the EquitySharePortfolio instance
 
+        Parameters
+        ----------
+        self: EquitySharePortfolio class instance
+            The EquitySharePortfolio instance with populated initial portfolio.
         :type equity_share: EquityShare
+            The EquityShare instance representing a single equity instrument.
+
         """
         if self.equity_share is None:
             self.equity_share = {equity_share.asset_id: equity_share}
@@ -88,7 +98,7 @@ class EquitySharePortfolio():
 
         Parameters
         ----------
-        self : EquitySharePortfolio class instance
+        self: EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated initial portfolio.
         :type modelling_date: datetime.date
             The date from which the dividend dates and values start.
@@ -129,8 +139,8 @@ class EquitySharePortfolio():
 
         Parameters
         ----------
-        self : EquitySharePortfolio class instance
-            The EquitySharePortfolio instance with populated initial portfolio.
+        self: EquitySharePortfolio class instance
+            The EquitySharePortfolio instance with populated portfolio.
         :type modelling_date: datetime.date
             The date from which the terminal dates and market values start.
         :type end_date: datetime.date
@@ -158,7 +168,6 @@ class EquitySharePortfolio():
             all_terminals.append(terminals)
         return all_terminals
 
-    ## Create date fractions used in fast capitalizing and discounting
     def create_dividend_fractions(self, modelling_date: date, dividend_array: list) -> dict:
         """
         Create the list of year-fractions at which each dividend is paid out (compared to the modelling date) and the list of
@@ -166,8 +175,8 @@ class EquitySharePortfolio():
 
         Parameters
         ----------
-        self : EquitySharePortfolio class instance
-            The EquitySharePortfolio instance with populated initial portfolio.
+        self: EquitySharePortfolio class instance
+            The EquitySharePortfolio instance with populated portfolio.
         :type modelling_date: datetime.date
             The date from which the dividend fraction is calculated.
         :type dividend_array: list of dictionaries
@@ -233,8 +242,8 @@ class EquitySharePortfolio():
 
         Parameters
         ----------
-        self : EquitySharePortfolio class instance
-            The EquitySharePortfolio instance with populated initial portfolio.
+        self: EquitySharePortfolio class instance
+            The EquitySharePortfolio instance with populated portfolio.
         :type modelling_date: datetime.date
             The date from which the terminal fraction is calculated.
         :type terminal_array: list of dictionaries
@@ -288,6 +297,22 @@ class EquitySharePortfolio():
         ]
 
     def unique_dates_profile(self, cashflow_profile: List):
+        """
+        Create a sorted list of dates at which there is an cash-flow event in any of the assets inside the portfolio and
+        a single numpy array (matrix) representing those cash flows.
+
+
+        Parameters
+        ----------
+        self: EquitySharePortfolio class instance
+            The EquitySharePortfolio instance with populated portfolio.
+        :type cashflow_profile: list of dictionaries containing the size and date of each 
+            cash-flow for the equity portfolio
+
+        :rtype dict list with two elements:
+            unique_dates
+            cash_flow_matrix
+        """
 
         # define list of unique dates
         unique_dates = []
