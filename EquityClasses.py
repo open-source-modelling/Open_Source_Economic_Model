@@ -83,21 +83,22 @@ class EquitySharePortfolio():
 
     def create_dividend_dates(self, modelling_date: date, end_date: date) -> list:
         """
-        Create the vector of dates at which the dividends are paid out and the total amounts for
-        all equity shares in the portfolio, for dates on or after the modelling date.
+        Create the list of dictionaries containing dates at which the dividends are paid out and the total amounts for
+        all equity shares in the portfolio, for dates on or after the modelling date but not after the terminal date.
 
         Parameters
         ----------
         self : EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated initial portfolio.
-        :type modelling_date: date
-        :type end_date: date
+        :type modelling_date: datetime.date
+            The date from which the dividend dates and values start.
+        :type end_date: datetime.date
+            The last date that the model considers (end of the modelling window).
 
         Returns
         -------
-        all_dividends
-            An array of arrays of datetimes, containing all the dates at which the coupons are paid out.
-
+        :rtype all_dividends
+            A list of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the coupons are paid out.
         """
         all_dividends = []
         dividends: dict[date, float] = {}
@@ -123,12 +124,24 @@ class EquitySharePortfolio():
 
     def create_terminal_dates(self, modelling_date: date, terminal_date: date, terminal_rate: float) -> list:
         """
+        Create the list of dictionaries containing dates at which the terminal cash-flows are paid out and the total amounts for
+        all equity shares in the portfolio, for dates on or after the modelling date but not after the terminal date.
+
+        Parameters
+        ----------
         self : EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated initial portfolio.
-        :type modelling_date: date
-        :type end_date: date
+        :type modelling_date: datetime.date
+            The date from which the terminal dates and market values start.
+        :type end_date: datetime.date
+            The last date that the model considers (end of the modelling window).
+        :type terminal_rate: float
+            The assumed ultimate forward rate. The long term interest rate used in the Gordon growth model to calculate the terminal cash-flow
 
-        :rtype: dict
+        Returns
+        -------
+        :rtype all_terminals
+            A list of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the terminal cash-flows are paid out.
         """
         all_terminals = []
         terminals: dict[date, float] = {}
@@ -155,15 +168,15 @@ class EquitySharePortfolio():
         ----------
         self : EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated initial portfolio.
-        modelling_date: datetime.date
-            The date from which the terminal date is calculated.
-        dividend_array: list of dictionaries
+        :type modelling_date: datetime.date
+            The date from which the dividend fraction is calculated.
+        :type dividend_array: list of dictionaries
             Each element of the list represents a single equity asset. Each element contains a dictionary where has keys as dates at which the dividend cash flows are paid out
             and the values are the size of payment amount in local currency
             
         Returns
         -------
-        dict : Array with two elements: 
+        :rtype dict Array with two elements: 
             all_dividend_date_frac: A list of numpy arrays, Each element in the list represents a sigle asset. Each numpy array represents the time fraction
             between the modelling date and the date of the cash flow (ex. 18 months from modelling date is 1.5).
             all_dividend_dates_considered: list of numpy arrays. Each element in the list represents a single asset. Each numpy array represents the indices of
@@ -222,15 +235,15 @@ class EquitySharePortfolio():
         ----------
         self : EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated initial portfolio.
-        modelling_date: datetime.date
-            The date from which the terminal date is calculated.
-        terminal_array: list of dictionaries
+        :type modelling_date: datetime.date
+            The date from which the terminal fraction is calculated.
+        :type terminal_array: list of dictionaries
             Each element of the list represents a single equity asset. Each element contains a dictionary where keys are the dates at which the terminal cash flow is paid out
             and the values are the size of payment in local currency
             
         Returns
         -------
-        dict : Array with two elements: 
+        :rtype dict Array with two elements: 
             all_terminal_date_frac: A list of numpy arrays, Each element in the list represents a sigle asset. Each numpy array represents the time fraction
             between the modelling date and the terminal date (ex. 18 months from modelling date is 1.5).
             all_terminal_dates_considered: list of numpy arrays. Each element in the list represents a single asset. Each numpy array represents the index of
