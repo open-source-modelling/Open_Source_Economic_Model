@@ -148,22 +148,31 @@ class EquitySharePortfolio():
     ## Create date fractions used in fast capitalizing and discounting
     def create_dividend_fractions(self, modelling_date: date, dividend_array: list) -> dict:
         """
-        Create the vector of year fractions at which the dividends are paid out and the total amounts for
-        all equity shares in the portfolio, for dates on or after the modelling date
+        Create the list of year-fractions at which each dividend is paid out (compared to the modelling date) and the list of
+        relevant indices (aka. indices of cash flows that are within the modelling period)
 
         Parameters
         ----------
         self : EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated initial portfolio.
-
+        modelling_date: datetime.date
+            The date from which the terminal date is calculated.
+        dividend_array: list of dictionaries
+            Each element of the list represents a single equity asset. Each element contains a dictionary where has keys as dates at which the dividend cash flows are paid out
+            and the values are the size of payment amount in local currency
+            
         Returns
         -------
-        EquityShare.dividendfrac
-            An array of flats, containing all the date fractions at which the dividends are paid out.
-
+        dict : Array with two elements: 
+            all_dividend_date_frac: A list of numpy arrays, Each element in the list represents a sigle asset. Each numpy array represents the time fraction
+            between the modelling date and the date of the cash flow (ex. 18 months from modelling date is 1.5).
+            all_dividend_dates_considered: list of numpy arrays. Each element in the list represents a single asset. Each numpy array represents the indices of
+            the cash flows from the dividend_array that mature within the period between the modelling date and the terminal date.
         """
 
+
         # other counting conventions MISSING
+        # Remove numpy arrays in construction
 
         # Data structures list of lists for dividend payments
         all_date_frac = ([])  # this will save the date fractions of dividends for the portfolio
@@ -206,26 +215,34 @@ class EquitySharePortfolio():
 
     def create_terminal_fractions(self, modelling_date: date, terminal_array: dict) -> dict:
         """
-        Create the vector of year fractions at which the dividends are paid out and the total amounts for
-        all equity shares in the portfolio, for dates on or after the modelling date
+        Create the list of year-fractions at which the terminal amount is paid out (compared to the modelling date) and the list of
+        relevant indices (aka. indices of cash flows that are within the modelling period)
 
         Parameters
         ----------
         self : EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated initial portfolio.
-
+        modelling_date: datetime.date
+            The date from which the terminal date is calculated.
+        terminal_array: list of dictionaries
+            Each element of the list represents a single equity asset. Each element contains a dictionary where keys are the dates at which the terminal cash flow is paid out
+            and the values are the size of payment in local currency
+            
         Returns
         -------
-        EquityShare.dividendfrac
-            An array of flats, containing all the date fractions at which the dividends are paid out.
-
+        dict : Array with two elements: 
+            all_terminal_date_frac: A list of numpy arrays, Each element in the list represents a sigle asset. Each numpy array represents the time fraction
+            between the modelling date and the terminal date (ex. 18 months from modelling date is 1.5).
+            all_terminal_dates_considered: list of numpy arrays. Each element in the list represents a single asset. Each numpy array represents the index of
+            the cash flow from the terminal_array that matures within the period between the modelling date and the terminal date.
         """
 
         # other counting conventions MISSING
+        # Remove numpy arrays in construction
 
         # Data structures list of lists for dividend payments
-        all_dividend_date_frac = ([])  # this will save the date fractions of dividends for the portfolio
-        all_dividend_dates_considered = (
+        all_terminal_date_frac = ([])  # this will save the date fractions of dividends for the portfolio
+        all_terminal_dates_considered = (
             [])  # this will save if a cash flow is already expired before the modelling date in the portfolio
 
         for one_terminal_array in terminal_array:
@@ -245,16 +262,16 @@ class EquitySharePortfolio():
                     equity_terminal_dates_considered, int(1)
                 )  # append "is after modelling date" flag
             # else skip
-            all_dividend_date_frac.append(
+            all_terminal_date_frac.append(
                 equity_terminal_date_frac
             )  # append what fraction of the date is each cash flow compared to the modelling date
-            all_dividend_dates_considered.append(
+            all_terminal_dates_considered.append(
                 equity_terminal_dates_considered.astype(int)
             )  # append which cash flows are after the modelling date
 
         return [
-            all_dividend_date_frac,
-            all_dividend_dates_considered
+            all_terminal_date_frac,
+            all_terminal_dates_considered
         ]
 
     def unique_dates_profile(self, cashflow_profile: List):
