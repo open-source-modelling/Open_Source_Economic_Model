@@ -3,13 +3,13 @@ from ImportData import get_EquityShare, get_settings, import_SWEiopa, get_Cash, 
     get_configuration
 from EquityClasses import *
 from PathsClasses import Paths
+from ExportData import save_matrices_to_csv
 from Curves import Curves
 import pandas as pd
 import datetime
 import os
 from TraceClass import tracer
 from ConfigurationClass import Configuration
-
 
 ###### ALM FUNCTIONS #####
 @tracer
@@ -96,11 +96,7 @@ def main():
     unique_list = equity_portfolio.unique_dates_profile(dividend_dates)
     unique_terminal_list = equity_portfolio.unique_dates_profile(terminal_dates)
 
-    # Save equity cash flows matrices
-    # equity_portfolio.save_equity_matrices_to_csv(unique_dividend = unique_list, unique_terminal=unique_terminal_list, dividend_matrix=dividend_dates, terminal_matrix=terminal_dates, paths =paths)
-
     # Load liability cashflows
-
     liabilities = get_Liability(liability_cashflow_file)
     unique_liabilities_list = liabilities.unique_dates_profile()
 
