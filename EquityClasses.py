@@ -347,23 +347,6 @@ class EquitySharePortfolio():
             unique_dates,
             cash_flow_matrix]
 
-    def save_equity_matrices_to_csv(self, unique_dividend, unique_terminal, dividend_matrix, terminal_matrix, paths):
-
-        filepath_1 = Path(paths.intermediate + 'unique_dividend_dates.csv')
-        filepath_2 = Path(paths.intermediate + 'unique_terminal_dates.csv')
-        filepath_3 = Path(paths.intermediate + 'cashflow_dividend_matrix.csv')
-        filepath_4 = Path(paths.intermediate + 'cashflow_terminal_matrix.csv')
-
-        filepath_1.parent.mkdir(parents=True, exist_ok=True)
-        filepath_2.parent.mkdir(parents=True, exist_ok=True)
-        filepath_3.parent.mkdir(parents=True, exist_ok=True)
-        filepath_4.parent.mkdir(parents=True, exist_ok=True)
-
-        pd.DataFrame(unique_dividend).to_csv(filepath_1)
-        pd.DataFrame(unique_terminal).to_csv(filepath_2)
-        pd.DataFrame(dividend_matrix).to_csv(filepath_3)
-        pd.DataFrame(terminal_matrix).to_csv(filepath_4)
-
     def init_equity_portfolio_to_dataframe(self, modelling_date: date)->list:
 
         asset_keys = self.equity_share.keys()
