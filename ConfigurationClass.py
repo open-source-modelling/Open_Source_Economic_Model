@@ -1,7 +1,10 @@
+
 class Configuration:
     def __init__(self) -> None:
         self.bond_portfolio: str = ""
         self.trace_enabled: bool = False
+        self.logging_level: str = ""
+        self.logging_file_name: str = ""
         self.intermediate_path: str = ""
         self.intermediate_enabled: bool = False
         self.intermediate_equity_portfolio: str = ""

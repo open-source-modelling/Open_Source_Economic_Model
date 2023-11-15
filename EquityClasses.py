@@ -7,6 +7,18 @@ from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
 from FrequencyClass import Frequency
 from TraceClass import Trace, tracer
+import logging
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter("%(levelname)s:%(name)s:(%(asctime)s):%(message)s (Line: %(lineno)d [%(filename)s])")
+
+file_handler = logging.FileHandler("EquityClasses.log")
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
 
 
 @dataclass
@@ -19,6 +31,9 @@ class EquityShare:
     frequency: Frequency
     market_price: float
     growth_rate: float
+
+    def __post_init__(self) -> None:
+        logger.info("Equity class initiated")
 
     # @property Look into what property does
     @tracer
@@ -65,6 +80,7 @@ class EquitySharePortfolio():
         ----------        
         :type equity_share: dict[int,EquityShare]
         """
+        logger.info("EquitySharePortfolio initializer called")
         self.equity_share = equity_share
 
     def IsEmpty(self) -> bool:
