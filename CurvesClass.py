@@ -74,7 +74,7 @@ class Curves:
     def SWExtrapolate(self, m_target: np.ndarray, m_obs: np.ndarray, b: np.ndarray, ufr: float, alpha: float):
         """"
         SWEXTRAPOLATE Interpolate or/and extrapolate rates for targeted maturities using a Smith-Wilson algorithm.
-        r = SWExtrapolate(m_target,m_obs, b, ufr, alpha) calculates the rates for maturities specified in M_Target using the calibration vector b.
+        r = SWExtrapolate(m_target, m_obs, b, ufr, alpha) calculates the rates for maturities specified in M_Target using the calibration vector b.
         
         Parameters
         ----------
@@ -102,7 +102,6 @@ class Curves:
     def Galfa(self, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, alpha: float, tau: float):
         """
         Calculates the gap at the convergence point between the allowable tolerance tau and the curve extrapolated using the Smith-Wilson algorithm.
-        interpolation and extrapolation of rates.
         
         Parameters
         ----------
