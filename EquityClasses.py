@@ -7,6 +7,18 @@ from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
 from FrequencyClass import Frequency
 from TraceClass import Trace, tracer
+import logging
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter("%(levelname)s:%(name)s:(%(asctime)s):%(message)s (Line: %(lineno)d [%(filename)s])")
+
+file_handler = logging.FileHandler("EquityClasses.log")
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
 
 
 @dataclass
@@ -19,6 +31,9 @@ class EquityShare:
     frequency: Frequency
     market_price: float
     growth_rate: float
+
+    def __post_init__(self) -> None:
+        logger.info("Equity class initiated")
 
     # @property Look into what property does
     @tracer
@@ -65,6 +80,7 @@ class EquitySharePortfolio():
         ----------        
         :type equity_share: dict[int,EquityShare]
         """
+        logger.info("EquitySharePortfolio initializer called")
         self.equity_share = equity_share
 
     def IsEmpty(self) -> bool:
@@ -346,23 +362,6 @@ class EquitySharePortfolio():
         return [
             unique_dates,
             cash_flow_matrix]
-
-    def save_equity_matrices_to_csv(self, unique_dividend, unique_terminal, dividend_matrix, terminal_matrix, paths):
-
-        filepath_1 = Path(paths.intermediate + 'unique_dividend_dates.csv')
-        filepath_2 = Path(paths.intermediate + 'unique_terminal_dates.csv')
-        filepath_3 = Path(paths.intermediate + 'cashflow_dividend_matrix.csv')
-        filepath_4 = Path(paths.intermediate + 'cashflow_terminal_matrix.csv')
-
-        filepath_1.parent.mkdir(parents=True, exist_ok=True)
-        filepath_2.parent.mkdir(parents=True, exist_ok=True)
-        filepath_3.parent.mkdir(parents=True, exist_ok=True)
-        filepath_4.parent.mkdir(parents=True, exist_ok=True)
-
-        pd.DataFrame(unique_dividend).to_csv(filepath_1)
-        pd.DataFrame(unique_terminal).to_csv(filepath_2)
-        pd.DataFrame(dividend_matrix).to_csv(filepath_3)
-        pd.DataFrame(terminal_matrix).to_csv(filepath_4)
 
     def init_equity_portfolio_to_dataframe(self, modelling_date: date)->list:
 

@@ -11,12 +11,16 @@ from CashClass import Cash
 from LiabilityClasses import Liability
 
 
-def get_configuration(ini_file: str, op_sys, config_parser=configparser.ConfigParser()) -> Configuration:
+def get_configuration(ini_file: str, op_sys=os, config_parser=configparser.ConfigParser()) -> Configuration:
     """
+    :parameter: ini_file
+    :parameter: op_sys
+    :parameter: config_parser
 
-    :rtype: object
+    :rtype: Configuration
     """
     configuration = Configuration()
+
     config_parser.read(ini_file)
 
     if "BASE" in config_parser:
@@ -28,6 +32,10 @@ def get_configuration(ini_file: str, op_sys, config_parser=configparser.ConfigPa
         configuration.trace_enabled = bool(config_parser["TRACE"]["enabled"])
     else:
         configuration.trace_enabled = False
+
+    if "LOGGING" in config_parser:
+        configuration.logging_level = config_parser["LOGGING"]["level"]
+        configuration.logging_file_name = config_parser["LOGGING"]["file_name"]
 
     if "INTERMEDIATE" in config_parser:
         intermediate = config_parser["INTERMEDIATE"]
@@ -54,7 +62,7 @@ def get_configuration(ini_file: str, op_sys, config_parser=configparser.ConfigPa
         configuration.input_spread = op_sys.path.join(input_path, inp["sector_spread"])
         configuration.input_parameters = op_sys.path.join(input_path, inp["parameters"])
         configuration.input_liability_cashflow = op_sys.path.join(input_path,
-                                                                         inp["liability"])
+                                                                  inp["liability"])
     return configuration
 
 

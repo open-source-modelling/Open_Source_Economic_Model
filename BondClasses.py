@@ -5,6 +5,19 @@ from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
 from typing import List, Dict, Any
 from FrequencyClass import Frequency
+import logging
+
+
+logger=logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter(("%(levelname)s:%(name)s:%(mesage)s"))
+
+file_handler = logging.FileHandler("BondClass.log")
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+
 
 
 
@@ -54,8 +67,8 @@ class CorpBond:
 
     def generate_coupon_dates(self, modelling_date: date) -> date:
         """
-
-        :type modelling_date: date
+        :parameter modelling_date
+        :type date
         """
         delta = relativedelta(months=(12 // self.frequency))
         this_date = self.issue_date - delta
@@ -68,8 +81,17 @@ class CorpBond:
 
     def term_to_maturity(self, modelling_date: date)->int:
         """
+        Calculates the number of days between the modelling date and the redemption date of the bond
 
-        :type modelling_date: date
+        Parameters
+        ----------
+        :parameter modelling_date
+        :type date
+        The modelling start date
+
+
+        :returns int
+        The number of days between the modelling date and the redemption date of the bond
         """
         delta: timedelta = self.maturity_date - modelling_date
         return delta.days
