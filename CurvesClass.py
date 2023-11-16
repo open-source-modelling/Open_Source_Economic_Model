@@ -6,10 +6,10 @@ class Curves:
     
         self.initial_date = initial_date
         self.country = country
-        self.StartDate = pd.DataFrame(data=None)
-        self.FwdRates = pd.DataFrame(data=None)
-        self.M_Obs = pd.DataFrame(data=None)
-        self.r_Obs = pd.DataFrame(data=None)
+        self.start_date = pd.DataFrame(data=None)
+        self.fwd_rates = pd.DataFrame(data=None)
+        self.m_obs = pd.DataFrame(data=None)
+        self.r_obs = pd.DataFrame(data=None)
         self.ufr = ufr
         self.precision = precision
         self.tau = tau
@@ -71,15 +71,15 @@ class Curves:
 
         return np.linalg.inv(Q.transpose() @ H @ Q) @ (p-q)          # Calibration vector b from paragraph 149
     
-    def SWExtrapolate(self, M_Target, M_Obs, b, ufr, alpha):
+    def SWExtrapolate(self, m_target, m_obs, b, ufr, alpha):
         """"
         SWEXTRAPOLATE Interpolate or/and extrapolate rates for targeted maturities using a Smith-Wilson algorithm.
-        r = SWExtrapolate(T_Target,T_Obs, b, ufr, alpha) calculates the rates for maturities specified in M_Target using the calibration vector b.
+        r = SWExtrapolate(m_target,m_obs, b, ufr, alpha) calculates the rates for maturities specified in M_Target using the calibration vector b.
         
         Parameters
         ----------
-            :type M_Target : k x 1 ndarray. Each element represents a bond maturity of interest. Ex. M_Target = [[1], [2], [3], [5]]
-            :type M_Obs :    n x 1 ndarray. Observed bond maturities used for calibrating the calibration vector b. Ex. M_Obs = [[1], [3]]
+            :type m_target : k x 1 ndarray. Each element represents a bond maturity of interest. Ex. M_Target = [[1], [2], [3], [5]]
+            :type m_obs :    n x 1 ndarray. Observed bond maturities used for calibrating the calibration vector b. Ex. M_Obs = [[1], [3]]
             :type b :        n x 1 ndarray calibration vector calculated on observed bonds.
             :type ufr :      float representing the ultimate forward rate.
             Ex. ufr = 0.042
@@ -92,12 +92,12 @@ class Curves:
         
         For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf
         """
-        C = np.identity(M_Obs.size)
-        d = np.exp(-np.log(1+ufr) * M_Obs)                                                # Calculate vector d described in paragraph 138
+        C = np.identity(m_obs.size)
+        d = np.exp(-np.log(1+ufr) * m_obs)                                                # Calculate vector d described in paragraph 138
         Q = np.diag(d) @ C                                                             # Matrix Q described in paragraph 139
-        H = self.SWHeart(M_Target, M_Obs, alpha)                                          # Heart of the Wilson function from paragraph 132
-        p = np.exp(-np.log(1+ufr)* M_Target) + np.diag(np.exp(-np.log(1+ufr) * M_Target)) @ H @ Q @ b # Discount pricing function for targeted maturities from paragraph 147
-        return p ** (-1/ M_Target) -1 # Convert obtained prices to rates and return prices
+        H = self.SWHeart(m_target, m_obs, alpha)                                          # Heart of the Wilson function from paragraph 132
+        p = np.exp(-np.log(1+ufr)* m_target) + np.diag(np.exp(-np.log(1+ufr) * m_target)) @ H @ Q @ b # Discount pricing function for targeted maturities from paragraph 147
+        return p ** (-1/ m_target) -1 # Convert obtained prices to rates and return prices
 
     def Galfa(self, m_obs: np.ndarray, r_obs: np.ndarray, ufr, alpha, tau):
         """
