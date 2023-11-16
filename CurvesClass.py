@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 class Curves:
-    def __init__(self, ufr, precision, tau, initial_date, country):
+    def __init__(self, ufr: float, precision: float, tau: float, initial_date, country: str):
     
         self.initial_date = initial_date
         self.country = country
@@ -16,7 +16,7 @@ class Curves:
         self.alpha = pd.DataFrame(data=None)
         self.b = pd.DataFrame(data=None)
 
-    def SWHeart(self, u, v, alpha):
+    def SWHeart(self, u: np.ndarray, v: np.ndarray, alpha: float):
         """
         SWHEART Calculate the heart of the Wilson function.
         SWHeart(u, v, alpha) calculates the matrix H (Heart of the Wilson
@@ -42,7 +42,7 @@ class Curves:
         v_mat = np.tile(v, [u.size, 1])
         return 0.5 * (alpha * (u_mat + v_mat) + np.exp(-alpha * (u_mat + v_mat)) - alpha * np.absolute(u_mat-v_mat) - np.exp(-alpha * np.absolute(u_mat-v_mat))); # Heart of the Wilson function from paragraph 132
 
-    def SWCalibrate(self, r, M, ufr, alpha):
+    def SWCalibrate(self, r: np.ndarray, M: np.ndarray, ufr: float, alpha: float):
         """
         SWCALIBRATE Calculate the calibration vector using a Smith-Wilson algorithm
         b = SWCalibrate(r, T, ufr, alpha) calculates the vector b used for
@@ -52,7 +52,7 @@ class Curves:
         ----------
         :type r :     n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable zero coupon bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
         :type M :     n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u=[[1], [3]]
-        :type ufr :   1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
+        :type ufr :   float representing the ultimate forward rate. Ex. ufr = 0.042
         :type alpha : float representing the convergence speed parameter alpha. Ex. alpha = 0.05
         
         Returns
@@ -71,7 +71,7 @@ class Curves:
 
         return np.linalg.inv(Q.transpose() @ H @ Q) @ (p-q)          # Calibration vector b from paragraph 149
     
-    def SWExtrapolate(self, m_target, m_obs, b, ufr, alpha):
+    def SWExtrapolate(self, m_target: np.ndarray, m_obs: np.ndarray, b: np.ndarray, ufr: float, alpha: float):
         """"
         SWEXTRAPOLATE Interpolate or/and extrapolate rates for targeted maturities using a Smith-Wilson algorithm.
         r = SWExtrapolate(m_target,m_obs, b, ufr, alpha) calculates the rates for maturities specified in M_Target using the calibration vector b.
@@ -99,7 +99,7 @@ class Curves:
         p = np.exp(-np.log(1+ufr)* m_target) + np.diag(np.exp(-np.log(1+ufr) * m_target)) @ H @ Q @ b # Discount pricing function for targeted maturities from paragraph 147
         return p ** (-1/ m_target) -1 # Convert obtained prices to rates and return prices
 
-    def Galfa(self, m_obs: np.ndarray, r_obs: np.ndarray, ufr, alpha, tau):
+    def Galfa(self, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, alpha: float, tau: float):
         """
         Calculates the gap at the convergence point between the allowable tolerance tau and the curve extrapolated using the Smith-Wilson algorithm.
         interpolation and extrapolation of rates.
@@ -120,13 +120,13 @@ class Curves:
             >>> import numpy as np
             >>> from SWCalibrate import SWCalibrate as SWCalibrate
             >>> from SWExtrapolate import SWExtrapolate as SWExtrapolate
-            >>> M_Obs = np.transpose(np.array([1, 2, 4, 5, 6, 7]))
-            >>> r_Obs =  np.transpose(np.array([0.01, 0.02, 0.03, 0.032, 0.035, 0.04]))
+            >>> m_obs = np.transpose(np.array([1, 2, 4, 5, 6, 7]))
+            >>> r_obs =  np.transpose(np.array([0.01, 0.02, 0.03, 0.032, 0.035, 0.04]))
             >>> alfa = 0.15
             >>> ufr = 0.04
             >>> precision = 0.0000000001
             >>> tau = 0.0001
-            >>> Galfa(M_Obs, r_Obs, ufr, alfa, tau)
+            >>> Galfa(m_obs, r_obs, ufr, alfa, tau)
             [Out] -8.544212205612438e-05
 
         For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf
@@ -150,14 +150,14 @@ class Curves:
 
         Parameters
         ----------
-            :type xStart :    1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
-            :type xEnd :      1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
-            :type M_Obs :     n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u = [[1], [3]]
-            :type r_Obs :     n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
+            :type x_start :   1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
+            :type x_end :     1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
+            :type m_obs :     n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u = [[1], [3]]
+            :type r_obs :     n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
             :type ufr  :      1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
             :type tau :       1 x 1 floating number representing the allowed difference between ufr and actual curve. Ex. Tau = 0.00001
             :type precision : 1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
-            :type maxIter :   1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution         
+            :type max_iter :  1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution         
         
         Returns
         -------
@@ -166,16 +166,16 @@ class Curves:
         Example of use:
             >>> import numpy as np
             >>> from SWCalibrate import SWCalibrate as SWCalibrate
-            >>> M_Obs = np.transpose(np.array([1, 2, 4, 5, 6, 7]))
-            >>> r_Obs =  np.transpose(np.array([0.01, 0.02, 0.03, 0.032, 0.035, 0.04]))
-            >>> xStart = 0.05
-            >>> xEnd = 0.5
-            >>> maxIter = 1000
+            >>> m_obs = np.transpose(np.array([1, 2, 4, 5, 6, 7]))
+            >>> r_obs =  np.transpose(np.array([0.01, 0.02, 0.03, 0.032, 0.035, 0.04]))
+            >>> x_start = 0.05
+            >>> x_end = 0.5
+            >>> max_iter = 1000
             >>> alfa = 0.15
             >>> ufr = 0.042
             >>> precision = 0.0000000001
             >>> tau = 0.0001
-            >>> BisectionAlpha(xStart, xEnd, M_Obs, r_Obs, ufr, tau, precision, maxIter)
+            >>> BisectionAlpha(x_start, x_end, m_obs, r_obs, ufr, tau, precision, max_iter)
             [Out] 0.11549789285636511
 
         For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf and https://en.wikipedia.org/wiki/Bisection_method
