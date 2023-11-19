@@ -42,3 +42,21 @@ def test_set_observed(curves_1, term_structure_maturity, term_structure_yield):
     curves_1.SetObservedTermStructure(maturity_vec=term_structure_maturity, yield_vec=term_structure_yield)
     assert all(curves_1.m_obs["Maturity"].values == term_structure_maturity)
     assert all(curves_1.r_obs["Yield"].values == term_structure_yield)
+
+def test_CalcFwdRates(curves_1, term_structure_maturity, term_structure_yield):
+    curves_1.SetObservedTermStructure(maturity_vec=term_structure_maturity, yield_vec=term_structure_yield)
+    
+    maturity_first = term_structure_maturity[:-1]
+    maturity_shift = term_structure_maturity[1:]
+    yield_first = term_structure_yield[:-1]
+    yield_shift = term_structure_yield[1:]
+
+    for iel in range(0,len(yield_shift)-1):
+        fwd_temp = (1+yield_shift[iel]) ** maturity_shift[iel] / (1+yield_first[iel])**maturity_first[iel]
+        curves_1.CalcFwdRates()
+        assert curves_1.fwd_rates["Forward"].values[iel+1] == fwd_temp
+        
+     
+
+
+
