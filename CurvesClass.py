@@ -16,6 +16,15 @@ class Curves:
         self.alpha = pd.DataFrame(data=None)
         self.b = pd.DataFrame(data=None)
 
+    def CalcFwdRates(self):
+        fwdata = ((self.r_obs["Yield"]+1) ** self.m_obs["Maturity"])/((self.r_obs["Yield"].shift(periods=1)+1) ** self.m_obs["Maturity"].shift(periods=1))
+        self.fwd_rates = pd.DataFrame(data=fwdata.values, index=None, columns=["Forward"])
+
+    def SetObservedTermStructure(self, maturity_vec, yield_vec):
+        self.m_obs = pd.DataFrame(data= maturity_vec,index=None, columns=["Maturity"])
+        self.r_obs = pd.DataFrame(data= yield_vec, index=None, columns=["Yield"])
+        
+
     def SWHeart(self, u: np.ndarray, v: np.ndarray, alpha: float):
         """
         SWHEART Calculate the heart of the Wilson function.
@@ -74,7 +83,7 @@ class Curves:
     def SWExtrapolate(self, m_target: np.ndarray, m_obs: np.ndarray, b: np.ndarray, ufr: float, alpha: float):
         """"
         SWEXTRAPOLATE Interpolate or/and extrapolate rates for targeted maturities using a Smith-Wilson algorithm.
-        r = SWExtrapolate(m_target, m_obs, b, ufr, alpha) calculates the rates for maturities specified in M_Target using the calibration vector b.
+        r = SWExtrapolate(m_target,m_obs, b, ufr, alpha) calculates the rates for maturities specified in M_Target using the calibration vector b.
         
         Parameters
         ----------
@@ -102,6 +111,7 @@ class Curves:
     def Galfa(self, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, alpha: float, tau: float):
         """
         Calculates the gap at the convergence point between the allowable tolerance tau and the curve extrapolated using the Smith-Wilson algorithm.
+        interpolation and extrapolation of rates.
         
         Parameters
         ----------
