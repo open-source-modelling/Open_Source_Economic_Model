@@ -1,7 +1,7 @@
 from CurvesClass import Curves
 import pytest
 import datetime
-
+import numpy as np
 
 @pytest.fixture
 def curves_1():
@@ -22,7 +22,6 @@ def term_structure_maturity():
 def term_structure_yield():
     yield_vec = [0.01, 0.012, 0.014, 0.018, 0.023,0.025]
     return yield_vec
-  
 
 def test_Initialize():
     ufr = 1
@@ -50,13 +49,33 @@ def test_CalcFwdRates(curves_1, term_structure_maturity, term_structure_yield):
     maturity_shift = term_structure_maturity[1:]
     yield_first = term_structure_yield[:-1]
     yield_shift = term_structure_yield[1:]
+    curves_1.CalcFwdRates()
 
     for iel in range(0,len(yield_shift)-1):
         fwd_temp = (1+yield_shift[iel]) ** maturity_shift[iel] / (1+yield_first[iel])**maturity_first[iel]
-        curves_1.CalcFwdRates()
         assert curves_1.fwd_rates["Forward"].values[iel+1] == fwd_temp
-        
-     
+            
+def test_SWHeart(curves_1):
+    alpha = 0.05
+    u = np.array([0.1,0.2,0.3])
+    v = np.array([0.5,0.6,0.9])
+    out_1 = curves_1.SWHeart(u,v,alpha)
+    out_2 = curves_1.SWHeart(v,u,alpha)
+    assert (out_1 == out_2.transpose()).all()
+
+
+
+
+
+
+#def test_ProjectSpotRates(curves_1, term_structure_maturity, term_structure_yield):
+#    curves_1.SetObservedTermStructure(maturity_vec=term_structure_maturity, yield_vec=term_structure_yield)
+#    curves_1.CalcFwdRates()
+#    N = 1
+#    curves_1.ProjectSpotRates(N)
+
+#    spot = ((1+curves_1.fwd_rates["Forward"][1:]).cumprod(axis=None)**(1/(term_structure_maturity-1))-1)[1:]-1
+
 
 
 
