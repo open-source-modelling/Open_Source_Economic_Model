@@ -4,7 +4,7 @@ from ImportData import get_EquityShare, get_settings, import_SWEiopa, get_Cash, 
 from EquityClasses import *
 from PathsClasses import Paths
 from ExportData import save_matrices_to_csv
-from Curves import Curves
+from CurvesClass import Curves
 import pandas as pd
 import datetime
 import os
