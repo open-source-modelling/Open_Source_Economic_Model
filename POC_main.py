@@ -114,6 +114,12 @@ def main():
     # Curves object with information about term structure
     curves = Curves(extra_param["UFR"] / 100, settings.precision, settings.tau, settings.modelling_date,
                     settings.country)
+    
+    logger.info("Process risk free rate curve")
+    
+    curves.SetObservedTermStructure(maturity_vec=curve_country.index.tolist(), yield_vec=curve_country.values)
+    curves.CalcFwdRates()
+
     logger.info("Import cash portfolio")
     cash = get_Cash(cash_portfolio_file)
 
