@@ -1,16 +1,17 @@
 # Main script for POC
+import datetime
+import logging
+import os
+import pandas as pd
+
+from ConfigurationClass import Configuration
+from CurvesClass import Curves
+from EquityClasses import *
+from ExportData import save_matrices_to_csv
 from ImportData import get_EquityShare, get_settings, import_SWEiopa, get_Cash, get_Liability, \
     get_configuration
-from EquityClasses import *
 from PathsClasses import Paths
-from ExportData import save_matrices_to_csv
-from CurvesClass import Curves
-import pandas as pd
-import datetime
-import os
 from TraceClass import tracer
-from ConfigurationClass import Configuration
-import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -110,7 +111,7 @@ def main():
     logger.info("Importing risk free rate curve")
     [maturities_country, curve_country, extra_param, Qb] = import_SWEiopa(settings.EIOPA_param_file,
                                                                           settings.EIOPA_curves_file, settings.country)
-
+    
     # Curves object with information about term structure
     curves = Curves(extra_param["UFR"] / 100, settings.precision, settings.tau, settings.modelling_date,
                     settings.country)
@@ -118,7 +119,23 @@ def main():
     logger.info("Process risk free rate curve")
     
     curves.SetObservedTermStructure(maturity_vec=curve_country.index.tolist(), yield_vec=curve_country.values)
+    
+    logger.info("Calculate 1-year forward rate")
     curves.CalcFwdRates()
+
+    logger.info("Calculate projected spot rates")
+    curves.ProjectForwardRate(settings.n_proj_years)
+
+    logger.info("Calculate calibration parameter alpha")
+    alphaoptimized = [curves.BisectionAlpha(0.05, 0.5, curves.m_obs["Maturity"], curves.r_obs["Yield"], curves.ufr, curves.tau, curves.precision, 1000)]
+    
+    curves.alpha["Yield year"] = alphaoptimized
+    curves.alpha.index= [settings.modelling_date]
+    
+    logger.info("Calibrate vector b")
+    
+    bCalibrated = curves.SWCalibrate(curves.r_obs["Yield"], curves.m_obs["Maturity"], curves.ufr, curves.alpha["Yield year"][0])
+
 
     logger.info("Import cash portfolio")
     cash = get_Cash(cash_portfolio_file)

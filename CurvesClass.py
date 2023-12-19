@@ -13,8 +13,8 @@ class Curves:
         self.ufr = ufr
         self.precision = precision
         self.tau = tau
-        self.alpha = pd.DataFrame(data=None)
-        self.b = pd.DataFrame(data=None)
+        self.alpha = pd.DataFrame(data=None, columns=["Yield year"], dtype="float64")
+        self.b = pd.DataFrame(data=None, columns=["Yield year"])
 
     def CalcFwdRates(self):
         fwdata = ((self.r_obs["Yield"]+1) ** self.m_obs["Maturity"])/((self.r_obs["Yield"].shift(periods=1)+1) ** self.m_obs["Maturity"].shift(periods=1))
@@ -23,7 +23,25 @@ class Curves:
     def SetObservedTermStructure(self, maturity_vec, yield_vec):
         self.m_obs = pd.DataFrame(data= maturity_vec,index=None, columns=["Maturity"])
         self.r_obs = pd.DataFrame(data= yield_vec, index=None, columns=["Yield"])
-        
+
+    def ProjectForwardRate(self,N):
+        """
+        Calculate the projected spot curve from pre calculated 1-year forward curve. Each column represents
+        the spot curve starting 1 year later than the previous column. Calling this function populates/overwrites
+        the r_obs property of the instance.
+
+        Parameters
+        ----------
+        self: Curves class instance
+            The Curves class instance with populated fwd_rates
+        :type N: integer
+            The number of required yearly projections
+        """
+        for year in range(1,N):
+            spot = ((1+self.fwd_rates["Forward"][year:]).cumprod(axis=None)**(1/(self.m_obs["Maturity"]-year))-1)[year:]-1
+            self.r_obs=self.r_obs.join(pd.Series(data=spot.values, index=None, name="Yield year"+str(year)))
+
+
 
     def SWHeart(self, u: np.ndarray, v: np.ndarray, alpha: float):
         """
