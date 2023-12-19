@@ -47,7 +47,7 @@ Specific deep dives into topics related to the methodology are available as Jupy
 So far, we have produced a simple example that can be ran using the script `POC_main.py`. A hypothetical portfolio of a few equities and a single fixed liability cash flow profile. This example will grow as more development is committed to the main branch.
 
 ## Ask to the community
-Send us an email at GREGOR@OSMODELLING.COM with feedback, comments, ideas on what we could do better etc. Do you want to help us on this (very niche) open source project?
+Send us an email at gregor@osmodelling.com with feedback, comments, ideas on what we could do better etc. Do you want to help us on this (very niche) open source project?
 
 [Documentation]:https://github.com/open-source-modelling/Asset_Liability_Model_POC_python/tree/main/Documentation
 [OSAL pdf]:https://github.com/open-source-modelling/Asset_Liability_Model_POC_python/blob/main/Documentation/OSAL_POC_Documentation_draft.pdf
