@@ -52,6 +52,6 @@ Send us an email at gregor@osmodelling.com with feedback, comments, ideas on wha
 [Documentation]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/Documentation
 [OSEM pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_POC_Documentation_draft.pdf
 [OSEM Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_POC_Documentation_draft.ipynb
-[Term structure Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/PROTOTYPE%20CALIBRATION%20AND%20PROJECTION.ipynb
+[Term structure Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Projection%20of%20the%20risk%20free%20curve%20and%20recalibration%20inside%20OSEM.ipynb
 [Equity pricing Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/PROTOTYPE%20EQUITY%20PRICING.ipynb
 [Bond pricing Jupyter notebook]: https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/PROTOTYPE%20BOND%20PRICING.ipynb
