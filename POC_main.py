@@ -136,6 +136,9 @@ def main():
     
     bCalibrated = curves.SWCalibrate(curves.r_obs["Yield"], curves.m_obs["Maturity"], curves.ufr, curves.alpha["Yield year"][0])
 
+    ProjYear = 1
+    NameOfYear = "Yield year"+str(ProjYear)
+
 
     logger.info("Import cash portfolio")
     cash = get_Cash(cash_portfolio_file)

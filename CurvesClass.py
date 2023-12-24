@@ -8,8 +8,8 @@ class Curves:
         self.country = country
         self.start_date = pd.DataFrame(data=None)
         self.fwd_rates = pd.DataFrame(data=None)
-        self.m_obs = pd.DataFrame(data=None)
-        self.r_obs = pd.DataFrame(data=None)
+        self.m_obs = pd.DataFrame(data=None,index=None, columns=["Maturity"])
+        self.r_obs = pd.DataFrame(data= None, index=None, columns=["Yield"])
         self.ufr = ufr
         self.precision = precision
         self.tau = tau
@@ -21,7 +21,7 @@ class Curves:
         self.fwd_rates = pd.DataFrame(data=fwdata.values, index=None, columns=["Forward"])
 
     def SetObservedTermStructure(self, maturity_vec, yield_vec):
-        self.m_obs = pd.DataFrame(data= maturity_vec,index=None, columns=["Maturity"])
+        self.m_obs = pd.DataFrame(data= maturity_vec, index=None, columns=["Maturity"])
         self.r_obs = pd.DataFrame(data= yield_vec, index=None, columns=["Yield"])
 
     def ProjectForwardRate(self,N):
