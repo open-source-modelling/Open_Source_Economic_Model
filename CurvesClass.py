@@ -8,21 +8,27 @@ class Curves:
         self.country = country
         self.start_date = pd.DataFrame(data=None)
         self.fwd_rates = pd.DataFrame(data=None)
-        self.m_obs = pd.DataFrame(data=None,index=None, columns=["Maturity"])
-        self.r_obs = pd.DataFrame(data= None, index=None, columns=["Yield"])
+        self.m_obs_ini = pd.DataFrame(data=None,index=None, columns=["Maturity"])
+        self.r_obs_ini = pd.DataFrame(data= None, index=None, columns=["Yield"])
+        self.m_obs = pd.DataFrame(data=None,index=None)
+        self.r_obs = pd.DataFrame(data= None, index=None)
         self.ufr = ufr
         self.precision = precision
         self.tau = tau
         self.alpha = pd.DataFrame(data=None, columns=["Yield year"], dtype="float64")
         self.b = pd.DataFrame(data=None, columns=["Yield year"])
 
-    def CalcFwdRates(self):
-        fwdata = ((self.r_obs["Yield"]+1) ** self.m_obs["Maturity"])/((self.r_obs["Yield"].shift(periods=1)+1) ** self.m_obs["Maturity"].shift(periods=1))
-        self.fwd_rates = pd.DataFrame(data=fwdata.values, index=None, columns=["Forward"])
-
     def SetObservedTermStructure(self, maturity_vec, yield_vec):
-        self.m_obs = pd.DataFrame(data= maturity_vec, index=None, columns=["Maturity"])
-        self.r_obs = pd.DataFrame(data= yield_vec, index=None, columns=["Yield"])
+        self.m_obs_ini = pd.DataFrame(data= maturity_vec, index=None, columns=["Maturity"])
+        self.r_obs_ini = pd.DataFrame(data= yield_vec, index=None, columns=["Yield"])
+
+
+    def CalcFwdRates(self):
+        fwdata0 = 1 + self.r_obs_ini["Yield"][0] # First forward rate is equal to the first spot rate
+        fwdata = ((1 + self.r_obs_ini["Yield"]) ** self.m_obs_ini["Maturity"])/((1 + self.r_obs_ini["Yield"].shift(periods=1)) ** self.m_obs_ini["Maturity"].shift(periods=1))
+        out = np.insert(fwdata.values[1:], 0, fwdata0) # First forward in fwdata is NaN. instead fwdata0 is inserted at the start
+        self.fwd_rates = pd.DataFrame(data=out, index=None, columns=["Forward"])
+
 
     def ProjectForwardRate(self,N):
         """
@@ -37,9 +43,9 @@ class Curves:
         :type N: integer
             The number of required yearly projections
         """
-        for year in range(1,N):
-            spot = ((1+self.fwd_rates["Forward"][year:]).cumprod(axis=None)**(1/(self.m_obs["Maturity"]-year))-1)[year:]-1
-            self.r_obs=self.r_obs.join(pd.Series(data=spot.values, index=None, name="Yield year"+str(year)))
+        for year in range(0,N):
+            spot = ((1+self.fwd_rates["Forward"][year:]).cumprod(axis=None)**(1/(self.m_obs_ini["Maturity"]-year))-1)[year:]-1
+            self.r_obs=self.r_obs.join(pd.Series(data=spot.values, index=None, name="Yield year_"+str(year)))
 
 
 
