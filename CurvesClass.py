@@ -10,13 +10,14 @@ class Curves:
         self.fwd_rates = pd.DataFrame(data=None)
         self.m_obs_ini = pd.DataFrame(data=None,index=None, columns=["Maturity"])
         self.r_obs_ini = pd.DataFrame(data= None, index=None, columns=["Yield"])
-        self.m_obs = pd.DataFrame(data=None,index=None)
-        self.r_obs = pd.DataFrame(data= None, index=None)
+        self.m_obs = pd.DataFrame(data=None,index=None, columns=["Maturities_year_0"])
+        self.r_obs = pd.DataFrame(data= None, index=None, columns=["Yield_year_0"])
         self.ufr = ufr
         self.precision = precision
         self.tau = tau
-        self.alpha = pd.DataFrame(data=None, columns=["Yield year"], dtype="float64")
-        self.b = pd.DataFrame(data=None, columns=["Yield year"])
+        self.alpha_ini = pd.DataFrame(data=None, columns=["Alpha_year"], dtype="float64")
+        self.alpha = pd.DataFrame(data=None, columns=["Alpha_year_0"], dtype="float64")
+        self.b = pd.DataFrame(data=None, columns=["Calibration_year_0"])
 
     def SetObservedTermStructure(self, maturity_vec, yield_vec):
         self.m_obs_ini = pd.DataFrame(data= maturity_vec, index=None, columns=["Maturity"])
@@ -43,10 +44,20 @@ class Curves:
         :type N: integer
             The number of required yearly projections
         """
-        for year in range(0,N):
-            spot = ((1+self.fwd_rates["Forward"][year:]).cumprod(axis=None)**(1/(self.m_obs_ini["Maturity"]-year))-1)[year:]-1
-            self.r_obs=self.r_obs.join(pd.Series(data=spot.values, index=None, name="Yield year_"+str(year)))
+        if N<0:
+            return "N should be greater than 0"
 
+        # Calculate first spot rate and initiate the dataframe
+        spot = ((1+self.fwd_rates["Forward"]).cumprod(axis=None)**(1/self.m_obs_ini["Maturity"])-1)-1
+        self.m_obs["Maturities_year_0"] = self.m_obs_ini["Maturity"].values
+        self.r_obs["Yield year_0"] = spot.values
+
+        if N>=1:
+            for year in range(1,N):
+                maturities = self.m_obs_ini["Maturity"]-year
+                spot = ((1+self.fwd_rates["Forward"][year:]).cumprod(axis=None)**(1/maturities)-1)[year:]-1
+                self.m_obs = self.m_obs.join(pd.Series(data=maturities.values[year:], index=None, name="Maturities_year_"+str(year)))
+                self.r_obs = self.r_obs.join(pd.Series(data=spot.values, index=None, name="Yield_year_"+str(year)))
 
 
     def SWHeart(self, u: np.ndarray, v: np.ndarray, alpha: float):
