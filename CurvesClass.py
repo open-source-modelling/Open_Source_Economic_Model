@@ -31,7 +31,7 @@ class Curves:
         self.fwd_rates = pd.DataFrame(data=out, index=None, columns=["Forward"])
 
 
-    def ProjectForwardRate(self,N):
+    def ProjectForwardRate(self,n_years: int):
         """
         Calculate the projected spot curve from pre calculated 1-year forward curve. Each column represents
         the spot curve starting 1 year later than the previous column. Calling this function populates/overwrites
@@ -41,10 +41,11 @@ class Curves:
         ----------
         self: Curves class instance
             The Curves class instance with populated fwd_rates
-        :type N: integer
+        :type n_years: integer
             The number of required yearly projections
         """
-        if N<0:
+
+        if n_years<0:
             return "N should be greater than 0"
 
         # Calculate first spot rate and initiate the dataframe
@@ -52,12 +53,76 @@ class Curves:
         self.m_obs["Maturities_year_0"] = self.m_obs_ini["Maturity"].values
         self.r_obs["Yield year_0"] = spot.values
 
-        if N>=1:
-            for year in range(1,N):
+        if n_years>=1:
+            for year in range(1,n_years):
                 maturities = self.m_obs_ini["Maturity"]-year
                 spot = ((1+self.fwd_rates["Forward"][year:]).cumprod(axis=None)**(1/maturities)-1)[year:]-1
                 self.m_obs = self.m_obs.join(pd.Series(data=maturities.values[year:], index=None, name="Maturities_year_"+str(year)))
                 self.r_obs = self.r_obs.join(pd.Series(data=spot.values, index=None, name="Yield_year_"+str(year)))
+
+    def CalibrateProjected(self, n_years: int, ini_guess: float, end:float, n_iter:int):
+        """
+        ToDo
+        Parameters
+        ----------
+        self: Curves class instance
+            The Curves class instance with populated ufr, tau, precision, r_obs and m_obs,
+        :type n_years: integer
+            The number of required yearly projections
+
+        :type ini_guess: float
+            Initial guess of the parameter alpha in the calibration
+
+        :type end: float
+            Uppoer limit of the parameter alpha in the calibration
+
+        :type n_iter: integer
+            Number of iteration of the calibration (bisection) algorithm 
+
+
+
+        """
+
+        ufr = self.ufr
+        tau = self.tau
+        precision = self.precision
+
+
+        # Time 0 calibration
+        yield_head = "Yield_year_0"
+        mat_head = "Maturities_year_0"
+        calib_head = "Calibration_year_0"
+        alpha_head = "Alpha_year_0"
+
+        r_obs = np.transpose(np.array(self.r_obs[yield_head])) # Obtain the yield curve
+        m_obs = np.transpose(np.array(self.m_obs[mat_head])) # Obtain the maturities curve
+
+        # Calculate the calibration parameter alpha 
+        alpha_optimized = [self.BisectionAlpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, n_iter)]
+
+        # Save the calibration parameter alpha
+        self.alpha[alpha_head] = alpha_optimized
+
+        b_calibrated = self.SWCalibrate(r_obs, m_obs, ufr, self.alpha[alpha_head][0])
+        self.b[calib_head] = b_calibrated
+        
+        # All other times
+        for i_year in range(1, n_years):
+            yield_head = "Yield_year_" + str(i_year)
+            mat_head = "Maturities_year_" + str(i_year)
+            calib_head = "Calibration_year_" + str(i_year)
+            alpha_head = "Alpha_year_" + str(i_year)
+            
+            r_obs = np.transpose(np.array(self.r_obs[yield_head]))[:-i_year] # Obtain the yield curve
+            m_obs = np.transpose(np.array(self.m_obs[mat_head]))[:-i_year]
+
+            alpha_optimized = [self.BisectionAlpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, n_iter)]
+            self.alpha[alpha_head] = alpha_optimized
+
+            b_calibrated = self.SWCalibrate(r_obs, m_obs, ufr, self.alpha[alpha_head][0])
+            b_calibrated = np.append(b_calibrated, np.repeat(np.nan, i_year))
+            
+            self.b[calib_head] = b_calibrated
 
 
     def SWHeart(self, u: np.ndarray, v: np.ndarray, alpha: float):
