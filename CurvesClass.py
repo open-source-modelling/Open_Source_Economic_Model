@@ -79,8 +79,6 @@ class Curves:
         :type n_iter: integer
             Number of iteration of the calibration (bisection) algorithm 
 
-
-
         """
 
         ufr = self.ufr
@@ -124,6 +122,23 @@ class Curves:
             
             self.b[calib_head] = b_calibrated
 
+    def RetrieveRates(self, proj_step: int, target_mat, type: str):
+        maturity_name = "Maturities_year_" + str(proj_step)
+        calibration_name = "Calibration_year_" + str(proj_step)
+        alpha_name = "Alpha_year_" + str(proj_step)
+        calib_b = self.b[calibration_name][:-proj_step].values
+        calib_maturities = self.m_obs[maturity_name][:-proj_step].values
+        calib_alpha = self.alpha[alpha_name][0]
+        yield_result = self.SWExtrapolate(target_mat, calib_maturities, calib_b, self.ufr, calib_alpha)
+
+        if type == "Yield":
+            return yield_result
+        elif type== "Capitalisation":
+            return (1+np.array(yield_result))**target_mat
+        elif type == "Discount":    
+            return (1+np.array(yield_result))**(-target_mat)
+        else:
+            pass
 
     def SWHeart(self, u: np.ndarray, v: np.ndarray, alpha: float):
         """
