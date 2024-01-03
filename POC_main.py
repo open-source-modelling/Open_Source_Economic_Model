@@ -127,19 +127,11 @@ def main():
     curves.ProjectForwardRate(settings.n_proj_years)
 
     logger.info("Calculate calibration parameter alpha")
-    alphaoptimized = [curves.BisectionAlpha(0.05, 0.5, curves.m_obs["Maturity"], curves.r_obs["Yield"], curves.ufr, curves.tau, curves.precision, 1000)]
+    curves.CalibrateProjected(settings.n_proj_years, 0.05, 0.5, 1000)
+ 
+    #desired_mat = np.array([0.7,1.2,1.3543])
+    #curves.RetrieveRates(3, desired_mat, "Discount")
     
-    curves.alpha["Yield year"] = alphaoptimized
-    curves.alpha.index= [settings.modelling_date]
-    
-    logger.info("Calibrate vector b")
-    
-    bCalibrated = curves.SWCalibrate(curves.r_obs["Yield"], curves.m_obs["Maturity"], curves.ufr, curves.alpha["Yield year"][0])
-
-    ProjYear = 1
-    NameOfYear = "Yield year"+str(ProjYear)
-
-
     logger.info("Import cash portfolio")
     cash = get_Cash(cash_portfolio_file)
 
