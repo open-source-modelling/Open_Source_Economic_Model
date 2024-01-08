@@ -15,7 +15,6 @@
 
 </br>
 
-## Problem
 Financial institutions such as life insurers or pension funds have a fiduciary duty to manage long-term commitments to their customers. They initially collect premiums/contributions from their clients, and in exchange promise to provide a guarantee or a higher return at a further date. A large part of risk management in such companies is focused on making sure that the invested assets are managed in such a way as to guarantee the honouring of all commitments (pensions, annuities, insurance claims etc.). One such tool is an asset-liability model. Such models try to simulate three things simultaneously:
  - Evolution and performance of company's investments
  - Evolution of liabilities
@@ -47,7 +46,7 @@ Specific deep dives into topics related to the methodology are available as Jupy
 So far, we have produced a simple example that can be ran using the script `POC_main.py`. A hypothetical portfolio of a few equities and a single fixed liability cash flow profile. This example will grow as more development is committed to the main branch.
 
 ## Ask to the community
-Send us an email at gregor@osmodelling.com with feedback, comments, ideas on what we could do better etc. Do you want to help us on this (very niche) open source project?
+Send us an email at gregor@osmodelling.com with feedback, comments, ideas on what we could do better etc. Do you want to help us on this open source project?
 
 [Documentation]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/Documentation
 [OSEM pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_POC_Documentation_draft.pdf
