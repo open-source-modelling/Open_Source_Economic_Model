@@ -20,11 +20,39 @@ class Curves:
         self.b = pd.DataFrame(data=None, columns=["Calibration_year_0"])
 
     def SetObservedTermStructure(self, maturity_vec, yield_vec):
+        """
+        Set the initial vector of liquid maturities and the coresponding yield rates into the curves class. Both vectors are saved as dataframes into
+        The vector of maturities is saved into the m_obs_ini property.
+        The vector of yields is saved into the r_obs_ini property.
+
+        Parameters
+        ----------
+        self: Curves class instance
+            The Curves class instance
+        :type maturity_vec: list
+            List of maturities for which yields are provided
+        :type yield_vec: list
+            List of yield rates for the maturities in maturity_vec
+
+        Note that the current assumption is that the yields are provided for every year from time 0 to the end of the modelling window
+        
+        """
+        
         self.m_obs_ini = pd.DataFrame(data= maturity_vec, index=None, columns=["Maturity"])
         self.r_obs_ini = pd.DataFrame(data= yield_vec, index=None, columns=["Yield"])
 
 
     def CalcFwdRates(self):
+        """
+        Calculate 1-year forward rates using the initial yield curve and maturities provided.
+        
+        Parameters
+        ----------
+        self: Curves class instance
+            The Curves class instance        
+        """
+
+
         fwdata0 = 1 + self.r_obs_ini["Yield"][0] # First forward rate is equal to the first spot rate
         fwdata = ((1 + self.r_obs_ini["Yield"]) ** self.m_obs_ini["Maturity"])/((1 + self.r_obs_ini["Yield"].shift(periods=1)) ** self.m_obs_ini["Maturity"].shift(periods=1))
         out = np.insert(fwdata.values[1:], 0, fwdata0) # First forward in fwdata is NaN. instead fwdata0 is inserted at the start
@@ -62,7 +90,10 @@ class Curves:
 
     def CalibrateProjected(self, n_years: int, ini_guess: float, end:float, n_iter:int):
         """
-        ToDo
+        
+        
+
+
         Parameters
         ----------
         self: Curves class instance
@@ -132,11 +163,11 @@ class Curves:
         yield_result = self.SWExtrapolate(target_mat, calib_maturities, calib_b, self.ufr, calib_alpha)
 
         if type == "Yield":
-            return yield_result
+            return pd.DataFrame(data=yield_result,index=None, columns=["Yield"])
         elif type== "Capitalisation":
-            return (1+np.array(yield_result))**target_mat
+            return pd.DataFrame(data=(1+np.array(yield_result))**target_mat,index=None, columns=["Capitalisation"])
         elif type == "Discount":    
-            return (1+np.array(yield_result))**(-target_mat)
+            return pd.DataFrame(data=(1+np.array(yield_result))**(-target_mat),index=None, columns=["Discount"])
         else:
             pass
 
