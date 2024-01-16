@@ -117,7 +117,6 @@ def main():
                     settings.country)
     
     logger.info("Process risk free rate curve")
-    
     curves.SetObservedTermStructure(maturity_vec=curve_country.index.tolist(), yield_vec=curve_country.values)
     
     logger.info("Calculate 1-year forward rate")
@@ -129,8 +128,9 @@ def main():
     logger.info("Calculate calibration parameter alpha")
     curves.CalibrateProjected(settings.n_proj_years, 0.05, 0.5, 1000)
  
+    #test
     #desired_mat = np.array([0.7,1.2,1.3543])
-    #curves.RetrieveRates(3, desired_mat, "Discount")
+    #print(curves.RetrieveRates(3, desired_mat, "Discount"))
     
     logger.info("Import cash portfolio")
     cash = get_Cash(cash_portfolio_file)
@@ -174,6 +174,7 @@ def main():
     ### PREPARE DATA STRUCTURES WITH CASH FLOWS###
     # Dataframe with dividend cash flows
     cash_flows = create_cashflow_dataframe(dividend_dates, unique_list)
+    
     # Dataframe with terminal cash flows
     terminal_cash_flows = create_cashflow_dataframe(terminal_dates, unique_terminal_list)
 

@@ -59,18 +59,19 @@ class Curves:
         self.fwd_rates = pd.DataFrame(data=out, index=None, columns=["Forward"])
 
 
-    def ProjectForwardRate(self,n_years: int):
+    def ProjectForwardRate(self, n_years: int):
         """
-        Calculate the projected spot curve from pre calculated 1-year forward curve. Each column represents
-        the spot curve starting 1 year later than the previous column. Calling this function populates/overwrites
-        the r_obs property of the instance.
+        Calculate the projected spot curve from the 1-year forward curve. Each column represents
+        the spot curve starting 1 year later than the previous column. Calling this function populates
+        the r_obs and m_obs property of the instance with the projected yields and maturities. The projection is done for
+        n_year years.
 
         Parameters
         ----------
         self: Curves class instance
             The Curves class instance with populated fwd_rates
         :type n_years: integer
-            The number of required yearly projections
+            The number of required yearly projections. (Ex. n_year = 2 will generate a 3 column dataframe (Year 0, 1, and 2))
         """
 
         if n_years<0:
@@ -82,22 +83,28 @@ class Curves:
         self.r_obs["Yield year_0"] = spot.values
 
         if n_years>=1:
-            for year in range(1,n_years):
+            for year in range(1, n_years):
                 maturities = self.m_obs_ini["Maturity"]-year
                 spot = ((1+self.fwd_rates["Forward"][year:]).cumprod(axis=None)**(1/maturities)-1)[year:]-1
                 self.m_obs = self.m_obs.join(pd.Series(data=maturities.values[year:], index=None, name="Maturities_year_"+str(year)))
                 self.r_obs = self.r_obs.join(pd.Series(data=spot.values, index=None, name="Yield_year_"+str(year)))
 
-    def CalibrateProjected(self, n_years: int, ini_guess: float, end:float, n_iter:int):
+    def CalibrateProjected(self, n_years: int, ini_guess: float, end:float, max_iter:int):
         """
+        Takes the projected yield curve from the m_obs and r_obs properties and uses the bisection algorithm
+        to calibrate the alpha parameter if the Smith &Wilson algorithm. The calibration is done on the first
+        n_years calibrations. The maximum number of iterations per each calibration is set by n_iter.
         
-        
+        The optimal value of the parameter alpha is saved into the alpha property.
 
+        The optimized value of alpha together with other Smith&Wilson parameters and the projected yield curve
+        are used to calculate the calibration vector b. This vector is saved into the property b.
 
         Parameters
         ----------
         self: Curves class instance
             The Curves class instance with populated ufr, tau, precision, r_obs and m_obs,
+        
         :type n_years: integer
             The number of required yearly projections
 
@@ -105,10 +112,10 @@ class Curves:
             Initial guess of the parameter alpha in the calibration
 
         :type end: float
-            Uppoer limit of the parameter alpha in the calibration
+            Upper limit of the parameter alpha in the calibration
 
-        :type n_iter: integer
-            Number of iteration of the calibration (bisection) algorithm 
+        :type max_iter: integer
+            Maximum number of iteration of the calibration (bisection) algorithm 
 
         """
 
@@ -127,7 +134,7 @@ class Curves:
         m_obs = np.transpose(np.array(self.m_obs[mat_head])) # Obtain the maturities curve
 
         # Calculate the calibration parameter alpha 
-        alpha_optimized = [self.BisectionAlpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, n_iter)]
+        alpha_optimized = [self.BisectionAlpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, max_iter)]
 
         # Save the calibration parameter alpha
         self.alpha[alpha_head] = alpha_optimized
@@ -135,7 +142,7 @@ class Curves:
         b_calibrated = self.SWCalibrate(r_obs, m_obs, ufr, self.alpha[alpha_head][0])
         self.b[calib_head] = b_calibrated
         
-        # All other times
+        # All other projection periods except time 0
         for i_year in range(1, n_years):
             yield_head = "Yield_year_" + str(i_year)
             mat_head = "Maturities_year_" + str(i_year)
@@ -145,7 +152,7 @@ class Curves:
             r_obs = np.transpose(np.array(self.r_obs[yield_head]))[:-i_year] # Obtain the yield curve
             m_obs = np.transpose(np.array(self.m_obs[mat_head]))[:-i_year]
 
-            alpha_optimized = [self.BisectionAlpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, n_iter)]
+            alpha_optimized = [self.BisectionAlpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, max_iter)]
             self.alpha[alpha_head] = alpha_optimized
 
             b_calibrated = self.SWCalibrate(r_obs, m_obs, ufr, self.alpha[alpha_head][0])
