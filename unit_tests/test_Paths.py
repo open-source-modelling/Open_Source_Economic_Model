@@ -10,7 +10,7 @@ def test_base_path(paths):
       assert paths.base == "Test folder/"
 
 def test_intermediate_path(paths):
-    assert paths.intermediate == "Test folder/intermediate"
+    assert paths.intermediate == "Test folder/Intermediate/"
 
 def test_input_path(paths):
-    assert paths.input == "Test folder/input"
+    assert paths.input == "Test folder/Input/"
