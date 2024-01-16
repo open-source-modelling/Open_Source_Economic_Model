@@ -71,18 +71,19 @@ def test_SWHeartZero(curves_1):
     out_1 = curves_1.SWHeart(u, v, alpha)
     out_2 = curves_1.SWHeart(v, u, alpha)
     out_3 = curves_1.SWHeart(u, u, alpha)
-    assert (out_1 == expected).all() # Fix to be approximate
-    assert (out_2 == expected).all() # Fix to be approximate
-    assert (out_3 == expected).all() # Fix to be approximate
+    
+    assert out_1 == pytest.approx(expected) # Fix to be approximate
+    assert out_2 == pytest.approx(expected) # Fix to be approximate
+    assert out_3 == pytest.approx(expected) # Fix to be approximate
 
-def test_SWCalibrate(curve_1):
-    r =np.array([0.1,0.2,0.3])
+def test_SWCalibrate(curves_1):
+    r = np.array([0.1, 0.2, 0.3])
     m = np.array([1, 2, 3])
     ufr = 0.035
     alpha = 0.5
-    b = curve_1.SWCalibrate(r, m, ufr, alpha)
-    expected = [0,0,0]
-    assert (b.values==expected).all()
+    b = curves_1.SWCalibrate(r, m, ufr, alpha)
+    expected = [3.25964092, -0.01510795, -1.83196649]
+    assert b == pytest.approx(expected)
 
 def test_ProjectForwardRateMat(curves_1, term_structure_maturity, term_structure_yield):
     n_year = 3
