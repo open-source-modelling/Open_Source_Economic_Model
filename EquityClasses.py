@@ -70,6 +70,42 @@ class EquityShare:
             if this_date <= end_date:
                 yield this_date  # ? What is the advantage of yield here?
 
+    def create_single_cash_flows(self, modelling_date, end_date, growth_rate):
+        """
+        Parameters
+        ----------
+        self: EquityShare instance
+            The EquityShare instance with the equity position of interest.
+        :type modelling_date: datetime.date
+            The date from which the dividend dates and values start.
+        :type end_date: datetime.date
+            The last date that the model considers (end of the modelling window).
+        :type growth_rate: float
+            Annualized growth rate of the equity of interest.
+            
+        Returns
+        -------
+        :type dividends: list of dict
+            List of dictionaries containing the cash flow date and the size.        
+        """
+
+        dividend_amount = 0
+        dividends = {}
+        for dividend_date in self.generate_dividend_dates(modelling_date, end_date):
+            if dividend_date in dividends:  # If two cash flows on same date
+                pass
+                # Do nothing since dividend amounts are calibrated afterwards for equity
+                # dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
+            else:  # New cash flow date
+                market_price = self.generate_market_value(modelling_date, dividend_date,
+                                                                    self.market_price,
+                                                                    growth_rate)
+                dividend_amount = self.dividend_amount(current_market_price=market_price)
+                dividends.update({dividend_date: dividend_amount})
+        return dividends
+
+
+
 
 class EquitySharePortfolio():
     def __init__(self, equity_share: dict[int, EquityShare] = None):
@@ -130,46 +166,9 @@ class EquitySharePortfolio():
         equity_share: EquityShare
         for asset_id in self.equity_share:
             equity_share = self.equity_share[asset_id]  # Select one asset position
-            dividends = self.create_single_cash_flows(equity_share, modelling_date, end_date, equity_share.growth_rate)
+            dividends = equity_share.create_single_cash_flows(modelling_date, end_date, equity_share.growth_rate)
             all_dividends.append(dividends)
         return all_dividends
-
-    def create_single_cash_flows(self, equity_share, modelling_date, end_date, growth_rate):
-        """
-        Parameters
-        ----------
-        self: EquitySharePortfolio class instance
-            The EquitySharePortfolio instance with populated initial portfolio.
-        equity_share: EquityShare instance
-            The EquityShare instance with the equity position of interest.
-        :type modelling_date: datetime.date
-            The date from which the dividend dates and values start.
-        :type end_date: datetime.date
-            The last date that the model considers (end of the modelling window).
-        :type growth_rate: float
-            Annualized growth rate of the equity of interest.
-            
-        Returns
-        -------
-        :type dividends: list of dict
-            List of dictionaries containing the cash flow date and the size.        
-        """
-
-        dividend_amount = 0
-        dividends = {}
-        for dividend_date in equity_share.generate_dividend_dates(modelling_date, end_date):
-            if dividend_date in dividends:  # If two cash flows on same date
-                pass
-                # Do nothing since dividend amounts are calibrated afterwards for equity
-                # dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
-            else:  # New cash flow date
-                market_price = equity_share.generate_market_value(modelling_date, dividend_date,
-                                                                    equity_share.market_price,
-                                                                    growth_rate)
-                dividend_amount = equity_share.dividend_amount(current_market_price=market_price)
-                dividends.update({dividend_date: dividend_amount})
-        return dividends
-
 
     def create_terminal_dates(self, modelling_date: date, terminal_date: date, terminal_rate: float) -> list:
         """
