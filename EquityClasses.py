@@ -127,26 +127,29 @@ class EquitySharePortfolio():
             A list of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the coupons are paid out.
         """
         all_dividends = []
-        dividends: dict[date, float] = {}
         equity_share: EquityShare
-        dividend_date: date
         for asset_id in self.equity_share:
             equity_share = self.equity_share[asset_id]  # Select one asset position
-            dividend_amount = 0
-            dividends = {}
-            for dividend_date in equity_share.generate_dividend_dates(modelling_date, end_date):
-                if dividend_date in dividends:  # If two cash flows on same date
-                    pass
-                    # Do nothing since dividend amounts are calibrated afterwards for equity
-                    # dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
-                else:  # New cash flow date
-                    market_price = equity_share.generate_market_value(modelling_date, dividend_date,
-                                                                      equity_share.market_price,
-                                                                      equity_share.growth_rate)
-                    dividend_amount = equity_share.dividend_amount(current_market_price=market_price)
-                    dividends.update({dividend_date: dividend_amount})
+            dividends = self.create_single_cash_flows(equity_share, modelling_date, end_date, equity_share.growth_rate)
             all_dividends.append(dividends)
         return all_dividends
+
+    def create_single_cash_flows(self, equity_share, modelling_date, end_date, growth_rate):
+        dividend_amount = 0
+        dividends = {}
+        for dividend_date in equity_share.generate_dividend_dates(modelling_date, end_date):
+            if dividend_date in dividends:  # If two cash flows on same date
+                pass
+                # Do nothing since dividend amounts are calibrated afterwards for equity
+                # dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
+            else:  # New cash flow date
+                market_price = equity_share.generate_market_value(modelling_date, dividend_date,
+                                                                    equity_share.market_price,
+                                                                    growth_rate)
+                dividend_amount = equity_share.dividend_amount(current_market_price=market_price)
+                dividends.update({dividend_date: dividend_amount})
+        return dividends
+
 
     def create_terminal_dates(self, modelling_date: date, terminal_date: date, terminal_rate: float) -> list:
         """
