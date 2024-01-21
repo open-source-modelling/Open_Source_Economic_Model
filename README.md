@@ -9,7 +9,7 @@
 
 <h1 align="center" style="border-botom: none">
   <b>
-    🐍 Open Source Economic Model (OSEM) 🐍     
+    🐍 Open-Source Economic Model (OSEM) 🐍     
   </b>
 </h1>
 
