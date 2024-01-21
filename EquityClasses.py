@@ -135,6 +135,26 @@ class EquitySharePortfolio():
         return all_dividends
 
     def create_single_cash_flows(self, equity_share, modelling_date, end_date, growth_rate):
+        """
+        Parameters
+        ----------
+        self: EquitySharePortfolio class instance
+            The EquitySharePortfolio instance with populated initial portfolio.
+        equity_share: EquityShare instance
+            The EquityShare instance with the equity position of interest.
+        :type modelling_date: datetime.date
+            The date from which the dividend dates and values start.
+        :type end_date: datetime.date
+            The last date that the model considers (end of the modelling window).
+        :type growth_rate: float
+            Annualized growth rate of the equity of interest.
+            
+        Returns
+        -------
+        :type dividends: list of dict
+            List of dictionaries containing the cash flow date and the size.        
+        """
+
         dividend_amount = 0
         dividends = {}
         for dividend_date in equity_share.generate_dividend_dates(modelling_date, end_date):
