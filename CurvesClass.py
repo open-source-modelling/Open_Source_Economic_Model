@@ -80,7 +80,7 @@ class Curves:
         # Calculate first spot rate and initiate the dataframe
         spot = ((1+self.fwd_rates["Forward"]).cumprod(axis=None)**(1/self.m_obs_ini["Maturity"])-1)-1
         self.m_obs["Maturities_year_0"] = self.m_obs_ini["Maturity"].values
-        self.r_obs["Yield year_0"] = spot.values
+        self.r_obs["Yield_year_0"] = spot.values
 
         if n_years>=1:
             for year in range(1, n_years):
