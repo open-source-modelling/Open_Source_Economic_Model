@@ -183,12 +183,8 @@ class EquityShare:
         y_end = self.price_share(test_dividends, test_terminal, modelling_date, curves)[0]-self.market_price
 
         if np.abs(y_start) < Precision:
-            print("Y_Start")
-            print(y_start)
             return x_start
         if np.abs(y_end) < Precision:
-            print("Y_End")
-            print(y_end)
             return x_end  # If final point already satisfies the conditions return end point
         iIter = 0
         while iIter <= maxIter:
@@ -196,12 +192,8 @@ class EquityShare:
 
             test_dividends = self.create_single_cash_flows(modelling_date, end_date, x_mid)
             test_terminal = self.create_single_terminal(modelling_date, end_date, x_mid)
-            test_terminal = {[0]}
             y_mid = self.price_share(test_dividends, test_terminal, modelling_date, curves)[0]-self.market_price
-            print([y_mid,x_end,x_start,iIter])
             if (y_mid == 0 or (x_end - x_start) / 2 < Precision):  # Solution found
-                print("Y_Mid")
-                print([y_mid,x_end,x_start,iIter,self.market_price])
                 return x_mid
             else:  # Solution not found
                 iIter += 1
