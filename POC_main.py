@@ -129,7 +129,7 @@ def main():
     curves.CalibrateProjected(settings.n_proj_years, 0.05, 0.5, 1000)
  
     #test
-    #desired_mat = np.array([0.7,1.2,1.3543])
+    #desired_mat = np.array([0.7, 1.2, 1.3543])
     #print(curves.RetrieveRates(3, desired_mat, "Discount"))
     
     logger.info("Import cash portfolio")
@@ -193,6 +193,7 @@ def main():
         time_frac = (date_of_interest - previous_date_of_interest).days / 365.5
 
         bank_account[date_of_interest] = bank_account[previous_date_of_interest]
+        
         # Which dividend dates are expired
         expired_dates = calculate_expired_dates(unique_list, date_of_interest)
         for expired_date in expired_dates:  # Sum expired dividend flows
