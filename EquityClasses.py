@@ -36,22 +36,22 @@ class EquityShare:
         logger.info("Equity class initiated")
 
     # @property Look into what property does
-    @tracer
+#    @tracer
     def dividend_amount(self, current_market_price: float) -> float:
         out = current_market_price * self.dividend_yield
         return out
 
-    @tracer
+#    @tracer
     def terminal_amount(self, market_price: float, growth_rate: float, terminal_rate: float) -> float:
         return market_price / (terminal_rate - growth_rate)
 
-    @tracer
+#    @tracer
     def generate_market_value(self, modelling_date: date, evaluated_date: date, market_price: float,
                               growth_rate: float):
         t = (evaluated_date - modelling_date).days / 365.5
         return market_price * (1 + growth_rate) ** t
 
-    @tracer
+#    @tracer
     def generate_dividend_dates(self, modelling_date: date, end_date: date) -> date:
         """
         Generator yielding the dividend payment date starting from the first dividend
@@ -70,8 +70,10 @@ class EquityShare:
             if this_date <= end_date:
                 yield this_date  # ? What is the advantage of yield here?
 
-    def create_single_cash_flows(self, modelling_date, end_date, growth_rate):
+    def create_single_cash_flows(self, modelling_date: date, end_date: date, growth_rate: float):
         """
+
+        
         Parameters
         ----------
         self: EquityShare instance
@@ -95,7 +97,7 @@ class EquityShare:
             if dividend_date in dividends:  # If two cash flows on same date
                 pass
                 # Do nothing since dividend amounts are calibrated afterwards for equity
-                # dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
+                # dividends[dividend_date] = dividend_amount + dividends[dividend_date]
             else:  # New cash flow date
                 market_price = self.generate_market_value(modelling_date, dividend_date,
                                                                     self.market_price,
@@ -104,6 +106,111 @@ class EquityShare:
                 dividends.update({dividend_date: dividend_amount})
         return dividends
 
+
+    def create_single_terminal(self, modelling_date: date, end_date: date, terminal_rate: float):
+        terminals = {}
+        market_price = self.generate_market_value(modelling_date, end_date, self.market_price,
+                                                            self.growth_rate)
+        terminal_amount = self.terminal_amount(market_price, self.growth_rate, terminal_rate)
+        terminals.update({end_date: terminal_amount})
+        return terminals
+
+    def price_share(self, test_dividends, test_terminal, modelling_date, curves):
+        Datefrac = []
+        Values = []
+        for key, value in test_dividends.items():
+            date_frac = (key-modelling_date).days/365.25
+            Datefrac.append(date_frac)
+            Values.append(value)
+            
+        for key, value in test_terminal.items():
+            date_frac = (key-modelling_date).days/365.25
+            Datefrac.append(date_frac)
+            Values.append(value)
+        
+        Datefrac = pd.DataFrame(data = Datefrac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
+        Values = pd.DataFrame(data = Values, columns = ["Cash flow"])
+
+        discount = curves.RetrieveRates(3, Datefrac.iloc[:, 0].to_numpy(), "Discount")
+
+        nodisc_value = Values.values*discount
+        disc_value = sum(nodisc_value.values)
+        return disc_value
+
+    def bisection_growth(self, x_start, x_end, modelling_date, end_date, curves, Precision, maxIter):
+        """
+        Bisection root finding algorithm for finding the root of a function. The function here is the allowed difference between the ultimate forward rate and the extrapolated curve using Smith & Wilson.
+
+        Args:
+            cbPriced =  CorporateBondPriced object containing the list of priced bonds, spreads and cash flows
+            xStart =    1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
+            xEnd =      1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
+            M_Obs =     n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u = [[1], [3]]
+            r_Obs =     n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
+            ufr  =      1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
+            Tau =       1 x 1 floating number representing the allowed difference between ufr and actual curve. Ex. Tau = 0.00001
+            Precision = 1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
+            maxIter =   1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution         
+            approx_function
+        Returns:
+            1 x 1 floating number representing the optimal value of the parameter alpha 
+
+        Example of use:
+            >>> import numpy as np
+            >>> from SWCalibrate import SWCalibrate as SWCalibrate
+            >>> M_Obs = np.transpose(np.array([1, 2, 4, 5, 6, 7]))
+            >>> r_Obs =  np.transpose(np.array([0.01, 0.02, 0.03, 0.032, 0.035, 0.04]))
+            >>> xStart = 0.05
+            >>> xEnd = 0.5
+            >>> maxIter = 1000
+            >>> alfa = 0.15
+            >>> ufr = 0.042
+            >>> Precision = 0.0000000001
+            >>> Tau = 0.0001
+            >>> BisectionAlpha(xStart, xEnd, M_Obs, r_Obs, ufr, Tau, Precision, maxIter)
+            [Out] 0.11549789285636511
+
+        For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf and https://en.wikipedia.org/wiki/Bisection_method
+
+        Implemented by Gregor Fabjan from Qnity Consultants on 17/12/2021.
+        """
+        test_dividends = self.create_single_cash_flows(modelling_date, end_date, x_start)
+        test_terminal = self.create_single_terminal(modelling_date, end_date, x_start)
+        y_start = self.price_share(test_dividends, test_terminal, modelling_date, curves)[0]-self.market_price
+
+        test_dividends = self.create_single_cash_flows(modelling_date, end_date, x_end)
+        test_terminal = self.create_single_terminal(modelling_date, end_date, x_end)
+        y_end = self.price_share(test_dividends, test_terminal, modelling_date, curves)[0]-self.market_price
+
+        if np.abs(y_start) < Precision:
+            print("Y_Start")
+            print(y_start)
+            return x_start
+        if np.abs(y_end) < Precision:
+            print("Y_End")
+            print(y_end)
+            return x_end  # If final point already satisfies the conditions return end point
+        iIter = 0
+        while iIter <= maxIter:
+            x_mid = (x_end + x_start) / 2  # calculate mid-point
+
+            test_dividends = self.create_single_cash_flows(modelling_date, end_date, x_mid)
+            test_terminal = self.create_single_terminal(modelling_date, end_date, x_mid)
+            test_terminal = {[0]}
+            y_mid = self.price_share(test_dividends, test_terminal, modelling_date, curves)[0]-self.market_price
+            print([y_mid,x_end,x_start,iIter])
+            if (y_mid == 0 or (x_end - x_start) / 2 < Precision):  # Solution found
+                print("Y_Mid")
+                print([y_mid,x_end,x_start,iIter,self.market_price])
+                return x_mid
+            else:  # Solution not found
+                iIter += 1
+                if np.sign(y_mid) == np.sign(
+                        y_start):  # If the start point and the middle point have the same sign, then the root must be in the second half of the interval
+                    x_start = x_mid
+                else:  # If the start point and the middle point have a different sign than by mean value theorem the interval must contain at least one root
+                    x_end = x_mid
+        return "Did not converge"
 
 
 
@@ -229,7 +336,6 @@ class EquitySharePortfolio():
             all_dividend_dates_considered: list of numpy arrays. Each element in the list represents a single asset. Each numpy array represents the indices of
             the cash flows from the dividend_array that mature within the period between the modelling date and the terminal date.
         """
-
 
         # other counting conventions MISSING
         # Remove numpy arrays in construction
