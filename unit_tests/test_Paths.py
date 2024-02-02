@@ -14,3 +14,6 @@ def test_intermediate_path(paths):
 
 def test_input_path(paths):
     assert paths.input == "Test folder/Input/"
+
+def test_output_path(paths):
+    assert paths.input == "Test folder/Output/"
