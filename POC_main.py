@@ -3,11 +3,9 @@ import datetime
 import logging
 import os
 import pandas as pd
-
 from ConfigurationClass import Configuration
 from CurvesClass import Curves
 from EquityClasses import *
-from ExportData import save_matrices_to_csv
 from ImportData import get_EquityShare, get_settings, import_SWEiopa, get_Cash, get_Liability, \
     get_configuration
 from PathsClasses import Paths
@@ -287,7 +285,7 @@ def main():
         previous_market_value = sum(market_price_df[date_of_interest])
 
 
-    out_struct.to_csv("Output\Results.csv")
+    out_struct.to_csv(conf.output_path+"\Results.csv")
     # print(bank_account)
     # print(total_market_value)
     # print(sum(market_price[modelling_date_1]))

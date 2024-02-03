@@ -18,3 +18,4 @@ class Configuration:
         self.input_spread: str = ""
         self.input_parameters: str = ""
         self.input_liability_cashflow: str = ""
+        self.output_path: str = ""
