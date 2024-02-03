@@ -8,7 +8,6 @@ from CurvesClass import Curves
 from EquityClasses import *
 from ImportData import get_EquityShare, get_settings, import_SWEiopa, get_Cash, get_Liability, \
     get_configuration
-from PathsClasses import Paths
 from TraceClass import tracer
 
 logger = logging.getLogger(__name__)
