@@ -43,7 +43,8 @@ class EquityShare:
 
 #    @tracer
     def terminal_amount(self, market_price: float, growth_rate: float, terminal_rate: float) -> float:
-        return market_price / (terminal_rate - growth_rate)
+        #return market_price / (terminal_rate - growth_rate)
+        return market_price
 
 #    @tracer
     def generate_market_value(self, modelling_date: date, evaluated_date: date, market_price: float,
@@ -115,7 +116,7 @@ class EquityShare:
         terminals.update({end_date: terminal_amount})
         return terminals
 
-    def price_share(self, test_dividends, test_terminal, modelling_date, curves):
+    def price_share(self, test_dividends, test_terminal, modelling_date, proj_period, curves):
         Datefrac = []
         Values = []
         for key, value in test_dividends.items():
@@ -131,13 +132,13 @@ class EquityShare:
         Datefrac = pd.DataFrame(data = Datefrac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
         Values = pd.DataFrame(data = Values, columns = ["Cash flow"])
 
-        discount = curves.RetrieveRates(3, Datefrac.iloc[:, 0].to_numpy(), "Discount")
+        discount = curves.RetrieveRates(proj_period, Datefrac.iloc[:, 0].to_numpy(), "Discount")
 
         nodisc_value = Values.values*discount
         disc_value = sum(nodisc_value.values)
         return disc_value
 
-    def bisection_growth(self, x_start, x_end, modelling_date, end_date, curves, Precision, maxIter):
+    def bisection_growth(self, x_start, x_end, modelling_date, end_date, proj_period, curves, Precision, maxIter):
         """
         Bisection root finding algorithm for finding the root of a function. The function here is the allowed difference between the ultimate forward rate and the extrapolated curve using Smith & Wilson.
 
@@ -176,11 +177,11 @@ class EquityShare:
         """
         test_dividends = self.create_single_cash_flows(modelling_date, end_date, x_start)
         test_terminal = self.create_single_terminal(modelling_date, end_date, x_start)
-        y_start = self.price_share(test_dividends, test_terminal, modelling_date, curves)[0]-self.market_price
+        y_start = self.price_share(test_dividends, test_terminal, modelling_date, proj_period, curves)[0]-self.market_price
 
         test_dividends = self.create_single_cash_flows(modelling_date, end_date, x_end)
         test_terminal = self.create_single_terminal(modelling_date, end_date, x_end)
-        y_end = self.price_share(test_dividends, test_terminal, modelling_date, curves)[0]-self.market_price
+        y_end = self.price_share(test_dividends, test_terminal, modelling_date, proj_period, curves)[0]-self.market_price
 
         if np.abs(y_start) < Precision:
             return x_start
@@ -192,7 +193,7 @@ class EquityShare:
 
             test_dividends = self.create_single_cash_flows(modelling_date, end_date, x_mid)
             test_terminal = self.create_single_terminal(modelling_date, end_date, x_mid)
-            y_mid = self.price_share(test_dividends, test_terminal, modelling_date, curves)[0]-self.market_price
+            y_mid = self.price_share(test_dividends, test_terminal, modelling_date, proj_period, curves)[0]-self.market_price
             if (y_mid == 0 or (x_end - x_start) / 2 < Precision):  # Solution found
                 return x_mid
             else:  # Solution not found
@@ -501,34 +502,6 @@ class EquitySharePortfolio():
 
         return [market_price, growth_rate]
 
-    #    def create_terminal_cashflow(self, modelling_date: date, end_date: date) -> dict:
-    #        """
-    #        self : EquitySharePortfolio class instance
-    #            The EquitySharePortfolio instance with populated initial portfolio.
-    #        :type modelling_date: date
-    #        :type end_date: date
-
-    #        :rtype: dict
-    #        """
-    #        all_terminals = np.array([])
-    #        terminals: dict[date, float] = {}
-    #        equity_share: EquityShare
-    #        terminal_date: date
-
-    #        for asset_id in self.equity_share:
-    #            equity_share = self.equity_share[asset_id]
-    #
-    #            terminal_amount = 0
-    #            terminal_date = end_date
-    #            if terminal_date in terminals:
-    #                pass
-    #                # Do nothing since dividend amounts are calibrated afterwards for equity
-    #                #terminals[terminal_date] = terminal_amount + terminals[terminal_date]
-    #            else:
-    #                terminals.update({terminal_date:terminal_amount})
-    #            all_terminals = np.append(all_terminals,np.array(terminals))
-    #        return all_terminals
-
     # Calculate terminal value given growth rate, ultimate forward rate and vector of cash flows
     def equity_gordon(self, dividendyield, yieldrates, dividenddatefrac, ufr, g):
 
@@ -601,185 +574,3 @@ class EquitySharePortfolio():
                 else:  # If the start point and the middle point have a different sign than by mean value theorem the interval must contain at least one root
                     x_end = xMid
         return "Did not converge"
-
-# Missing create cash flows
-
-
-# class Equity:
-#    def __init__(self, nace, issuedate, issuername, dividendyield, frequency, marketprice,terminalvalue,enddate):
-#        """
-#        Equity class saves
-#
-#        Properties
-#        ----------
-#        nace
-#        issuedate
-#        frequency
-#        marketprice
-#        dividendyield
-#        terminalvalue
-#        growthrate
-#        dividenddates
-#        dividendfrac
-#        terminaldates
-#        dividendcfs
-#        terminalcfs
-#
-#        """
-#        self.nace = nace
-#        self.issuedate = issuedate
-#        self.issuername = issuername
-#        self.frequency = frequency
-#        self.marketprice = marketprice
-#        self.dividendyield = dividendyield
-#        self.terminalvalue = terminalvalue
-#        self.enddate = enddate
-#        self.terminaldates = []
-#        self.growthrate = []
-#        self.dividenddates = []
-#        self.dividendfrac = []
-#        self.terminaldates =[]
-#        self.dividendcfs = []
-#        self.terminalcfs = []
-#
-#    def createcashflowdates(self):
-#        """
-#        Create the vector of dates at which the dividends and terminal value are paid out.
-#
-#        Needs numpy as np and datetime as dt
-#
-#        Parameters
-#        ----------
-#        self : CorporateBond class instance
-#            The CorporateBond instance with populated initial portfolio.
-#
-#        Returns
-#        -------
-#        Equity.dividenddates
-#            An array of datetimes, containing all the dates at which the coupons are paid out.
-#        Equity.terminaldates
-#            An array of datetimes, containing the dates at which the principal is paid out
-#        """
-#
-#        nAssets = self.issuedate.size
-#
-#        for iEquity in range(0,nAssets):
-#            issuedate = self.issuedate[iEquity]
-#            enddate   = self.enddate[iEquity]
-#
-#            dates = np.array([])
-#            thisdate = issuedate
-#
-#            while thisdate <= enddate:
-#                if self.frequency == 1:
-#                    thisdate = dt.date(thisdate.year + 1, thisdate.month, thisdate.day)
-#                    if thisdate <=enddate:
-#                        dates = np.append(dates,thisdate)
-#                    else:
-#                        #return dates
-#                        break
-#                elif self.frequency == 2:
-#                    thisdate = thisdate + dt.timedelta(days=182)
-#                    if thisdate <= enddate:
-#                        dates = np.append(dates, thisdate)
-#                    else:
-#                        break
-#
-#            self.dividenddates.append(dates)
-#
-#            # Notional payoff date is equal to maturity
-#            self.terminaldates.append(np.array([self.enddate[iEquity]]))
-#
-#
-# class EquityPriced:
-#    def __init__(self, modellingdate,compounding, enddate, dividendyield, marketprice, terminalvalue, growthrates):
-#        """
-#        Equity class saves
-#
-#        Properties
-#        ----------
-#        modellingdate
-#        compounding
-#        enddate
-#        dividendyield
-#        growthrate
-#        marketprice
-#        terminalvalue
-#        bookprice
-#        dividenddatefrac
-#        terminaldatefrac
-#        dividendcfs
-#        terminalcfs
-#        """
-#
-#        self.modellingdate = modellingdate
-#        self.compounding = compounding
-#        self.enddate = enddate
-#        self.dividendyield = dividendyield
-#        self.growthrate = growthrates
-#        self.marketprice = marketprice
-#        self.terminalvalue = terminalvalue
-#        self.bookprice = []
-#        self.dividenddatefrac = []
-#        self.terminaldatefrac =[]
-#        self.dividendcfs = []
-#        self.terminalcfs = []
-#
-#
-#    def createcashflows(self):
-#        """
-#        Convert information about the equity into a series of cash flows and a series of dates at which the cash flows are paid.
-#
-#        Needs numpy as np
-#        Parameters
-#        ----------
-#        self : EquityPriced object
-#
-#
-#        Modifies
-#        -------
-#        EquityPriced
-#            ToDo.
-#
-#        """
-#        # Produce array of dates when coupons are paid out
-#
-#        nAssets = self.marketprice.size
-#
-#        # Missing what if date is 31,30
-#        # Missing other frequencies
-#
-#        # Cash flow of each dividend
-#        #dividendsize = self.marketprice*self.dividendyield
-#
-#        self.dividendcfs = []
-#        self.dividenddates = []
-#        self.terminaldates = []
-#        self.terminalcfs = []
-#
-#        for iEquity in range(0,nAssets):
-#            startyear = self.issuedate[iEquity].year
-#            endyear   = self.maturitydate[iEquity].year
-#            month     = self.issuedate[iEquity].month
-#            day       = self.issuedate[iEquity].day
-#
-#            coupondateone = np.array([])
-#
-#            if self.frequency[iEquity] == 1:
-#                for selectedyear in range(startyear,endyear+1): # Creates array of dates for selected ZCB
-#                    dividenddateone = np.append(dividenddateone,dt.date(selectedyear,month,day))
-#            elif self.frequency[iEquity] == 2:
-#                #todo
-#                print("Not completed")
-#            else:
-#                #todo
-#                print("Not completed")
-#
-#            self.dividendcfs.append(np.ones_like(dividenddateone)*dividendsize[iEquity])
-#            self.dividenddates.append(dividenddateone)
-#
-#            # Terminal payoff date is equal to maturity
-#            self.terminaldates.append(np.array([self.maturitydate[iEquity]]))
-#
-#            # Cash flow of the principal payback
-#            self.terminalcfs.append(np.array(self.terminal[iEquity]))
