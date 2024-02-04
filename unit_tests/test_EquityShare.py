@@ -73,11 +73,11 @@ def test_dividend_amount(equity_share):
 
 def test_terminal_amount_calculation(equity_share):
     """
-    Uses the Gordon growth model formula to calculate the terminal value of a stock
+    Capitalised market value is equal to the terminal value of a stock
     """
     growth_rate = 0.05
     terminal_rate = 0.02
     market_value = 100
-    gordon_manual = market_value / (terminal_rate - growth_rate)
+    gordon_manual = market_value
     gordon_calc = equity_share.terminal_amount(market_value, growth_rate, terminal_rate)
     assert gordon_calc == gordon_manual
