@@ -142,8 +142,8 @@ def main():
     equity_portfolio = EquitySharePortfolio(equity_input)
 
     # Calculate cashflow dates based on equity information
-    dividend_dates = equity_portfolio.create_dividend_dates(settings.modelling_date, settings.end_date)
-    terminal_dates = equity_portfolio.create_terminal_dates(modelling_date=settings.modelling_date,
+    dividend_dates = equity_portfolio.create_dividend_flows(settings.modelling_date, settings.end_date)
+    terminal_dates = equity_portfolio.create_terminal_flows(modelling_date=settings.modelling_date,
                                                             terminal_date=settings.end_date,
                                                             terminal_rate=curves.ufr)
 

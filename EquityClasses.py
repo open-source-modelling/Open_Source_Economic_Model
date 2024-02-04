@@ -36,17 +36,17 @@ class EquityShare:
         logger.info("Equity class initiated")
 
     # @property Look into what property does
-#    @tracer
+    @tracer
     def dividend_amount(self, current_market_price: float) -> float:
         out = current_market_price * self.dividend_yield
         return out
 
-#    @tracer
+    @tracer
     def terminal_amount(self, market_price: float, growth_rate: float, terminal_rate: float) -> float:
         #return market_price / (terminal_rate - growth_rate)
         return market_price
 
-#    @tracer
+    @tracer
     def generate_market_value(self, modelling_date: date, evaluated_date: date, market_price: float,
                               growth_rate: float):
         t = (evaluated_date - modelling_date).days / 365.5
@@ -206,7 +206,6 @@ class EquityShare:
         return "Did not converge"
 
 
-
 class EquitySharePortfolio():
     def __init__(self, equity_share: dict[int, EquityShare] = None):
         """
@@ -243,7 +242,7 @@ class EquitySharePortfolio():
         else:
             self.equity_share.update({equity_share.asset_id: equity_share})
 
-    def create_dividend_dates(self, modelling_date: date, end_date: date) -> list:
+    def create_dividend_flows(self, modelling_date: date, end_date: date) -> list:
         """
         Create the list of dictionaries containing dates at which the dividends are paid out and the total amounts for
         all equity shares in the portfolio, for dates on or after the modelling date but not after the terminal date.
@@ -270,7 +269,7 @@ class EquitySharePortfolio():
             all_dividends.append(dividends)
         return all_dividends
 
-    def create_terminal_dates(self, modelling_date: date, terminal_date: date, terminal_rate: float) -> list:
+    def create_terminal_flows(self, modelling_date: date, terminal_date: date, terminal_rate: float) -> list:
         """
         Create the list of dictionaries containing dates at which the terminal cash-flows are paid out and the total amounts for
         all equity shares in the portfolio, for dates on or after the modelling date but not after the terminal date.
