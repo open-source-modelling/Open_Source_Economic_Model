@@ -103,7 +103,7 @@ def test_create_dividend_dates_single_bond(equity_share_1):
     equity_share_portfolio.add(equity_share_1)
     modelling_date = datetime.date(2023, 6, 1)
     end_date = datetime.date(2023 + 50, 6, 1)
-    dividend_dates = equity_share_portfolio.create_dividend_dates(modelling_date, end_date)
+    dividend_dates = equity_share_portfolio.create_dividend_flows(modelling_date, end_date)
 
     assert datetime.date(2023, 6, 1) in dividend_dates[0]
     assert datetime.date(2023, 9, 1) in dividend_dates[0]
@@ -116,7 +116,7 @@ def test_create_dividend_dates_two_equities(equity_share_1, equity_share_2):
     equity_share_portfolio.add(equity_share_2)
     modelling_date = datetime.date(2023, 6, 1)
     end_date = datetime.date(2023 + 50, 6, 1)
-    dividend_dates = equity_share_portfolio.create_dividend_dates(modelling_date, end_date)
+    dividend_dates = equity_share_portfolio.create_dividend_flows(modelling_date, end_date)
     assert datetime.date(2023, 6, 1) in dividend_dates[0]
     assert datetime.date(2023, 7, 1) in dividend_dates[1]
 
@@ -138,7 +138,7 @@ def test_generate_market_value_two_equities(equity_share_1, equity_share_2):
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
     equity_share_portfolio.add(equity_share_2)
-    dividend_dates = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12),
+    dividend_dates = equity_share_portfolio.create_dividend_flows(datetime.date(2023, 6, 12),
                                                                   datetime.date(2023 + 50, 6, 1))
     dividend_date_1 = list(dividend_dates[0])[0]
     dividend_date_2 = list(dividend_dates[1])[0]
@@ -165,11 +165,12 @@ def test_generate_terminal_value_one_equity(equity_share_1):
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
     ufr = 0.05
-    terminal_value_1 = equity_share_portfolio.create_terminal_dates(modelling_date=modelling_date,
+    terminal_value_1 = equity_share_portfolio.create_terminal_flows(modelling_date=modelling_date,
                                                                     terminal_date=end_date, terminal_rate=ufr)
     t_manual_1 = (end_date - modelling_date).days / 365.5
-    terminal_manual_1 = equity_share_1.market_price * (1 + equity_share_1.growth_rate) ** t_manual_1 / (
-                ufr - equity_share_1.growth_rate)
+    #terminal_manual_1 = equity_share_1.market_price * (1 + equity_share_1.growth_rate) ** t_manual_1 / (
+    #            ufr - equity_share_1.growth_rate)
+    terminal_manual_1 = equity_share_1.market_price* (1 + equity_share_1.growth_rate)** t_manual_1
     assert terminal_value_1[0][end_date] == terminal_manual_1
 
 
@@ -178,7 +179,7 @@ def test_create_dividend_fractions(equity_share_1, equity_share_2):
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
     equity_share_portfolio.add(equity_share_2)
-    dividend_array = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12),
+    dividend_array = equity_share_portfolio.create_dividend_flows(datetime.date(2023, 6, 12),
                                                                   datetime.date(2023 + 50, 6, 1))
     [all_date_frac, all_dates_considered] = equity_share_portfolio.create_dividend_fractions(modelling_date,
                                                                                              dividend_array)
@@ -194,7 +195,7 @@ def test_create_terminal_fractions(equity_share_1, equity_share_2):
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
     equity_share_portfolio.add(equity_share_2)
-    terminal_array = equity_share_portfolio.create_terminal_dates(modelling_date=datetime.date(2023, 6, 1),
+    terminal_array = equity_share_portfolio.create_terminal_flows(modelling_date=datetime.date(2023, 6, 1),
                                                                   terminal_date=datetime.date(2023 + 50, 6, 1),
                                                                   terminal_rate=ufr)
     [all_terminal_date_frac, all_terminal_dates_considered] = equity_share_portfolio.create_terminal_fractions(
@@ -208,7 +209,7 @@ def test_create_terminal_fractions(equity_share_1, equity_share_2):
 def test_unique_dates_profile_one_equity(equity_share_1):
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
-    dividend_array = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12),
+    dividend_array = equity_share_portfolio.create_dividend_flows(datetime.date(2023, 6, 12),
                                                                   datetime.date(2023 + 50, 6, 1))
     unique_list = equity_share_portfolio.unique_dates_profile(dividend_array)
     assert len(unique_list) == len(list(dividend_array[0].keys()))
@@ -218,7 +219,7 @@ def test_unique_dates_profile_two_equities(equity_share_1, equity_share_2):
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
     equity_share_portfolio.add(equity_share_2)
-    dividend_array = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12),
+    dividend_array = equity_share_portfolio.create_dividend_flows(datetime.date(2023, 6, 12),
                                                                   datetime.date(2023 + 50, 6, 1))
     unique_list = equity_share_portfolio.unique_dates_profile(dividend_array)
     assert len(unique_list) <= (len(list(dividend_array[0].keys())) + len(list(dividend_array[1].keys())))
@@ -228,7 +229,7 @@ def test_unique_dates_profile_one_equity_terminal(equity_share_1):
     ufr = 0.05
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
-    terminal_array = equity_share_portfolio.create_terminal_dates(datetime.date(2023, 6, 12),
+    terminal_array = equity_share_portfolio.create_terminal_flows(datetime.date(2023, 6, 12),
                                                                   datetime.date(2023 + 50, 6, 1), ufr)
     unique_terminal_list = equity_share_portfolio.unique_dates_profile(terminal_array)
     assert len(unique_terminal_list) == len(list(terminal_array[0].keys()))
@@ -239,7 +240,7 @@ def test_unique_dates_profile_two_equities_terminal(equity_share_1, equity_share
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
     equity_share_portfolio.add(equity_share_2)
-    terminal_array = equity_share_portfolio.create_terminal_dates(datetime.date(2023, 6, 12),
+    terminal_array = equity_share_portfolio.create_terminal_flows(datetime.date(2023, 6, 12),
                                                                   datetime.date(2023 + 50, 6, 1), ufr)
     unique_terminal_list = equity_share_portfolio.unique_dates_profile(terminal_array)
     assert len(unique_terminal_list) == len(list(terminal_array[0].keys()))
