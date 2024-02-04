@@ -199,6 +199,10 @@ def main():
 
     for date_of_interest in dates_of_interest.values:
 
+        initial_market_value = sum(market_price_df[previous_date_of_interest])  # Total value of portfolio after growth
+        
+        out_struct.loc[date_of_interest, "Start market value"] = float(initial_market_value)
+
         # Move modelling time forward
         time_frac = (date_of_interest - previous_date_of_interest).days / 365.5
 
