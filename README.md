@@ -47,7 +47,9 @@ So far, we have produced a simple example that can be ran using the script `POC_
 
 ## Ask to the community
 Send us an email at gregor@osmodelling.com with feedback, comments, ideas on what we could do better etc. Do you want to help us on this open source project?
+Check our wiki page also on [GitHub Wiki]
 
+[GitHub Wiki]: https://github.com/open-source-modelling/Open_Source_Economic_Model/wiki/Introduction
 [Documentation]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/Documentation
 [OSEM pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_POC_Documentation_draft.pdf
 [OSEM Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_POC_Documentation_draft.ipynb
