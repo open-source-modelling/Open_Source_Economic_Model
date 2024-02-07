@@ -52,7 +52,7 @@ class EquityShare:
         t = (evaluated_date - modelling_date).days / 365.5
         return market_price * (1 + growth_rate) ** t
 
-#    @tracer
+    @tracer
     def generate_dividend_dates(self, modelling_date: date, end_date: date) -> date:
         """
         Generator yielding the dividend payment date starting from the first dividend
@@ -162,23 +162,24 @@ class EquityShare:
         disc_value = sum(nodisc_value.values)
         return disc_value
 
-    def bisection_growth(self, x_start, x_end, modelling_date, end_date, proj_period, curves, Precision, maxIter):
+    def bisection_growth(self, x_start, x_end, modelling_date, end_date, proj_period, curves, precision, max_iter):
         """
-        Bisection root finding algorithm for finding the root of a function. The function here is the allowed difference between the ultimate forward rate and the extrapolated curve using Smith & Wilson.
+        Bisection root finding algorithm for finding growth rate that when discounting with the risk free curve returns the market price.
 
         Args:
-            cbPriced =  CorporateBondPriced object containing the list of priced bonds, spreads and cash flows
-            xStart =    1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
-            xEnd =      1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
-            M_Obs =     n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u = [[1], [3]]
-            r_Obs =     n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
-            ufr  =      1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
-            Tau =       1 x 1 floating number representing the allowed difference between ufr and actual curve. Ex. Tau = 0.00001
-            Precision = 1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
-            maxIter =   1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution         
+            self =           EquityShare object containing a single equity share positions
+            x_start =        1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
+            x_end =          1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
+            modelling_date = 1 x 1 date, representing the date at which the entire run starts
+            end_date =       1 x 1 date, representing the date at which the modelling window closes
+            ufr  =           1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
+            proj_period  =   1 x 1 integer, representing the projection step at which the equity is calibrated. Ex. 1, 2
+            curves =         Curves object containing data about the term structure
+            precision =      1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
+            max_iter =       1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution         
             approx_function
         Returns:
-            1 x 1 floating number representing the optimal value of the parameter alpha 
+            1 x 1 floating number representing the optimal growth of an equity to return the targeted market price 
 
         Example of use:
             >>> import numpy as np
@@ -195,9 +196,7 @@ class EquityShare:
             >>> BisectionAlpha(xStart, xEnd, M_Obs, r_Obs, ufr, Tau, Precision, maxIter)
             [Out] 0.11549789285636511
 
-        For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf and https://en.wikipedia.org/wiki/Bisection_method
-
-        Implemented by Gregor Fabjan from Qnity Consultants on 17/12/2021.
+        Implemented by Gregor Fabjan from Qnity Consultants on 08/02/2024.
         """
         terminal_rate = curves.ufr
         dividends = self.create_single_cash_flows(modelling_date, end_date, x_start)
@@ -208,18 +207,18 @@ class EquityShare:
         terminal = self.create_single_terminal(modelling_date, end_date, terminal_rate, x_end)
         y_end = self.price_share(dividends, terminal, modelling_date, proj_period, curves)[0]-self.market_price
 
-        if np.abs(y_start) < Precision:
+        if np.abs(y_start) < precision:
             return x_start
-        if np.abs(y_end) < Precision:
+        if np.abs(y_end) < precision:
             return x_end  # If final point already satisfies the conditions return end point
         iIter = 0
-        while iIter <= maxIter:
+        while iIter <= max_iter:
             x_mid = (x_end + x_start) / 2  # calculate mid-point
 
             dividends = self.create_single_cash_flows(modelling_date, end_date, x_mid)
             terminal = self.create_single_terminal(modelling_date, end_date, terminal_rate, x_mid)
             y_mid = self.price_share(dividends, terminal, modelling_date, proj_period, curves)[0]-self.market_price
-            if (y_mid == 0 or (x_end - x_start) / 2 < Precision):  # Solution found
+            if (y_mid == 0 or (x_end - x_start) / 2 < precision):  # Solution found
                 return x_mid
             else:  # Solution not found
                 iIter += 1
@@ -532,8 +531,7 @@ class EquitySharePortfolio():
         lhs = 1 / dividendyield
         return np.sum(num / den) + termvalue - lhs
 
-    ## Bisection
-
+    ## Bisection (To Update)
     def bisection_spread(x_start, x_end, dividendyield, r_obs_est, dividenddatefrac, ufr, Precision, maxIter,
                          growth_func):
         """
@@ -541,8 +539,8 @@ class EquitySharePortfolio():
 
         Args:
             cbPriced =  CorporateBondPriced object containing the list of priced bonds, spreads and cash flows
-            xStart =    1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
-            xEnd =      1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
+            x_start =    1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
+            x_end =      1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
             M_Obs =     n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u = [[1], [3]]
             r_Obs =     n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
             ufr  =      1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
