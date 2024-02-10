@@ -131,17 +131,14 @@ def main():
     
     logger.info("Import cash portfolio")
     cash = get_Cash(cash_portfolio_file)
-
-    # Create generator that contains all equity positions
+    
     logger.info("Import equities")
-    equity_input_generator = get_EquityShare(equity_portfolio_file)
+    equity_input_generator = get_EquityShare(equity_portfolio_file) # Create generator that contains all equity positions
     equity_input = {equity_share.asset_id: equity_share for equity_share in equity_input_generator}
 
-    # Fill portfolio with equity positions
     logger.info("Create equity portfolio")
     equity_portfolio = EquitySharePortfolio(equity_input)
 
-    # Calculate cashflow dates based on equity information
     logger.info("Create dictionary of cash flows and dates")
     dividend_dict = equity_portfolio.create_dividend_flows(settings.modelling_date, settings.end_date)
     terminal_dict = equity_portfolio.create_terminal_flows(modelling_date=settings.modelling_date,
@@ -156,7 +153,6 @@ def main():
     unique_dividend_dates = equity_portfolio.unique_dates_profile(dividend_dict)
     unique_terminal_dates = equity_portfolio.unique_dates_profile(terminal_dict)
 
-    # Load liability cashflows
     logger.info("Load all liability cash flows")
     liabilities = get_Liability(liability_cashflow_file)
 
@@ -208,21 +204,19 @@ def main():
     logger.info("Start main loop")
 
     for date_of_interest in dates_of_interest.values:
-
+        logger.info("Set last period's values as initial point for this period")
         initial_market_value = sum(market_price_df[previous_date_of_interest])  # Total value of portfolio after growth
-        
-        out_struct.loc[date_of_interest, "Start market value"] = float(initial_market_value)
-
-        # Move modelling time forward
-        time_frac = (date_of_interest - previous_date_of_interest).days / 365.5
-
-        out_struct.loc[date_of_interest, "Start cash"] = float(bank_account[previous_date_of_interest])
-
         bank_account[date_of_interest] = bank_account[previous_date_of_interest]
 
-        # Which dividend dates are expired
-        expired_dates = calculate_expired_dates(unique_dividend_dates, date_of_interest)
-        
+        out_struct.loc[date_of_interest, "Start cash"] = float(bank_account[previous_date_of_interest])
+        out_struct.loc[date_of_interest, "Start market value"] = float(initial_market_value)
+
+
+        logger.info("Calculate the fraction of time to move forward")
+        time_frac = (date_of_interest - previous_date_of_interest).days / 365.5
+
+        logger.info("Calculate expired dividends, remove them from cash flows and add to bank account")
+        expired_dates = calculate_expired_dates(unique_dividend_dates, date_of_interest)        
         expired_cf = 0
         for expired_date in expired_dates:  # Sum expired dividend flows
             expired_cf += sum(dividend_cash_flows_df[expired_date])
@@ -232,7 +226,7 @@ def main():
         out_struct.loc[date_of_interest, "Dividend cash flow"] = float(expired_cf)
         bank_account[date_of_interest] += expired_cf
 
-        # Which terminal dates are expired
+        logger.info("Calculate expired terminal flows, remove them from cash flows and add to bank account")
         expired_dates = calculate_expired_dates(unique_terminal_dates, date_of_interest)
         expired_cf = 0
         for expired_date in expired_dates:  # Sum expired terminal flows
@@ -243,9 +237,8 @@ def main():
         out_struct.loc[date_of_interest, "Terminal cash flow"] = float(expired_cf)
         bank_account[date_of_interest] += expired_cf
 
-        # Which liability dates are expired
+        logger.info("Calculate expired liability flows, remove them from cash flows and add to bank account")
         expired_dates = calculate_expired_dates(unique_liabilities_dates, date_of_interest)
-
         expired_cf = 0
         for expired_date in expired_dates:  # Sum expired liability flows
             expired_cf -= sum(liability_cash_flows_df[expired_date])
@@ -255,7 +248,7 @@ def main():
         out_struct.loc[date_of_interest, "Liability cash flow"] = float(expired_cf)
         bank_account[date_of_interest] += expired_cf
 
-        # Calculate market value of portfolio after stock growth
+        logger.info("Calculate market value of portfolio after stock growth")
         market_price_df[date_of_interest] = market_price_df[previous_date_of_interest] * (
                 1 + growth_rate_df[settings.modelling_date]) ** time_frac
 
@@ -264,7 +257,8 @@ def main():
         out_struct.loc[date_of_interest, "After growth market value"] = float(total_market_value)
         out_struct.loc[date_of_interest, "Portfolio return"] = float(total_market_value/previous_market_value-1)
 
-        # Trading of assets
+
+        logger.info("Trading of excess/deficit liquidity, rebalancing")
         if total_market_value <= 0:
             pass
         elif bank_account[date_of_interest][0] < 0:  # Sell assets
@@ -291,20 +285,16 @@ def main():
         else:  # Remaining cash flow is equal to 0 so no trading needed
             pass
 
+        logger.info("Log final positions and prepare for entering next modelling period")
         out_struct.loc[date_of_interest, "End cash"] = float(bank_account[date_of_interest])
         out_struct.loc[date_of_interest, "End market value"] = float(sum(market_price_df[date_of_interest]))        
 
         previous_date_of_interest = date_of_interest
         previous_market_value = sum(market_price_df[date_of_interest])
 
-
+    logger.info("Main loop finished, saving results")
     out_struct.to_csv(conf.output_path+"\Results.csv")
-    # print(bank_account)
-    # print(total_market_value)
-    # print(sum(market_price[modelling_date_1]))
-    # print(total_market_value-sum(market_price[modelling_date_1]))
-    # print(cash.bank_account)
-
+    logger.info("Run completed")
 
 if __name__ == "__main__":
     main()
