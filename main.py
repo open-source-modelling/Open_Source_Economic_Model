@@ -142,8 +142,9 @@ def main():
     equity_portfolio = EquitySharePortfolio(equity_input)
 
     # Calculate cashflow dates based on equity information
-    dividend_dates = equity_portfolio.create_dividend_flows(settings.modelling_date, settings.end_date)
-    terminal_dates = equity_portfolio.create_terminal_flows(modelling_date=settings.modelling_date,
+    logger.info("Create dictionary of cash flows and dates")
+    dividend_dict = equity_portfolio.create_dividend_flows(settings.modelling_date, settings.end_date)
+    terminal_dict = equity_portfolio.create_terminal_flows(modelling_date=settings.modelling_date,
                                                             terminal_date=settings.end_date,
                                                             terminal_rate=curves.ufr)
 
@@ -151,17 +152,34 @@ def main():
     # [all_date_frac, all_dates_considered] = equity_portfolio.create_dividend_fractions(settings.modelling_date, dividend_dates)
     # [all_dividend_date_frac, all_dividend_dates_considered] = equity_portfolio.create_terminal_fractions(settings.modelling_date, terminal_dates)
 
-    unique_list = equity_portfolio.unique_dates_profile(dividend_dates)
-    unique_terminal_list = equity_portfolio.unique_dates_profile(terminal_dates)
+    logger.info("Find all asset cash flow dates")
+    unique_dividend_dates = equity_portfolio.unique_dates_profile(dividend_dict)
+    unique_terminal_dates = equity_portfolio.unique_dates_profile(terminal_dict)
 
     # Load liability cashflows
+    logger.info("Load all liability cash flows")
     liabilities = get_Liability(liability_cashflow_file)
-    unique_liabilities_list = liabilities.unique_dates_profile()
+
+    logger.info("Load all liability cash flow dates")
+    unique_liabilities_dates = liabilities.unique_dates_profile()
 
     ### -------- PREPARE INITIAL DATA FRAMES --------###
+    logger.info("Initialize market dataframes")
     [market_price_df, growth_rate_df] = equity_portfolio.init_equity_portfolio_to_dataframe(settings.modelling_date)
 
     bank_account = pd.DataFrame(data=[cash.bank_account], columns=[settings.modelling_date])
+
+    # Note that it is assumed liabilities not paid at modelling date
+
+    ### -------- PREPARE DATA STRUCTURES WITH CASH FLOWS -------- ###
+    # Dataframe with dividend cash flows
+    dividend_cash_flows_df = create_cashflow_dataframe(dividend_dict, unique_dividend_dates)
+    
+    # Dataframe with terminal cash flows
+    terminal_cash_flows_df = create_cashflow_dataframe(terminal_dict, unique_terminal_dates)
+
+    # DataFrame with liability cash flows
+    liability_cash_flows_df = create_liabilities_dataframe(liabilities)
 
     ### -------- PREPARE OUTPUT DATA FRAMES --------###
     previous_market_value = sum(market_price_df[settings.modelling_date])  # Value of the initial portfolio
@@ -179,23 +197,15 @@ def main():
         }
     
     out_struct = pd.DataFrame(data = ini_out, index=[settings.modelling_date]) 
-    # Note that it is assumed liabilities not paid at modelling date
-
-    ### -------- PREPARE DATA STRUCTURES WITH CASH FLOWS -------- ###
-    # Dataframe with dividend cash flows
-    cash_flows = create_cashflow_dataframe(dividend_dates, unique_list)
-    
-    # Dataframe with terminal cash flows
-    terminal_cash_flows = create_cashflow_dataframe(terminal_dates, unique_terminal_list)
-
-    # DataFrame with liability cash flows
-    liability_cash_flows = create_liabilities_dataframe(liabilities)
 
     # -------- GENERATE VECTOR OF NEXT PERIODS -------
+    logger.info("Generate vector of future modelling periods")
     dates_of_interest = set_dates_of_interest(settings.modelling_date, settings.end_date)
 
     # --------- MOVE TO NEXT PERIOD --------
     previous_date_of_interest = settings.modelling_date
+
+    logger.info("Start main loop")
 
     for date_of_interest in dates_of_interest.values:
 
@@ -211,36 +221,36 @@ def main():
         bank_account[date_of_interest] = bank_account[previous_date_of_interest]
 
         # Which dividend dates are expired
-        expired_dates = calculate_expired_dates(unique_list, date_of_interest)
+        expired_dates = calculate_expired_dates(unique_dividend_dates, date_of_interest)
         
         expired_cf = 0
         for expired_date in expired_dates:  # Sum expired dividend flows
-            expired_cf += sum(cash_flows[expired_date])
-            cash_flows.drop(columns=expired_date)
-            unique_list.remove(expired_date)
+            expired_cf += sum(dividend_cash_flows_df[expired_date])
+            dividend_cash_flows_df.drop(columns=expired_date)
+            unique_dividend_dates.remove(expired_date)
         
         out_struct.loc[date_of_interest, "Dividend cash flow"] = float(expired_cf)
         bank_account[date_of_interest] += expired_cf
 
         # Which terminal dates are expired
-        expired_dates = calculate_expired_dates(unique_terminal_list, date_of_interest)
+        expired_dates = calculate_expired_dates(unique_terminal_dates, date_of_interest)
         expired_cf = 0
         for expired_date in expired_dates:  # Sum expired terminal flows
-            expired_cf += sum(terminal_cash_flows[expired_date])
-            terminal_cash_flows.drop(columns=expired_date)
-            unique_terminal_list.remove(expired_date)
+            expired_cf += sum(terminal_cash_flows_df[expired_date])
+            terminal_cash_flows_df.drop(columns=expired_date)
+            unique_terminal_dates.remove(expired_date)
 
         out_struct.loc[date_of_interest, "Terminal cash flow"] = float(expired_cf)
         bank_account[date_of_interest] += expired_cf
 
         # Which liability dates are expired
-        expired_dates = calculate_expired_dates(unique_liabilities_list, date_of_interest)
+        expired_dates = calculate_expired_dates(unique_liabilities_dates, date_of_interest)
 
         expired_cf = 0
         for expired_date in expired_dates:  # Sum expired liability flows
-            expired_cf -= sum(liability_cash_flows[expired_date])
-            liability_cash_flows.drop(columns=expired_date)
-            unique_liabilities_list.remove(expired_date)
+            expired_cf -= sum(liability_cash_flows_df[expired_date])
+            liability_cash_flows_df.drop(columns=expired_date)
+            unique_liabilities_dates.remove(expired_date)
 
         out_struct.loc[date_of_interest, "Liability cash flow"] = float(expired_cf)
         bank_account[date_of_interest] += expired_cf
@@ -264,9 +274,9 @@ def main():
                 date_of_interest]  # Sold proportion of existing shares
             bank_account[date_of_interest] += total_market_value - sum(
                 market_price_df[date_of_interest])  # Add cash to bank account equal to shares sold
-            cash_flows = cash_flows.multiply(
+            dividend_cash_flows_df = dividend_cash_flows_df.multiply(
                 (1 - percent_to_sell))  # Adjust future dividend flows for new asset allocation
-            terminal_cash_flows = terminal_cash_flows.multiply(
+            terminal_cash_flows_df = terminal_cash_flows_df.multiply(
                 (1 - percent_to_sell))  # Adjust terminal cash flows for new asset allocation
         elif bank_account[date_of_interest][0] > 0:  # Buy assets
             percent_to_buy = bank_account[date_of_interest][0] / total_market_value  # What % of the portfolio is the excess cash
@@ -274,9 +284,9 @@ def main():
                 date_of_interest]  # Bought new shares as proportion of existing shares
             bank_account[date_of_interest] += total_market_value - sum(
                 market_price_df[date_of_interest])  # Bank account reduced for cash spent on buying shares
-            cash_flows = cash_flows.multiply(
+            dividend_cash_flows_df = dividend_cash_flows_df.multiply(
                 1 + percent_to_buy)  # Adjust future dividend flows for new asset allocation
-            terminal_cash_flows = terminal_cash_flows.multiply(
+            terminal_cash_flows_df = terminal_cash_flows_df.multiply(
                 1 + percent_to_buy)  # Adjust terminal cash flows for new asset allocation
         else:  # Remaining cash flow is equal to 0 so no trading needed
             pass
