@@ -56,6 +56,14 @@ def create_liabilities_dataframe(liabilities) -> pd.DataFrame:
     liability_cash_flows.index = [liabilities.liability_id]
     return liability_cash_flows
 
+def process_expired_cf(unique_dates, date_of_interest, cash_flows_df):
+    expired_dates = calculate_expired_dates(unique_dates, date_of_interest)        
+    cash = 0
+    for expired_date in expired_dates:  # Sum expired dividend flows
+        cash += sum(cash_flows_df[expired_date])
+        cash_flows_df.drop(columns=expired_date)
+        unique_dates.remove(expired_date)
+    return cash, cash_flows_df, unique_dates
 
 def get_logging_level(logging_level: str) -> int:
     if logging_level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
@@ -110,23 +118,15 @@ def main():
     # Curves object with information about term structure
     curves = Curves(extra_param["UFR"] / 100, settings.precision, settings.tau, settings.modelling_date,
                     settings.country)
-    
     logger.info("Process risk free rate curve")
     curves.SetObservedTermStructure(maturity_vec=curve_country.index.tolist(), yield_vec=curve_country.values)
-    
     logger.info("Calculate 1-year forward rate")
     curves.CalcFwdRates()
-
     logger.info("Calculate projected spot rates")
     curves.ProjectForwardRate(settings.n_proj_years)
-
     logger.info("Calculate calibration parameter alpha")
     curves.CalibrateProjected(settings.n_proj_years, 0.05, 0.5, 1000)
  
-    #test
-    #desired_mat = np.array([0.7, 1.2, 1.3543])
-    #print(curves.RetrieveRates(3, desired_mat, "Discount"))
-    
     logger.info("Import cash portfolio")
     cash = get_Cash(cash_portfolio_file)
     
@@ -213,37 +213,20 @@ def main():
         time_frac = (date_of_interest - previous_date_of_interest).days / 365.5
 
         logger.info("Calculate expired dividends, remove them from cash flows and add to bank account")
-        expired_dates = calculate_expired_dates(unique_dividend_dates, date_of_interest)        
-        expired_cf = 0
-        for expired_date in expired_dates:  # Sum expired dividend flows
-            expired_cf += sum(dividend_cash_flows_df[expired_date])
-            dividend_cash_flows_df.drop(columns=expired_date)
-            unique_dividend_dates.remove(expired_date)
-        
-        out_struct.loc[date_of_interest, "Dividend cash flow"] = float(expired_cf)
-        bank_account[date_of_interest] += expired_cf
+        cash, dividend_cash_flows_df, unique_dividend_dates = process_expired_cf(unique_dividend_dates, date_of_interest, dividend_cash_flows_df)
+        out_struct.loc[date_of_interest, "Dividend cash flow"] = float(cash)
+        bank_account[date_of_interest] += cash
 
         logger.info("Calculate expired terminal flows, remove them from cash flows and add to bank account")
-        expired_dates = calculate_expired_dates(unique_terminal_dates, date_of_interest)
-        expired_cf = 0
-        for expired_date in expired_dates:  # Sum expired terminal flows
-            expired_cf += sum(terminal_cash_flows_df[expired_date])
-            terminal_cash_flows_df.drop(columns=expired_date)
-            unique_terminal_dates.remove(expired_date)
-
-        out_struct.loc[date_of_interest, "Terminal cash flow"] = float(expired_cf)
-        bank_account[date_of_interest] += expired_cf
+        cash, terminal_cash_flows_df, unique_terminal_dates = process_expired_cf(unique_terminal_dates, date_of_interest, terminal_cash_flows_df)
+        out_struct.loc[date_of_interest, "Terminal cash flow"] = float(cash)
+        bank_account[date_of_interest] += cash
 
         logger.info("Calculate expired liability flows, remove them from cash flows and add to bank account")
-        expired_dates = calculate_expired_dates(unique_liabilities_dates, date_of_interest)
-        expired_cf = 0
-        for expired_date in expired_dates:  # Sum expired liability flows
-            expired_cf -= sum(liability_cash_flows_df[expired_date])
-            liability_cash_flows_df.drop(columns=expired_date)
-            unique_liabilities_dates.remove(expired_date)
-
-        out_struct.loc[date_of_interest, "Liability cash flow"] = float(expired_cf)
-        bank_account[date_of_interest] += expired_cf
+        cash, liability_cash_flows_df, unique_liabilities_dates = process_expired_cf(unique_liabilities_dates, date_of_interest, liability_cash_flows_df)
+        
+        out_struct.loc[date_of_interest, "Liability cash flow"] = -float(cash)
+        bank_account[date_of_interest] -= cash
 
         logger.info("Calculate market value of portfolio after stock growth")
         market_price_df[date_of_interest] = market_price_df[previous_date_of_interest] * (
