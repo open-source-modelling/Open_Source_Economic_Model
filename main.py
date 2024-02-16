@@ -24,13 +24,11 @@ logger.addHandler(file_handler)
 @tracer
 def create_cashflow_dataframe(cash_flow_dates, unique_dates) -> pd.DataFrame:
     cash_flows = pd.DataFrame(data=np.zeros((len(cash_flow_dates), len(unique_dates))),
-                              columns=unique_dates)  # Dataframe of cashflows (columns are dates, rows, assets)
-    counter = 0
-    for asset in cash_flow_dates:
-        keys = asset.keys()
+                              columns=unique_dates, index=cash_flow_dates.keys())  # Dataframe of cashflows (columns are dates, rows, assets)
+    for asset_id in cash_flow_dates.keys():
+        keys = cash_flow_dates[asset_id]
         for key in keys:
-            cash_flows[key].iloc[counter] = asset[key]
-        counter += 1
+            cash_flows[key].loc[asset_id] = keys[key]
     return cash_flows
 
 
@@ -210,7 +208,6 @@ def main():
 
         out_struct.loc[date_of_interest, "Start cash"] = float(bank_account[previous_date_of_interest])
         out_struct.loc[date_of_interest, "Start market value"] = float(initial_market_value)
-
 
         logger.info("Calculate the fraction of time to move forward")
         time_frac = (date_of_interest - previous_date_of_interest).days / 365.5

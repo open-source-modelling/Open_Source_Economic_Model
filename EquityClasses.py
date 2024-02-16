@@ -283,14 +283,14 @@ class EquitySharePortfolio():
         Returns
         -------
         :rtype all_dividends
-            A list of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the coupons are paid out.
+            A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the coupons are paid out.
         """
-        all_dividends = []
+        all_dividends = {}
         equity_share: EquityShare
         for asset_id in self.equity_share:
             equity_share = self.equity_share[asset_id]  # Select one asset position
             dividends = equity_share.create_single_cash_flows(modelling_date, end_date, equity_share.growth_rate)
-            all_dividends.append(dividends)
+            all_dividends[asset_id] = dividends
         return all_dividends
 
     def create_terminal_flows(self, modelling_date: date, terminal_date: date, terminal_rate: float) -> list:
@@ -312,9 +312,9 @@ class EquitySharePortfolio():
         Returns
         -------
         :rtype all_terminals
-            A list of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the terminal cash-flows are paid out.
+            A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the terminal cash-flows are paid out.
         """
-        all_terminals = []
+        all_terminals = {}
         terminals: dict[date, float] = {}
         equity_share: EquityShare
         terminal_date: date
@@ -322,7 +322,7 @@ class EquitySharePortfolio():
         for asset_id in self.equity_share:
             equity_share = self.equity_share[asset_id]
             terminals = equity_share.create_single_terminal(modelling_date, terminal_date, terminal_rate, equity_share.growth_rate)
-            all_terminals.append(terminals)
+            all_terminals[asset_id]=terminals
         return all_terminals
 
     def create_dividend_fractions(self, modelling_date: date, dividend_array: list) -> dict:
@@ -472,7 +472,7 @@ class EquitySharePortfolio():
 
         # define list of unique dates
         unique_dates = []
-        for one_dividend_array in cashflow_profile:
+        for one_dividend_array in cashflow_profile.values():
             for one_dividend_date in list(one_dividend_array.keys()):  # for each dividend date of the selected equity
                 if one_dividend_date in unique_dates:  # If two cash flows on same date
                     pass
