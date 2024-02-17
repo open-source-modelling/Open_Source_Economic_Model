@@ -115,6 +115,7 @@ def get_EquityShare(filename: str):
                                        issue_date=datetime.strptime(row["Issue_Date"], "%d/%m/%Y").date(),
                                        dividend_yield=float(row["Dividend_Yield"]),
                                        frequency=int(row["Frequency"]),
+                                       units = float(row["Units"]),
                                        market_price=float(row["Market_Price"]),
                                        growth_rate=float(row["Growth_Rate"]))
             yield equity_share

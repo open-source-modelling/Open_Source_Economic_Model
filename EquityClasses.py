@@ -5,10 +5,10 @@ from pathlib import Path
 from datetime import date
 from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
+from CurvesClass import Curves
 from FrequencyClass import Frequency
 from TraceClass import Trace, tracer
 import logging
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -20,7 +20,6 @@ file_handler.setFormatter(formatter)
 
 logger.addHandler(file_handler)
 
-
 @dataclass
 class EquityShare:
     asset_id: int
@@ -29,6 +28,7 @@ class EquityShare:
     issue_date: date
     dividend_yield: float
     frequency: Frequency
+    units: float
     market_price: float
     growth_rate: float
 
@@ -37,30 +37,94 @@ class EquityShare:
 
     # @property Look into what property does
     @tracer
-    def dividend_amount(self, current_market_price: float) -> float:
-        out = current_market_price * self.dividend_yield
-        return out
+    def dividend_amount(self, market_price: float) -> float:
+        """
+        Calculate the size of the dividend for a share inside the EquityShare class.
+        The dividend amount is equal to the percentage of the market value.
+        
+        Parameters
+        ----------
+        self: EquityShare class
+        :type market_price: float
+            The current market price of the equity share 
+        
+        Returns
+        -------
+        :type dividend_size: float 
+            The monetary amount of the dividend
+        """
+        dividend_size = market_price * self.dividend_yield
+        return dividend_size
 
     @tracer
     def terminal_amount(self, market_price: float, growth_rate: float, terminal_rate: float) -> float:
+        """
+        Calculates the terminal value of an equity share. Currently set as the market value.
+        
+        Parameters
+        ----------
+        self: EquityShare class
+        :type market_price: float
+            The current market price of the equity share 
+        :type growth_rate: float
+            The annual growth rate of the particular stock
+        :type terminal_rate: float
+            The assumed terminal interest rate
+        
+        Returns
+        -------
+        :type terminal_amount: float 
+            The monetary amount that can be obtained by selling the share at the end of the modelling window 
+        """
+
         #return market_price / (terminal_rate - growth_rate)
         return market_price
 
     @tracer
     def generate_market_value(self, modelling_date: date, evaluated_date: date, market_price: float,
-                              growth_rate: float):
+                              growth_rate: float) ->float:
+        """
+        Calculates the market value appreciation of an equity share between two points in time. 
+
+        Parameters
+        ----------
+        self: EquityShare class
+        :type modeling_date: date
+            Earlier date of interest 
+        :type evaluated_date: date
+            Later date of interest 
+        :type market_price: float
+            The market price of the share at the earlier date 
+        :type growth_rate: float
+            Assumed annualized growth rate of the issuer 
+
+        Returns
+        -------
+        :type float
+            The market value at the later date of interest 
+        """
+
         t = (evaluated_date - modelling_date).days / 365.5
         return market_price * (1 + growth_rate) ** t
 
     @tracer
-    def generate_dividend_dates(self, modelling_date: date, end_date: date) -> date:
+    def generate_dividend_dates(self, modelling_date: date, end_date: date):
         """
         Generator yielding the dividend payment date starting from the first dividend
         paid after the modelling date. 
-        
+
+        Parameters
+        ----------
+        self: EquityShare class
         :type modelling_date: date
+            The earliest date considered.
         :type end_date: date
-        
+            The latest date considered
+
+        Returns
+        -------
+        :type yield float
+            The date at which the dividend occurs
         """
         delta = relativedelta(months=(12 // self.frequency))
         this_date = self.issue_date - delta
@@ -71,7 +135,7 @@ class EquityShare:
             if this_date <= end_date:
                 yield this_date  # ? What is the advantage of yield here?
 
-    def create_single_cash_flows(self, modelling_date: date, end_date: date, growth_rate: float):
+    def create_single_cash_flows(self, modelling_date: date, end_date: date, growth_rate: float)->dict:
         """
         Create a dictionary of dividend cash flows using information about an equity share. The 
         return dictionary has dates of the cash flows as keys and monetary amounts as values. 
@@ -90,7 +154,7 @@ class EquityShare:
         Returns
         -------
         :type dividends: list of dict
-            List of dictionaries containing the cash flow date and the size.        
+            Dictionary of dictionaries containing the cash flow date and the size.        
         """
 
         dividend_amount = 0
@@ -104,12 +168,12 @@ class EquityShare:
                 market_price = self.generate_market_value(modelling_date, dividend_date,
                                                                     self.market_price,
                                                                     growth_rate)
-                dividend_amount = self.dividend_amount(current_market_price=market_price)
+                dividend_amount = self.dividend_amount(market_price=market_price)
                 dividends.update({dividend_date: dividend_amount})
         return dividends
 
 
-    def create_single_terminal(self, modelling_date: date, end_date: date, terminal_rate: float, growth_rate: float):
+    def create_single_terminal(self, modelling_date: date, end_date: date, terminal_rate: float, growth_rate: float)-> dict:
         """
         Create a dictionary of terminal cash flows using information about an equity share. The 
         return dictionary has dates of the cash flows as keys and monetary amounts as values. 
@@ -140,29 +204,29 @@ class EquityShare:
         terminals.update({end_date: terminal_amount})
         return terminals
 
-    def price_share(self, test_dividends, test_terminal, modelling_date, proj_period, curves):
-        Datefrac = []
-        Values = []
-        for key, value in test_dividends.items():
+    def price_share(self, dividends: dict, terminal: dict, modelling_date: date, proj_period: int, curves: Curves)->float:
+        date_frac = []
+        cash_flow = []
+        for key, value in dividends.items():
             date_frac = (key-modelling_date).days/365.25
-            Datefrac.append(date_frac)
-            Values.append(value)
+            date_frac.append(date_frac)
+            cash_flow.append(value)
             
-        for key, value in test_terminal.items():
+        for key, value in terminal.items():
             date_frac = (key-modelling_date).days/365.25
-            Datefrac.append(date_frac)
-            Values.append(value)
+            date_frac.append(date_frac)
+            cash_flow.append(value)
         
-        Datefrac = pd.DataFrame(data = Datefrac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
-        Values = pd.DataFrame(data = Values, columns = ["Cash flow"])
+        date_frac = pd.DataFrame(data = date_frac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
+        cash_flow = pd.DataFrame(data = cash_flow, columns = ["Cash flow"])
 
-        discount = curves.RetrieveRates(proj_period, Datefrac.iloc[:, 0].to_numpy(), "Discount")
+        discount = curves.RetrieveRates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount")
 
-        nodisc_value = Values.values*discount
+        nodisc_value = cash_flow.values*discount
         disc_value = sum(nodisc_value.values)
         return disc_value
 
-    def bisection_growth(self, x_start, x_end, modelling_date, end_date, proj_period, curves, precision, max_iter):
+    def bisection_growth(self, x_start: float, x_end:float, modelling_date:date, end_date:date, proj_period:int, curves: Curves, precision: float, max_iter:int)->float:
         """
         Bisection root finding algorithm for finding growth rate that when discounting with the risk free curve returns the market price.
 
@@ -211,8 +275,8 @@ class EquityShare:
             return x_start
         if np.abs(y_end) < precision:
             return x_end  # If final point already satisfies the conditions return end point
-        iIter = 0
-        while iIter <= max_iter:
+        i_iter = 0
+        while i_iter <= max_iter:
             x_mid = (x_end + x_start) / 2  # calculate mid-point
 
             dividends = self.create_single_cash_flows(modelling_date, end_date, x_mid)
@@ -221,7 +285,7 @@ class EquityShare:
             if (y_mid == 0 or (x_end - x_start) / 2 < precision):  # Solution found
                 return x_mid
             else:  # Solution not found
-                iIter += 1
+                i_iter += 1
                 if np.sign(y_mid) == np.sign(
                         y_start):  # If the start point and the middle point have the same sign, then the root must be in the second half of the interval
                     x_start = x_mid
@@ -293,7 +357,7 @@ class EquitySharePortfolio():
             all_dividends[asset_id] = dividends
         return all_dividends
 
-    def create_terminal_flows(self, modelling_date: date, terminal_date: date, terminal_rate: float) -> list:
+    def create_terminal_flows(self, modelling_date: date, terminal_date: date, terminal_rate: float) -> dict:
         """
         Create the list of dictionaries containing dates at which the terminal cash-flows are paid out and the total amounts for
         all equity shares in the portfolio, for dates on or after the modelling date but not after the terminal date.
@@ -325,7 +389,7 @@ class EquitySharePortfolio():
             all_terminals[asset_id]=terminals
         return all_terminals
 
-    def create_dividend_fractions(self, modelling_date: date, dividend_array: list) -> dict:
+    def create_dividend_fractions(self, modelling_date: date, dividend_array: list) -> list:
         """
         Create the list of year-fractions at which each dividend is paid out (compared to the modelling date) and the list of
         relevant indices (aka. indices of cash flows that are within the modelling period)
@@ -452,7 +516,7 @@ class EquitySharePortfolio():
             all_terminal_dates_considered
         ]
 
-    def unique_dates_profile(self, cashflow_profile: List):
+    def unique_dates_profile(self, cash_flow_profile: list):
         """
         Create a sorted list of dates at which there is an cash-flow event in any of the assets inside the portfolio and
         a single numpy array (matrix) representing those cash flows.
@@ -465,6 +529,7 @@ class EquitySharePortfolio():
         :type cashflow_profile: list of dictionaries containing the size and date of each 
             cash-flow for the equity portfolio
 
+
         :rtype dict list with two elements:
             unique_dates
             cash_flow_matrix
@@ -472,7 +537,7 @@ class EquitySharePortfolio():
 
         # define list of unique dates
         unique_dates = []
-        for one_dividend_array in cashflow_profile.values():
+        for one_dividend_array in cash_flow_profile.values():
             for one_dividend_date in list(one_dividend_array.keys()):  # for each dividend date of the selected equity
                 if one_dividend_date in unique_dates:  # If two cash flows on same date
                     pass
@@ -510,16 +575,20 @@ class EquitySharePortfolio():
         market_price_tmp = []
         growth_rate_tmp = []
         asset_id_tmp = []
+        units_tmp = []
         for key in asset_keys:
             market_price_tmp.append(self.equity_share[key].market_price)
             growth_rate_tmp.append(self.equity_share[key].growth_rate)
             asset_id_tmp.append(self.equity_share[key].asset_id)
+            units_tmp.append(self.equity_share[key].units)
 
         market_price = pd.DataFrame(data=market_price_tmp, index=asset_id_tmp, columns=[modelling_date])
 
         growth_rate = pd.DataFrame(data=growth_rate_tmp, index=asset_id_tmp, columns=[modelling_date])
+        
+        units = pd.DataFrame(data=units_tmp, index=asset_id_tmp, columns=[modelling_date])
 
-        return [market_price, growth_rate]
+        return [market_price, growth_rate, units]
 
     # Calculate terminal value given growth rate, ultimate forward rate and vector of cash flows
     def equity_gordon(self, dividendyield, yieldrates, dividenddatefrac, ufr, g):
