@@ -84,6 +84,20 @@ def import_SWEiopa(selected_param_file, selected_curves_file, country):
 
 
 def get_corporate_bonds(filename: str) -> CorpBond:
+    """
+    Load the bond input file into an EquityShare class generator.
+
+    Parameters
+    ----------
+    :type filename: string
+        Relative path to the corporate bond input file
+
+    Returns
+    -------
+    :type generator
+        Generator returning a filled CorpBond class of a single position
+    """
+
     with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
         reader = csv.DictReader(csv_file)
         for row in reader:
