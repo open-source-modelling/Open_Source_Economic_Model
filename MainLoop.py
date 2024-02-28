@@ -18,7 +18,7 @@ def create_cashflow_dataframe(cf_dict:dict, unique_dates:list) -> pd.DataFrame:
 
     Returns
     -------
-    :type cash_flows: pd.DataFrame
+    :type: pd.DataFrame
         Dataframe matrix with cash flows in a matrix form    
     """
 
@@ -36,12 +36,22 @@ def calculate_expired_dates(list_of_dates: list, deadline: dt.date) -> list:
 def set_dates_of_interest(modelling_date: dt.date, end_date: dt.date, days_interval=365) -> pd.Series:
     """
     Calculates all dates at which the modelling run will run.
+
     Parameters
     ----------
+    :type modelling_date: date
+        The starting modelling date
 
+    :type end_date: date
+        The end of the modelling window
 
-    
-    
+    :type days_interval: int
+        Time difference between two modelling dates of interest
+
+    Returns
+    -------
+    :type: pd.Series
+        Series of dates at which the modell will run   
     """
     next_date_of_interest = modelling_date
 
