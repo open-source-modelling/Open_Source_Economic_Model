@@ -13,11 +13,27 @@ from LiabilityClasses import Liability
 
 def get_configuration(ini_file: str, op_sys=os, config_parser=configparser.ConfigParser()) -> Configuration:
     """
-    :parameter: ini_file
-    :parameter: op_sys
-    :parameter: config_parser
+    Read the configuration parameters of the specific run and the logging settings.
 
+    Parameters
+    ----------
+    :type ini_file: string
+    :type op_sys: string
+    :type config_parser: string
+
+    :parameter: ini_file
+        Relative path to the setting file
+
+    :parameter: op_sys
+        Instance of a os class
+
+    :parameter: config_parser
+        Instance of a configuration parser class
+
+    Returns
+    -------
     :rtype: Configuration
+        Populated Configuration class instance
     """
     configuration = Configuration()
 
