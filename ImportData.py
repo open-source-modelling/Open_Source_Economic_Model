@@ -103,7 +103,17 @@ def get_corporate_bonds(filename: str) -> CorpBond:
 
 def get_EquityShare(filename: str):
     """
-    :type filename: str
+    Load an equity input file into an EquityShare class generator.
+
+    Parameters
+    ----------
+    :type filename: string
+        Relative path to the equity input file
+
+    Returns
+    -------
+    :type generator
+        Generator returning a filled EquityShare class of a single position
     """
 
     with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
@@ -123,7 +133,17 @@ def get_EquityShare(filename: str):
 
 def get_Cash(filename: str) -> Cash:
     """
-    :type filename: str
+    Load the initial cash input file into a Cash class object.
+
+    Parameters
+    ----------
+    :type filename: string
+        Relative path to the cash input file
+
+    Returns
+    -------
+    :type Cash object
+        Generator returning a filled Cash class with the initial cash position
     """
 
     with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
