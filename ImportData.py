@@ -184,7 +184,18 @@ def get_Liability(filename: str) -> Liability:
 
 def get_settings(filename: str) -> Settings:
     """
-    :type filename: str
+    Load the settings files into a Settings class object.
+
+    Parameters
+    ----------
+    :type filename: string
+        Relative path to the settings input file
+
+    Returns
+    -------
+    :type Settings class
+        Returning a populated Settings class
+
     """
     with open(filename, mode="r", encoding="utf-8-sig") as csvfile:
         read_dict = {}
