@@ -31,6 +31,22 @@ def create_cashflow_dataframe(cf_dict:dict, unique_dates:list) -> pd.DataFrame:
     return cash_flows
 
 def calculate_expired_dates(list_of_dates: list, deadline: dt.date) -> list:
+    """
+    Returns all dates before the deadline date.
+    Parameters
+    ----------
+    :type list_of_dates: list
+        List of all the dates considered
+        
+    :type deadline: date
+        Last date considered
+
+    Returns
+    -------
+    :type: list
+        List of dates that occur before the deadline date
+    """
+
     return list(a_date for a_date in list_of_dates if a_date <= deadline)
 
 def set_dates_of_interest(modelling_date: dt.date, end_date: dt.date, days_interval=365) -> pd.Series:
