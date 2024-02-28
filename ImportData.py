@@ -70,15 +70,35 @@ def get_configuration(ini_file: str, op_sys=os, config_parser=configparser.Confi
     return configuration
 
 
-def import_SWEiopa(selected_param_file, selected_curves_file, country):
-    param_raw = pd.read_csv(selected_param_file, sep=",", index_col=0)
+def import_SWEiopa(param_file, curves_file, country):
+    """
+    Load the input files related to the risk free curve into an a list of liquid maturities, yields and the parameters related to the Smith&Wilson algorithm.
+
+    Parameters
+    ----------
+    :type param_file: string
+        Relative path to the risk-free-curve parameter file input file
+
+    :type curves_file: string
+        Relative path to the risk-free-curve shape input file
+
+    :type country: string
+        Country name used to filter the correct curve and parameters from other files
+        
+    Returns
+    -------
+    :type list
+        List with 4 elements. The list of liquid maturities, the yields at those maturities, the parameters and the calibration vector
+    """
+    
+    param_raw = pd.read_csv(param_file, sep=",", index_col=0)
     maturities_country_raw = param_raw.loc[:, country + "_Maturities"].iloc[6:]
     param_country_raw = param_raw.loc[:, country + "_Values"].iloc[6:]
     extra_param = param_raw.loc[:, country + "_Values"].iloc[:6]
     relevant_positions = pd.notna(maturities_country_raw.values)
     maturities_country = maturities_country_raw.iloc[relevant_positions]
     Qb = param_country_raw.iloc[relevant_positions]
-    curve_raw = pd.read_csv(selected_curves_file, sep=",", index_col=0)
+    curve_raw = pd.read_csv(curves_file, sep=",", index_col=0)
     curve_country = curve_raw.loc[:, country]
     return [maturities_country, curve_country, extra_param, Qb]
 
