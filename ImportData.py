@@ -104,7 +104,7 @@ def import_SWEiopa(param_file, curves_file, country):
     Returns
     -------
     :type list
-        List with 4 elements. The list of liquid maturities, the yields at those maturities, the parameters and the calibration vector
+        List with 4 Pandas dataframes. The list of liquid maturities, the yields at those maturities, the parameters and the calibration vector
     """
     
     param_raw = pd.read_csv(param_file, sep=",", index_col=0)
