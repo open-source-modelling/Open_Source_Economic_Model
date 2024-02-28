@@ -79,6 +79,19 @@ def set_dates_of_interest(modelling_date: dt.date, end_date: dt.date, days_inter
     return pd.Series(dates_of_interest, name="Dates of interest")
 
 def create_liabilities_df(liabilities: Liability) -> pd.DataFrame:
+    """
+    Create a liability DataFrame with dates as columns and individual positions as rows.
+        
+    Parameters
+    ----------
+    :type modelling_date: date
+        The starting modelling date
+
+    Returns
+    -------
+    :type: pd.DataFrame
+        The DataFrame with liability cash flows       
+    """
     cash_flows = pd.DataFrame(columns=liabilities.cash_flow_dates)
     cash_flows.loc[-1] = liabilities.cash_flow_series
     cash_flows.index = [liabilities.liability_id]
