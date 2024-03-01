@@ -97,16 +97,56 @@ def create_liabilities_df(liabilities: Liability) -> pd.DataFrame:
     cash_flows.index = [liabilities.liability_id]
     return cash_flows
 
-def process_expired_cf(unique_dates: list, date_of_interest: dt.date, cash_flows: pd.DataFrame, units: pd.DataFrame)-> list:
-    expired_dates = calculate_expired_dates(unique_dates, date_of_interest)        
+def process_expired_cf(unique_dates: list, expiration_date: dt.date, cash_flows: pd.DataFrame, units: pd.DataFrame)-> list:
+    """
+    Remove columns with expired dates from dataframe and sum cashflows within those columns into cash.
+        
+    Parameters
+    ----------
+    :type unique_dates: list
+        The list of unoque dates at which cash flows occur
+    :type expiration_date: date
+        The date befor which, all cash flows are expired
+    :type cash_flows: DataFrame
+        The dataframe of all cashflows (per unit)
+    :type units: DataFrame
+        The dataframe showing the number of units of each position
+
+        
+    Returns
+    -------
+    :type: list
+        List with the DataFrame with remaining (non-expired) cash flows, the expired cashflows summed into cash 
+        and the list of remaining (non-expired) dates  
+    """
+
+    expired_dates = calculate_expired_dates(unique_dates, expiration_date)        
     cash = 0
     for expired_date in expired_dates:  # Sum expired dividend flows
-        cash += sum(units[date_of_interest]*cash_flows[expired_date])
+        cash += sum(units[expiration_date]*cash_flows[expired_date])
         cash_flows.drop(columns=expired_date)
         unique_dates.remove(expired_date)
     return cash, cash_flows, unique_dates
 
 def process_expired_liab(unique_dates:list, date_of_interest: dt.date, cash_flows:pd.DataFrame) -> list:
+    """
+    Remove columns with expired dates from dataframe and sum cashflows within those columns into cash.
+    The cash flows are aggregated liabilities without any units
+        
+    Parameters
+    ----------
+    :type unique_dates: list
+        The list of unoque dates at which cash flows occur
+    :type expiration_date: date
+        The date befor which, all cash flows are expired
+    :type cash_flows: DataFrame
+        The dataframe of all cashflows (per unit)
+        
+    Returns
+    -------
+    :type: list
+        List with the DataFrame with remaining (non-expired) cash flow columns and the expired cashflows summed into cash  
+    """
     expired_dates = calculate_expired_dates(unique_dates, date_of_interest)        
     cash = 0
     for expired_date in expired_dates:  # Sum expired dividend flows
