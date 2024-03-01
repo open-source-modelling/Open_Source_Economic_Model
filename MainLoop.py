@@ -147,6 +147,7 @@ def process_expired_liab(unique_dates:list, date_of_interest: dt.date, cash_flow
     :type: list
         List with the DataFrame with remaining (non-expired) cash flow columns and the expired cashflows summed into cash  
     """
+
     expired_dates = calculate_expired_dates(unique_dates, date_of_interest)        
     cash = 0
     for expired_date in expired_dates:  # Sum expired dividend flows
@@ -156,6 +157,27 @@ def process_expired_liab(unique_dates:list, date_of_interest: dt.date, cash_flow
     return cash, cash_flows, unique_dates
 
 def trade(current_date: dt.date, bank_account:pd.DataFrame, units:pd.DataFrame, price:pd.DataFrame) -> list:
+    """
+    The trading algorithm that takes the price and unit number of equity positions and the bank account and
+    invests/sells proportionally the assets to balance the bank account to 0.
+        
+    Parameters
+    ----------
+    :type current_date: date
+        The date of the period at which the modell currently operates
+    :type bank_account: DataFrame
+        The dataframe with the bank_account balance at each modelling date 
+    :type units: DataFrame
+        The dataframe of all cashflows (per unit)
+    :type units: DataFrame
+        The dataframe showing the number of units of each position
+                
+    Returns
+    -------
+    :type: list
+        List with the Dataframe documenting the  number of units after trading and the bank_account DataFrame with the
+        updated bank account balance for the modelling date.  
+    """
 
     total_market_value = sum(units[current_date]*price[current_date])  # Total value of portfolio after growth
 
