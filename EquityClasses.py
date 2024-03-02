@@ -208,13 +208,13 @@ class EquityShare:
         date_frac = []
         cash_flow = []
         for key, value in dividends.items():
-            date_frac = (key-modelling_date).days/365.25
-            date_frac.append(date_frac)
+            date_tmp = (key-modelling_date).days/365.25
+            date_frac.append(date_tmp)
             cash_flow.append(value)
             
         for key, value in terminal.items():
-            date_frac = (key-modelling_date).days/365.25
-            date_frac.append(date_frac)
+            date_tmp = (key-modelling_date).days/365.25
+            date_frac.append(date_tmp)
             cash_flow.append(value)
         
         date_frac = pd.DataFrame(data = date_frac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
