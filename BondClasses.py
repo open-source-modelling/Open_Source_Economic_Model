@@ -105,9 +105,14 @@ class CorpBond:
 class CorpBondPortfolio():
     def __init__(self, corporate_bonds: dict[int,CorpBond] = None):
         """
+        Initialize the EquitySharePortfolio instance with the first EquityShare instance
 
+        Parameters
+        ----------        
         :type corporate_bonds: dict[int,CorpBond]
         """
+        
+        logger.info("CorpBondPortfolio initializer called")        
         self.corporate_bonds = corporate_bonds
 
     def IsEmpty(self)-> bool:
