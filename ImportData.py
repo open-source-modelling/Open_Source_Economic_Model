@@ -62,6 +62,9 @@ def get_configuration(ini_file: str, op_sys=os, config_parser=configparser.Confi
                                                                      intermediate["cash_portfolio_file"])
         configuration.intermediate_equity_portfolio_file = op_sys.path.join(intermediate_path,
                                                                             intermediate["equity_portfolio_file"])
+        configuration.intermediate_bond_portfolio_file = op_sys.path.join(intermediate_path,
+                                                                            intermediate["bond_portfolio_file"])
+
 
     else:
         configuration.intermediate_enabled = False
@@ -74,6 +77,7 @@ def get_configuration(ini_file: str, op_sys=os, config_parser=configparser.Confi
         configuration.input_cash_portfolio = op_sys.path.join(input_path, inp["cash"])
         configuration.input_curves = op_sys.path.join(input_path, inp["curves"])
         configuration.input_equity_portfolio = op_sys.path.join(input_path, inp["equities"])
+        configuration.input_bond_portfolio = op_sys.path.join(input_path, inp["bonds"])
         configuration.input_param_no_VA = op_sys.path.join(input_path, inp["param_no_VA"])
         configuration.input_spread = op_sys.path.join(input_path, inp["sector_spread"])
         configuration.input_parameters = op_sys.path.join(input_path, inp["parameters"])
