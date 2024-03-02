@@ -33,6 +33,7 @@ class CorpBond:
     frequency: Frequency
     recovery_rate: float
     default_probability: float
+    units: float
     market_price: float
 
     def __post_init__(self) -> None:
