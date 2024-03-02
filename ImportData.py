@@ -147,6 +147,7 @@ def get_corporate_bonds(filename: str) -> CorpBond:
                                  frequency=int(row["Frequency"]),
                                  recovery_rate=float(row["Recovery_Rate"]),
                                  default_probability=float(row["Default_Probability"]),
+                                 units=float(row["Units"]),
                                  market_price=float(row["Market_Price"]))
             yield corp_bond
 
