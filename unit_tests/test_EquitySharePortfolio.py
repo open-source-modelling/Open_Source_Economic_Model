@@ -14,6 +14,7 @@ def equity_share_1() -> EquityShare:
     issue_date = datetime.date(2015, 12, 1)
     dividend_yield = 0.03
     frequency = Frequency.QUARTERLY
+    units = 1
     market_price = 12.6
     growth_rate = 0.01
 
@@ -23,6 +24,7 @@ def equity_share_1() -> EquityShare:
                                  , issue_date=issue_date
                                  , dividend_yield=dividend_yield
                                  , frequency=frequency
+                                 , units = units
                                  , market_price=market_price
                                  , growth_rate=growth_rate
                                  )
@@ -38,6 +40,7 @@ def equity_share_2() -> EquityShare:
                                  , issue_date=datetime.date(2016, 7, 1)
                                  , dividend_yield=0.04
                                  , frequency=Frequency.MONTHLY
+                                 , units = 2
                                  , market_price=102.1
                                  , growth_rate=0.02
                                  )
@@ -80,6 +83,7 @@ def test_add_to_non_empty_portfolio(equity_share_1, equity_share_2):
     issue_date = datetime.date(2012, 2, 1)
     dividend_yield = 0.01
     frequency = Frequency.BIANNUAL
+    units = 3
     market_price = 90
     growth_rate = 0.05
 
@@ -90,6 +94,7 @@ def test_add_to_non_empty_portfolio(equity_share_1, equity_share_2):
         , issue_date
         , dividend_yield
         , frequency
+        , units
         , market_price
         , growth_rate)
 
@@ -98,7 +103,7 @@ def test_add_to_non_empty_portfolio(equity_share_1, equity_share_2):
     assert (equity_share_3.asset_id in equity_share_portfolio.equity_share)
 
 
-def test_create_dividend_dates_single_bond(equity_share_1):
+def test_create_dividend_dates_single_equity(equity_share_1):
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
     modelling_date = datetime.date(2023, 6, 1)
