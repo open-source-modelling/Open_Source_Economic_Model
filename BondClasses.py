@@ -62,15 +62,44 @@ class CorpBond:
 
 
 
-    @property
-    def dividend_amount(self) -> float:
-        return self.coupon_rate * self.notional_amount
+    def coupon_amount(self) -> float:
+        """
+        Calculate the size of the coupon for a bond inside the CorpBond class.
+        The coupon amount is equal to the percentage of the notional value.
+        
+        Parameters
+        ----------
+        self: CorpBond class
+        
+        Returns
+        -------
+        :rtype float 
+            The monetary amount of the coupon
+        """
+        coupon = self.coupon_rate * self.notional_amount
+        return coupon
 
-    def generate_coupon_dates(self, modelling_date: date) -> date:
+    def generate_coupon_dates(self, modelling_date: date, end_date) -> date:
         """
-        :parameter modelling_date
-        :type date
+        Generator yielding the coupon payment date starting from the first coupon
+        paid after the modelling date. 
+
+        Parameters
+        ----------
+        self: CorpBond class
+        :type modelling_date: date
+            The earliest date considered.
+        :type end_date: date
+            The latest date considered
+
+        Returns
+        -------
+        :type yield float
+            The date at which the coupon payment occurs
         """
+
+        end_date = min(end_date, self.maturity_date)
+
         delta = relativedelta(months=(12 // self.frequency))
         this_date = self.issue_date - delta
         while this_date < self.maturity_date:  # Coupon payment dates
@@ -79,6 +108,39 @@ class CorpBond:
                 continue
             if this_date <= self.maturity_date:
                 yield this_date
+
+
+    def create_single_cash_flows(self, modelling_date: date, end_date: date)->dict:
+        """
+        Create a dictionary of coupon cash flows using information about a corporate bond. The 
+        return dictionary has dates of the cash flows as keys and monetary amounts as values. 
+        
+        Parameters
+        ----------
+        self: CorpBond instance
+            The CorpBond instance with the bond position of interest.
+        :type modelling_date: datetime.date
+            The date from which the dividend dates and values start.
+        :type end_date: datetime.date
+            The last date that the model considers (end of the modelling window).
+            
+        Returns
+        -------
+        :type dividends: list of dict
+            Dictionary of dictionaries containing the cash flow date and the size.        
+        """
+
+        coupon_size = 0
+        coupons = {}
+        for coupon_date in self.generate_coupon_dates(modelling_date, end_date):
+            if coupon_date in coupons:  # If two cash flows on same date
+                pass
+                # dividends[dividend_date] = dividend_amount + dividends[dividend_date]
+            else:  # New cash flow date
+                coupon_size = self.coupon_amount()
+                coupons.update({coupon_date: coupon_size})
+        return coupons
+
 
     def term_to_maturity(self, modelling_date: date)->int:
         """
@@ -156,16 +218,46 @@ class CorpBondPortfolio():
             corp_bond = self.corporate_bonds[asset_id]
             for coupon_date in corp_bond.generate_coupon_dates(modelling_date):
                 if coupon_date in coupons:
-                    coupons[coupon_date] += corp_bond.dividend_amount
+                    coupons[coupon_date] += corp_bond.coupon_amount()
                 else:
-                    coupons.update({coupon_date:corp_bond.dividend_amount})
+                    coupons.update({coupon_date:corp_bond.coupon_amount()})
         return coupons
-    
+
+    def create_coupon_flows(self, modelling_date: date, end_date: date) -> list:
+        """
+        Create the list of dictionaries containing dates at which the coupons are paid out and the total amounts for
+        all corporate bonds in the portfolio, for dates on or after the modelling date but not after the terminal date.
+
+        Parameters
+        ----------
+        self: CorpBondPortfolio class instance
+            The CorpBondPortfolio instance with populated initial portfolio.
+        :type modelling_date: datetime.date
+            The date from which the dividend dates and values start.
+        :type end_date: datetime.date
+            The last date that the model considers (end of the modelling window).
+
+        Returns
+        -------
+        :rtype all_coupons
+            A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the coupons are paid out.
+        """
+        all_coupons = {}
+        corporate_bond: CorpBond
+        for asset_id in self.corporate_bonds:
+            corporate_bond = self.corporate_bonds[asset_id]  # Select one asset position
+            coupons = corporate_bond.create_single_cash_flows(modelling_date, end_date)
+            all_coupons[asset_id] = coupons
+        return all_coupons 
+
+
+
     """
     def create_coupon_dates(self, modelling_date: date):
         for corp_bond in self.corporate_bonds.values() :
             corp_bond.generate_coupon_dates(modelling_date)
     """
+
 
     def create_maturity_cashflow(self, modelling_date: date) -> dict:
         """
