@@ -12,6 +12,7 @@ def equity_share() -> EquityShare:
     issue_date = datetime.date(2015, 12, 1)
     dividend_yield = 0.03
     frequency = FrequencyClass.Frequency.QUARTERLY
+    units= 1
     market_price = 12.6
     growth_rate = 0.01
 
@@ -20,6 +21,7 @@ def equity_share() -> EquityShare:
                                , issue_date=issue_date
                                , dividend_yield=dividend_yield
                                , frequency=frequency
+                               , units =units
                                , market_price=market_price
                                , growth_rate=growth_rate
                                )
@@ -33,14 +35,17 @@ def test_construct():
     issue_date = datetime.date(2015, 12, 1)
     dividend_yield = 0.03
     frequency = FrequencyClass.Frequency.QUARTERLY
+    units = 1
     market_price = 12.6
     growth_rate = 0.02
 
-    test_share_1 = EquityShare(asset_id=asset_id, nace=nace,
-                               issuer=issuer
+    test_share_1 = EquityShare(asset_id=asset_id
+                               , nace=nace
+                               , issuer=issuer
                                , issue_date=issue_date
                                , dividend_yield=dividend_yield
                                , frequency=frequency
+                               , units = units 
                                , market_price=market_price
                                , growth_rate=growth_rate
                                )
@@ -51,6 +56,7 @@ def test_construct():
     assert test_share_1.issue_date == issue_date
     assert test_share_1.dividend_yield == dividend_yield
     assert test_share_1.frequency == frequency
+    assert test_share_1.units == units
     assert test_share_1.market_price == market_price
     assert test_share_1.growth_rate == growth_rate
 
@@ -65,9 +71,9 @@ def test_dividend_dates(equity_share):
 
 
 def test_dividend_amount(equity_share):
-    market_value = 100.0
-    dividend = equity_share.dividend_amount(current_market_price=market_value)
-    manual_calculation_dividend = market_value * 0.03
+    market_price = 100.0
+    dividend = equity_share.dividend_amount(market_price=market_price)
+    manual_calculation_dividend = market_price * 0.03
     assert dividend == manual_calculation_dividend
 
 
