@@ -147,6 +147,7 @@ def get_corporate_bonds(filename: str) -> CorpBond:
                                  issue_date=datetime.strptime(row["Issue_Date"], "%d/%m/%Y").date(),
                                  maturity_date=datetime.strptime(row["Maturity_Date"], "%d/%m/%Y").date(),
                                  coupon_rate=float(row["Coupon_Rate"]),
+                                 zspread=float(row["Z_Spread"]),
                                  notional_amount=float(row["Notional_Amount"]),
                                  frequency=int(row["Frequency"]),
                                  recovery_rate=float(row["Recovery_Rate"]),
