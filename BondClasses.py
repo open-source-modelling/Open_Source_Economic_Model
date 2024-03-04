@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from datetime import datetime as dt, timedelta
 from datetime import date
 from dataclasses import dataclass
@@ -30,6 +31,7 @@ class CorpBond:
     maturity_date: date
     coupon_rate: float
     notional_amount: float
+    zspread: float
     frequency: Frequency
     recovery_rate: float
     default_probability: float
@@ -140,7 +142,37 @@ class CorpBond:
                 coupon_size = self.coupon_amount()
                 coupons.update({coupon_date: coupon_size})
         return coupons
+    
 
+    def create_single_maturity(self, end_date: date)-> dict:
+        """
+        Create a dictionary of terminal cash flows using information about an equity share. The 
+        return dictionary has dates of the cash flows as keys and monetary amounts as values. 
+        
+        Parameters
+        ----------
+        self: EquityShare instance
+            The EquityShare instance with the equity position of interest.
+        :type modelling_date: datetime.date
+            The date from which the dividend dates and values start.
+        :type end_date: datetime.date
+            The last date that the model considers (end of the modelling window).
+        :type terminal_rate: float
+            Long term interest rate assumed by the run.      
+        :type growth_rate: float
+            Annualized growth rate of the equity of interest.
+            
+        Returns
+        -------
+        :type dividends: list of dict
+            List of dictionaries containing the cash flow date and the size.        
+        """
+        
+        principals = {}
+        terminal_amount = self.notional_amount
+        terminal_date = min(end_date, self.maturity_date)
+        principals.update({terminal_date: terminal_amount})
+        return principals    
 
     def term_to_maturity(self, modelling_date: date)->int:
         """
@@ -250,6 +282,92 @@ class CorpBondPortfolio():
             all_coupons[asset_id] = coupons
         return all_coupons 
 
+    def create_maturity_flows(self, terminal_date: date) -> dict:
+        """
+        Create the list of dictionaries containing dates at which each bond matures and its notional is paid out. If the maturity is after the 
+        end of the modelling window, the bond returns the notional at the end of the modelling window.
+
+        Parameters
+        ----------
+        self: CorpBondPortfolio class instance
+            The EquitySharePortfolio instance with populated portfolio.
+        :type modelling_date: datetime.date
+            The date from which the terminal dates and market values start.
+        :type end_date: datetime.date
+            The last date that the model considers (end of the modelling window).
+        :type terminal_rate: float
+            The assumed ultimate forward rate. The long term interest rate used in the Gordon growth model to calculate the terminal cash-flow
+
+        Returns
+        -------
+        :rtype all_terminals
+            A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the terminal cash-flows are paid out.
+        """
+        all_maturity = {}
+        principals: dict[date, float] = {}
+        corp_bond: CorpBond
+        terminal_date: date
+
+        for asset_id in self.corporate_bonds:
+            corp_bond = self.corporate_bonds[asset_id]
+            principals = corp_bond.create_single_maturity(terminal_date)
+            all_maturity[asset_id]=principals
+        return all_maturity
+    
+
+    def unique_dates_profile(self, cash_flow_profile: list):
+        """
+        Create a sorted list of dates at which there is an cash-flow event in any of the assets inside the portfolio and
+        a single numpy array (matrix) representing those cash flows.
+
+
+        Parameters
+        ----------
+        self: EquitySharePortfolio class instance
+            The EquitySharePortfolio instance with populated portfolio.
+        :type cashflow_profile: list of dictionaries containing the size and date of each 
+            cash-flow for the equity portfolio
+
+
+        :rtype dict list with two elements:
+            unique_dates
+            cash_flow_matrix
+        """
+
+        # define list of unique dates
+        unique_dates = []
+        for one_dividend_array in cash_flow_profile.values():
+            for one_dividend_date in list(one_dividend_array.keys()):  # for each dividend date of the selected equity
+                if one_dividend_date in unique_dates:  # If two cash flows on same date
+                    pass
+                    # Do nothing since dividend amounts are calibrated afterwards for equity
+                    # dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
+                else:  # New cash flow date
+                    unique_dates.append(one_dividend_date)
+
+        return sorted(unique_dates)
+
+    def init_bond_portfolio_to_dataframe(self, modelling_date: date)->list:
+
+        asset_keys = self.corporate_bonds.keys()
+
+        market_price_tmp = []
+        zspread_tmp = []
+        asset_id_tmp = []
+        units_tmp = []
+        for key in asset_keys:
+            market_price_tmp.append(self.corporate_bonds[key].market_price)
+            zspread_tmp.append(self.corporate_bonds[key].zspread)
+            asset_id_tmp.append(self.corporate_bonds[key].asset_id)
+            units_tmp.append(self.corporate_bonds[key].units)
+
+        market_price = pd.DataFrame(data=market_price_tmp, index=asset_id_tmp, columns=[modelling_date])
+
+        zspread = pd.DataFrame(data=zspread_tmp, index=asset_id_tmp, columns=[modelling_date])
+        
+        units = pd.DataFrame(data=units_tmp, index=asset_id_tmp, columns=[modelling_date])
+
+        return [market_price, zspread, units]
 
 
     """
@@ -534,6 +652,7 @@ class CorporateBond:
         self.couponcfs = allcashflows
         self.notionalcfs = allnotionalcashflows
         return [allcashflows, allnotionalcashflows]
+
 
     def disctorates(self, disc, timefrac, compounding):
         """
