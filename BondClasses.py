@@ -393,6 +393,34 @@ class CorpBondPortfolio():
             else:
                 maturities.update({corp_bond.maturity_date:corp_bond.notional_amount})
         return maturities
+    
+    def price_bond(self, coupons: dict, notional: dict, modelling_date: date, proj_period: int, curves, spread: float)->float:
+        """
+        To Do
+        """
+
+        date_frac = []
+        cash_flow = []
+        
+        for key, value in coupons.items():
+            date_tmp = (key-modelling_date).days/365.25
+            date_frac.append(date_tmp)
+            cash_flow.append(value)
+            
+        for key, value in notional.items():
+            date_tmp = (key-modelling_date).days/365.25
+            date_frac.append(date_tmp)
+            cash_flow.append(value)
+        
+        date_frac = pd.DataFrame(data = date_frac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
+        cash_flow = pd.DataFrame(data = cash_flow, columns = ["Cash flow"])
+
+        discount = curves.RetrieveRates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
+
+        nodisc_value = cash_flow.values*discount
+        disc_value = sum(nodisc_value.values)
+        return disc_value
+
 
 class CorporateBond:
     def __init__(
