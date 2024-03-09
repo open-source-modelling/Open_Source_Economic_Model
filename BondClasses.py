@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
 from typing import List, Dict, Any
 from FrequencyClass import Frequency
+from CurvesClass import Curves
 import logging
 
 
@@ -194,6 +195,83 @@ class CorpBond:
     def gross_redemption_yield(self):
         pass
 
+    def price_bond(self, coupons: dict, notional: dict, modelling_date: date, proj_period: int, curves, spread: float)->float:
+        """
+        To Do
+        """
+
+        date_frac = []
+        cash_flow = []
+        
+        for key, value in coupons.items():
+            date_tmp = (key-modelling_date).days/365.25
+            date_frac.append(date_tmp)
+            cash_flow.append(value)
+            
+        for key, value in notional.items():
+            date_tmp = (key-modelling_date).days/365.25
+            date_frac.append(date_tmp)
+            cash_flow.append(value)
+        
+        date_frac = pd.DataFrame(data = date_frac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
+        cash_flow = pd.DataFrame(data = cash_flow, columns = ["Cash flow"])
+
+        discount = curves.RetrieveRates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
+
+        nodisc_value = cash_flow.values*discount
+        disc_value = sum(nodisc_value.values)
+        return disc_value
+
+    def bisection_spread(self, x_start: float, x_end:float, modelling_date:date, end_date:date, proj_period:int, curves: Curves, precision: float, max_iter:int)->float:
+        """
+        Bisection root finding algorithm for finding the spread that when discounting with the risk free curve returns the market price.
+
+        Args:
+            self =           EquityShare object containing a single equity share positions
+            x_start =        1 x 1 floating number representing the minimum allowed value of the spread. Ex. spread = 0.05
+            x_end =          1 x 1 floating number representing the maximum allowed value of the spread. Ex. spread = 0.8
+            modelling_date = 1 x 1 date, representing the date at which the entire run starts
+            end_date =       1 x 1 date, representing the date at which the modelling window closes
+            proj_period  =   1 x 1 integer, representing the projection step at which the equity is calibrated. Ex. 1, 2
+            curves =         Curves object containing data about the term structure
+            precision =      1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
+            max_iter =       1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution         
+            approx_function
+        Returns:
+            1 x 1 floating number representing the spread of the corporate bond implied by the market price and the yield curve dynamics 
+
+        Implemented by Gregor Fabjan from Qnity Consultants on 09/02/2024.
+        """
+
+        dividends = self.create_single_cash_flows(modelling_date, end_date)
+        terminal = self.create_single_maturity(end_date)
+        y_start = self.price_bond(dividends, terminal, modelling_date, proj_period, curves, x_start)[0]-self.market_price
+
+        dividends = self.create_single_cash_flows(modelling_date, end_date)
+        terminal = self.create_single_maturity(end_date)
+        y_end = self.price_bond(dividends, terminal, modelling_date, proj_period, curves, x_end)[0]-self.market_price
+
+        if np.abs(y_start) < precision:
+            return x_start
+        if np.abs(y_end) < precision:
+            return x_end  # If final point already satisfies the conditions return end point
+        i_iter = 0
+        while i_iter <= max_iter:
+            x_mid = (x_end + x_start) / 2  # calculate mid-point
+
+            dividends = self.create_single_cash_flows(modelling_date, end_date)
+            terminal = self.create_single_maturity(end_date)
+            y_mid = self.price_bond(dividends, terminal, modelling_date, proj_period, curves, x_mid)[0]-self.market_price
+            if (y_mid == 0 or (x_end - x_start) / 2 < precision):  # Solution found
+                return x_mid
+            else:  # Solution not found
+                i_iter += 1
+                if np.sign(y_mid) == np.sign(
+                        y_start):  # If the start point and the middle point have the same sign, then the root must be in the second half of the interval
+                    x_start = x_mid
+                else:  # If the start point and the middle point have a different sign than by mean value theorem the interval must contain at least one root
+                    x_end = x_mid
+        return "Did not converge"
 
 
 class CorpBondPortfolio():
@@ -394,32 +472,11 @@ class CorpBondPortfolio():
                 maturities.update({corp_bond.maturity_date:corp_bond.notional_amount})
         return maturities
     
-    def price_bond(self, coupons: dict, notional: dict, modelling_date: date, proj_period: int, curves, spread: float)->float:
-        """
-        To Do
-        """
 
-        date_frac = []
-        cash_flow = []
-        
-        for key, value in coupons.items():
-            date_tmp = (key-modelling_date).days/365.25
-            date_frac.append(date_tmp)
-            cash_flow.append(value)
-            
-        for key, value in notional.items():
-            date_tmp = (key-modelling_date).days/365.25
-            date_frac.append(date_tmp)
-            cash_flow.append(value)
-        
-        date_frac = pd.DataFrame(data = date_frac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
-        cash_flow = pd.DataFrame(data = cash_flow, columns = ["Cash flow"])
 
-        discount = curves.RetrieveRates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
 
-        nodisc_value = cash_flow.values*discount
-        disc_value = sum(nodisc_value.values)
-        return disc_value
+
+
 
 
 class CorporateBond:
