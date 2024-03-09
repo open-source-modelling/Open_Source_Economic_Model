@@ -236,7 +236,6 @@ class EquityShare:
             x_end =          1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
             modelling_date = 1 x 1 date, representing the date at which the entire run starts
             end_date =       1 x 1 date, representing the date at which the modelling window closes
-            ufr  =           1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
             proj_period  =   1 x 1 integer, representing the projection step at which the equity is calibrated. Ex. 1, 2
             curves =         Curves object containing data about the term structure
             precision =      1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
@@ -245,23 +244,10 @@ class EquityShare:
         Returns:
             1 x 1 floating number representing the optimal growth of an equity to return the targeted market price 
 
-        Example of use:
-            >>> import numpy as np
-            >>> from SWCalibrate import SWCalibrate as SWCalibrate
-            >>> M_Obs = np.transpose(np.array([1, 2, 4, 5, 6, 7]))
-            >>> r_Obs =  np.transpose(np.array([0.01, 0.02, 0.03, 0.032, 0.035, 0.04]))
-            >>> xStart = 0.05
-            >>> xEnd = 0.5
-            >>> maxIter = 1000
-            >>> alfa = 0.15
-            >>> ufr = 0.042
-            >>> Precision = 0.0000000001
-            >>> Tau = 0.0001
-            >>> BisectionAlpha(xStart, xEnd, M_Obs, r_Obs, ufr, Tau, Precision, maxIter)
-            [Out] 0.11549789285636511
 
         Implemented by Gregor Fabjan from Qnity Consultants on 08/02/2024.
         """
+        
         terminal_rate = curves.ufr
         dividends = self.create_single_cash_flows(modelling_date, end_date, x_start)
         terminal = self.create_single_terminal(modelling_date, end_date, terminal_rate, x_start)
