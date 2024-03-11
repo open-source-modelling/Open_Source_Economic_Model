@@ -6,8 +6,9 @@ import pandas as pd
 from ConfigurationClass import Configuration
 from CurvesClass import Curves
 from EquityClasses import *
+from BondClasses import CorpBondPortfolio
 from MainLoop import *
-from ImportData import get_EquityShare, get_settings, import_SWEiopa, get_Cash, get_Liability, \
+from ImportData import get_EquityShare, get_corporate_bonds, get_settings, import_SWEiopa, get_Cash, get_Liability, \
     get_configuration
 from TraceClass import tracer
 
@@ -61,6 +62,7 @@ def main():
     cash_portfolio_file = conf.input_cash_portfolio
     equity_portfolio_file = conf.input_equity_portfolio
     liability_cashflow_file = conf.input_liability_cashflow
+    bond_portfolio_file = conf.input_bond_portfolio
 
     # Import run parameters
     logger.info("Importing run parameters")
@@ -90,22 +92,38 @@ def main():
     equity_input_generator = get_EquityShare(equity_portfolio_file) # Create generator that contains all equity positions
     equity_input = {equity_share.asset_id: equity_share for equity_share in equity_input_generator}
 
+    logger.info("Import corporate bonds")
+    bond_input_generator = get_corporate_bonds(bond_portfolio_file)
+    bond_input = {corp_bond.asset_id: corp_bond for corp_bond in bond_input_generator}
+
     logger.info("Create equity portfolio")
     equity_portfolio = EquitySharePortfolio(equity_input)
 
-    logger.info("Create dictionary of cash flows and dates")
+    logger.info("Create bond portfolio")
+    bond_portfolio = CorpBondPortfolio(bond_input)
+    # GENERATE ALL SYNTHETIC EQUITIES HERE
+    # synt_equity_portfolio
+
+    logger.info("Create dictionary of cash flows and dates for equities")
     dividend_dict = equity_portfolio.create_dividend_flows(settings.modelling_date, settings.end_date)
     terminal_dict = equity_portfolio.create_terminal_flows(modelling_date=settings.modelling_date,
                                                             terminal_date=settings.end_date,
                                                             terminal_rate=curves.ufr)
 
+    logger.info("Create dictionary of cash flows and dates for corporate bonds")
+    dividend_flows = bond_portfolio.create_coupon_flows(settings.modelling_date, settings.end_date)
+    terminal_flows = bond_portfolio.create_maturity_flows(terminal_date=settings.end_date)
     # Calculate date fractions based on modelling date
     # [all_date_frac, all_dates_considered] = equity_portfolio.create_dividend_fractions(settings.modelling_date, dividend_dates)
     # [all_dividend_date_frac, all_dividend_dates_considered] = equity_portfolio.create_terminal_fractions(settings.modelling_date, terminal_dates)
 
-    logger.info("Find all asset cash flow dates")
+    logger.info("Find all asset cash flow dates for equities")
     unique_dividend_dates = equity_portfolio.unique_dates_profile(dividend_dict)
     unique_terminal_dates = equity_portfolio.unique_dates_profile(terminal_dict)
+
+    logger.info("Find all asset cash flow dates for corporate bonds")
+    unique_coupon_dates = bond_portfolio.unique_dates_profile(dividend_flows)
+    unique_notional_dates = bond_portfolio.unique_dates_profile(terminal_flows)
 
     logger.info("Load all liability cash flows")
     liabilities = get_Liability(liability_cashflow_file)
@@ -115,7 +133,9 @@ def main():
 
     ### -------- PREPARE INITIAL DATA FRAMES --------###
     logger.info("Initialize market dataframes")
-    [price_df, growth_rate_df, units_df] = equity_portfolio.init_equity_portfolio_to_dataframe(settings.modelling_date)
+    [equity_price_df, equity_growth_df, equity_units_df] = equity_portfolio.init_equity_portfolio_to_dataframe(settings.modelling_date)
+
+    [bond_price_df, bond_zspread_df, bond_units_df] = bond_portfolio.init_bond_portfolio_to_dataframe(settings.modelling_date)
 
     bank_account = pd.DataFrame(data=[cash.bank_account], columns=[settings.modelling_date])
 
@@ -128,11 +148,17 @@ def main():
     # Dataframe with terminal cash flows
     terminal_df = create_cashflow_dataframe(terminal_dict, unique_terminal_dates)
 
+    # Dataframe with bond  coupon cash flows
+    coupon_df = create_cashflow_dataframe(dividend_flows, unique_coupon_dates)
+
+    # Dataframe with bond notional cash flows
+    notional_df = create_cashflow_dataframe(terminal_flows, unique_notional_dates)
+
     # DataFrame with liability cash flows
     liability_df = create_liabilities_df(liabilities)
 
     ### -------- PREPARE OUTPUT DATA FRAMES --------###
-    previous_market_value = sum(price_df[settings.modelling_date] * units_df[settings.modelling_date])  # Value of the initial portfolio
+    previous_market_value = sum(equity_price_df[settings.modelling_date] * equity_units_df[settings.modelling_date])  # Value of the initial portfolio
 
     ini_out = {
         "Start cash": [None], 
@@ -159,9 +185,9 @@ def main():
 
     for current_date in dates_of_interest.values:
         logger.info("Set last period's values as initial point for this period")
-        initial_market_value = sum(price_df[previous_date] * units_df[previous_date])  # Total value of portfolio after growth
+        initial_market_value = sum(equity_price_df[previous_date] * equity_units_df[previous_date])  # Total value of portfolio after growth
         bank_account[current_date] = bank_account[previous_date]
-        units_df[current_date] = units_df[previous_date]
+        equity_units_df[current_date] = equity_units_df[previous_date]
         
         summary_df.loc[current_date, "Start cash"] = float(bank_account[previous_date])
         summary_df.loc[current_date, "Start market value"] = float(initial_market_value)
@@ -170,12 +196,12 @@ def main():
         time_frac = (current_date - previous_date).days / 365.5
 
         logger.info("Calculate expired dividends, remove them from cash flows and add to bank account")
-        cash, dividend_df, unique_dividend_dates = process_expired_cf(unique_dividend_dates, current_date, dividend_df, units_df)
+        cash, dividend_df, unique_dividend_dates = process_expired_cf(unique_dividend_dates, current_date, dividend_df, equity_units_df)
         summary_df.loc[current_date, "Dividend cash flow"] = float(cash)
         bank_account[current_date] += cash
 
         logger.info("Calculate expired terminal flows, remove them from cash flows and add to bank account")
-        cash, terminal_df, unique_terminal_dates = process_expired_cf(unique_terminal_dates, current_date, terminal_df, units_df)
+        cash, terminal_df, unique_terminal_dates = process_expired_cf(unique_terminal_dates, current_date, terminal_df, equity_units_df)
         summary_df.loc[current_date, "Terminal cash flow"] = float(cash)
         bank_account[current_date] += cash
 
@@ -186,24 +212,24 @@ def main():
         bank_account[current_date] -= cash
 
         logger.info("Calculate market value of portfolio after stock growth")
-        price_df[current_date] = price_df[previous_date] * (
-                1 + growth_rate_df[settings.modelling_date]) ** time_frac
+        equity_price_df[current_date] = equity_price_df[previous_date] * (
+                1 + equity_growth_df[settings.modelling_date]) ** time_frac
 
-        total_market_value = sum(units_df[current_date]*price_df[current_date])  # Total value of portfolio after growth
+        total_market_value = sum(equity_units_df[current_date]*equity_price_df[current_date])  # Total value of portfolio after growth
         
         summary_df.loc[current_date, "After growth market value"] = float(total_market_value)
         summary_df.loc[current_date, "Portfolio return"] = float(total_market_value/previous_market_value-1)
 
         logger.info("Trading of excess/deficit liquidity, rebalancing")
         
-        [units_df, bank_account] = trade(current_date, bank_account, units_df, price_df)
+        [equity_units_df, bank_account] = trade(current_date, bank_account, equity_units_df, equity_price_df)
 
         logger.info("Log final positions and prepare for entering next modelling period")
         summary_df.loc[current_date, "End cash"] = float(bank_account[current_date])
-        summary_df.loc[current_date, "End market value"] = float(sum(units_df[current_date]*price_df[current_date]))        
+        summary_df.loc[current_date, "End market value"] = float(sum(equity_units_df[current_date]*equity_price_df[current_date]))        
 
         previous_date = current_date
-        previous_market_value = sum(units_df[current_date]*price_df[current_date])
+        previous_market_value = sum(equity_units_df[current_date]*equity_price_df[current_date])
 
     logger.info("Main loop finished, saving results")
     summary_df.to_csv(conf.output_path+"\Results.csv")
