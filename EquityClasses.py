@@ -205,6 +205,30 @@ class EquityShare:
         return terminals
 
     def price_share(self, dividends: dict, terminal: dict, modelling_date: date, proj_period: int, curves: Curves)->float:
+        """
+        Calculate the price of an equity share using the yield curve obtained
+        from the curves object.  
+
+        Parameters
+        ----------
+        self: EquityShare instance
+            The EquityShare instance with the equity position of interest.
+        :type dividends: dict
+            A dictionary with dates of dividend cashflows as keys and monetary amounts as values.
+        :type terminal: dict
+            A dictionary with dates of terminal sale as keys and monetary amounts as values.              
+        :type modelling_date: datetime.date
+            The date from which the dividend dates and values start.
+        :type proj_period: int
+            Which modelling date in dates of interest is the pricing function using.
+        :type curves: Curves
+            Instance of the Curves class with calibrated term structure.
+
+        Returns
+        -------
+        :type disc_value: float
+            The price of the share.         
+        """
         date_frac = []
         cash_flow = []
         for key, value in dividends.items():

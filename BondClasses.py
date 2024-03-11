@@ -79,7 +79,7 @@ class CorpBond:
         coupon = self.coupon_rate * self.notional_amount
         return coupon
 
-    def generate_coupon_dates(self, modelling_date: date, end_date) -> date:
+    def generate_coupon_dates(self, modelling_date: date, end_date: date) -> date:
         """
         Generator yielding the coupon payment date starting from the first coupon
         paid after the modelling date. 
@@ -144,21 +144,17 @@ class CorpBond:
 
     def create_single_maturity(self, end_date: date)-> dict:
         """
-        Create a dictionary of terminal cash flows using information about an equity share. The 
+        Create a dictionary of terminal cash flows using information about a bond portfolio. The 
         return dictionary has dates of the cash flows as keys and monetary amounts as values. 
         
         Parameters
         ----------
-        self: EquityShare instance
-            The EquityShare instance with the equity position of interest.
+        self: CorpBond instance
+            The CorpBond instance with the bond position of interest.
         :type modelling_date: datetime.date
             The date from which the dividend dates and values start.
         :type end_date: datetime.date
             The last date that the model considers (end of the modelling window).
-        :type terminal_rate: float
-            Long term interest rate assumed by the run.      
-        :type growth_rate: float
-            Annualized growth rate of the equity of interest.
             
         Returns
         -------
@@ -194,7 +190,31 @@ class CorpBond:
 
     def price_bond(self, coupons: dict, notional: dict, modelling_date: date, proj_period: int, curves, spread: float)->float:
         """
-        To Do
+        Calculate the price of a bond with defined coupon and notional payments using the 
+        yield curve obtained from the curves object with a fixed extra spread passed in spread.  
+
+        Parameters
+        ----------
+        self: CorpBond instance
+            The CorpBond instance with the bond position of interest.
+        :type coupons: dict
+            A dictionary with dates of coupon cashflows as keys and monetary amounts as values.
+        :type notional: dict
+            A dictionary with dates of repayments of the notional as keys and monetary amounts as values.              
+        :type modelling_date: datetime.date
+            The date from which the dividend dates and values start.
+        :type proj_period: int
+            Which modelling date in dates of interest is the pricing function using.
+        :type curves: Curves
+            Instance of the Curves class with calibrated term structure.
+        :type spread: float
+            Extra spread over the risk free rate applied to the bond.
+        
+
+        Returns
+        -------
+        :type disc_value: float
+            The price of the bond.         
         """
 
         date_frac = []
