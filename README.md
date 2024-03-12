@@ -51,8 +51,8 @@ Check our wiki page also on [GitHub Wiki]
 
 [GitHub Wiki]: https://github.com/open-source-modelling/Open_Source_Economic_Model/wiki/Introduction
 [Documentation]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/Documentation
-[OSEM pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_POC_Documentation_draft.pdf
-[OSEM Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_POC_Documentation_draft.ipynb
-[Term structure Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Projection%20of%20the%20risk%20free%20curve%20and%20recalibration%20inside%20OSEM.ipynb
-[Equity pricing Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/PROTOTYPE%20EQUITY%20PRICING.ipynb
-[Bond pricing Jupyter notebook]: https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/PROTOTYPE%20BOND%20PRICING.ipynb
+[OSEM pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_Documentation_draft.pdf
+[OSEM Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_Documentation_draft.ipynb
+[Term structure Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/_PROJECTION%20OF%20THE%20RISK%20FREE%20CURVE%20AND%20RECALIBRATION_v2.pdf
+[Equity pricing Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/_PROTOTYPE%20EQUITY%20PRICING_v2.pdf
+[Bond pricing Jupyter notebook]: https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/_PROTOTYPE%20BOND%20PRICING_v2.pdf
