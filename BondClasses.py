@@ -498,3 +498,19 @@ class CorpBondPortfolio():
             notional_df.loc[asset_id],settings.modelling_date, proj_period,curves,bond_zspread_df.loc[asset_id][0])
             bond_price_df.loc[asset_id][date_of_interest] = price
         return bond_price_df
+    
+    def calibrate_bond_portfolio(self, zspread_df, settings, proj_period, curves):
+        """
+        To Do
+        """
+        for asset_id in zspread_df.index:
+            calibrated_spread = self.corporate_bonds[asset_id].bisection_spread(x_start=-0.2
+                                        , x_end=0.2
+                                        , modelling_date=settings.modelling_date
+                                        , end_date=settings.end_date
+                                        , proj_period=proj_period
+                                        , curves=curves
+                                        , precision= 0.00000001
+                                        , max_iter=100000)
+            zspread_df.loc[asset_id][settings.modelling_date]=calibrated_spread    
+        return zspread_df
