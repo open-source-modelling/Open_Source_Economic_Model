@@ -183,21 +183,18 @@ def trade(current_date: dt.date, bank_account:pd.DataFrame, eq_units:pd.DataFram
     if total_market_value <= 0:
         pass
     elif bank_account[current_date][0] < 0:  # Sell assets
-        percent_to_sell = min(1, -bank_account[current_date][
-            0] / total_market_value)  # How much of the portfolio needs to be sold
+        percent_to_sell = min(1, -bank_account[current_date][0] / total_market_value)  # How much of the portfolio needs to be sold
         eq_units[current_date] = eq_units[current_date] * (1 - percent_to_sell) 
         bd_units[current_date] = bd_units[current_date] * (1 - percent_to_sell)
 
-        bank_account[current_date] += total_market_value - sum(
-            eq_units[current_date]*eq_price[current_date]+bd_units[current_date]*bd_price[current_date])  # Add cash to bank account equal to shares sold
+        bank_account[current_date] += total_market_value - sum(eq_units[current_date]*eq_price[current_date])-sum(bd_units[current_date]*bd_price[current_date])  # Add cash to bank account equal to shares sold
         
     elif bank_account[current_date][0] > 0:  # Buy assets
         percent_to_buy = bank_account[current_date][0] / total_market_value  # What % of the portfolio is the excess cash
         eq_units[current_date] = eq_units[current_date] * (1 + percent_to_buy)  
         bd_units[current_date] = bd_units[current_date] * (1 + percent_to_buy)  
                     
-        bank_account[current_date] += total_market_value - sum(
-            eq_units[current_date]*eq_price[current_date])+sum(bd_units[current_date]*bd_price[current_date])  # Bank account reduced for cash spent on buying shares
+        bank_account[current_date] += total_market_value - sum(eq_units[current_date]*eq_price[current_date])-sum(bd_units[current_date]*bd_price[current_date])  # Bank account reduced for cash spent on buying shares
     else:  # Remaining cash flow is equal to 0 so no trading needed
         pass
 
