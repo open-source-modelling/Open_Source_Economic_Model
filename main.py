@@ -157,8 +157,7 @@ def main():
     liability_df = create_liabilities_df(liabilities)
 
     ### -------- PREPARE OUTPUT DATA FRAMES --------###
-    previous_market_value = sum(equity_price_df[settings.modelling_date] * equity_units_df[settings.modelling_date])
-    + sum(bond_price_df[settings.modelling_date] * bond_units_df[settings.modelling_date])  # Value of the initial portfolio
+    previous_market_value = sum(equity_price_df[settings.modelling_date] * equity_units_df[settings.modelling_date])+ sum(bond_price_df[settings.modelling_date] * bond_units_df[settings.modelling_date])  # Value of the initial portfolio
 
     ini_out = {
         "Start cash": [None], 
@@ -241,7 +240,7 @@ def main():
         summary_df.loc[current_date, "Portfolio return"] = float(total_market_value/previous_market_value-1)
 
         logger.info("Trading of excess/deficit liquidity, rebalancing")
-        
+
         [equity_units_df, bond_units_df, bank_account] = trade(current_date, bank_account, equity_units_df, equity_price_df, bond_units_df, bond_price_df)
 
         logger.info("Log final positions and prepare for entering next modelling period")
