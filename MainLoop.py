@@ -156,7 +156,7 @@ def process_expired_liab(unique_dates:list, date_of_interest: dt.date, cash_flow
         unique_dates.remove(expired_date)
     return cash, cash_flows, unique_dates
 
-def trade(current_date: dt.date, bank_account:pd.DataFrame, units:pd.DataFrame, price:pd.DataFrame) -> list:
+def trade(current_date: dt.date, bank_account:pd.DataFrame, eq_units:pd.DataFrame, eq_price:pd.DataFrame, bd_units:pd.DataFrame, bd_price:pd.DataFrame) -> list:
     """
     The trading algorithm that takes the price and unit number of equity positions and the bank account and
     invests/sells proportionally the assets to balance the bank account to 0.
@@ -179,24 +179,27 @@ def trade(current_date: dt.date, bank_account:pd.DataFrame, units:pd.DataFrame, 
         updated bank account balance for the modelling date.  
     """
 
-    total_market_value = sum(units[current_date]*price[current_date])  # Total value of portfolio after growth
+    total_market_value = sum(eq_units[current_date]*eq_price[current_date]+bd_units[current_date]*bd_price[current_date])  # Total value of portfolio after growth
 
     if total_market_value <= 0:
         pass
     elif bank_account[current_date][0] < 0:  # Sell assets
         percent_to_sell = min(1, -bank_account[current_date][
             0] / total_market_value)  # How much of the portfolio needs to be sold
-        units[current_date] = units[current_date] * (1 - percent_to_sell)  
+        eq_units[current_date] = eq_units[current_date] * (1 - percent_to_sell) 
+        bd_units[current_date] = bd_units[current_date] * (1 - percent_to_sell)
+
         bank_account[current_date] += total_market_value - sum(
-            units[current_date]*price[current_date])  # Add cash to bank account equal to shares sold
+            eq_units[current_date]*eq_price[current_date]+bd_units[current_date]*bd_price[current_date])  # Add cash to bank account equal to shares sold
         
     elif bank_account[current_date][0] > 0:  # Buy assets
         percent_to_buy = bank_account[current_date][0] / total_market_value  # What % of the portfolio is the excess cash
-        units[current_date] = units[current_date] * (1 + percent_to_buy)  
+        eq_units[current_date] = eq_units[current_date] * (1 + percent_to_buy)  
+        bd_units[current_date] = bd_units[current_date] * (1 + percent_to_buy)  
                     
         bank_account[current_date] += total_market_value - sum(
-            units[current_date]*price[current_date])  # Bank account reduced for cash spent on buying shares
+            eq_units[current_date]*eq_price[current_date]+bd_units[current_date]*bd_price[current_date])  # Bank account reduced for cash spent on buying shares
     else:  # Remaining cash flow is equal to 0 so no trading needed
         pass
 
-    return [units, bank_account]
+    return [eq_units, bd_units, bank_account]
