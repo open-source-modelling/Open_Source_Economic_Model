@@ -178,8 +178,7 @@ def trade(current_date: dt.date, bank_account:pd.DataFrame, eq_units:pd.DataFram
         List with the Dataframe documenting the  number of units after trading and the bank_account DataFrame with the
         updated bank account balance for the modelling date.  
     """
-
-    total_market_value = sum(eq_units[current_date]*eq_price[current_date]+bd_units[current_date]*bd_price[current_date])  # Total value of portfolio after growth
+    total_market_value = sum(eq_units[current_date]*eq_price[current_date])+sum(bd_units[current_date]*bd_price[current_date])  # Total value of portfolio after growth
 
     if total_market_value <= 0:
         pass
@@ -198,7 +197,7 @@ def trade(current_date: dt.date, bank_account:pd.DataFrame, eq_units:pd.DataFram
         bd_units[current_date] = bd_units[current_date] * (1 + percent_to_buy)  
                     
         bank_account[current_date] += total_market_value - sum(
-            eq_units[current_date]*eq_price[current_date]+bd_units[current_date]*bd_price[current_date])  # Bank account reduced for cash spent on buying shares
+            eq_units[current_date]*eq_price[current_date])+sum(bd_units[current_date]*bd_price[current_date])  # Bank account reduced for cash spent on buying shares
     else:  # Remaining cash flow is equal to 0 so no trading needed
         pass
 
