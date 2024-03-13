@@ -37,7 +37,7 @@ The OSEM should be able to produce a projection of what would happen to the bala
 ## Methodology
 The development of the OSEM model is still very much an ongoing project. However, a draft of the methodology document can be found in the [Documentation] folder as [OSEM pdf] or a [OSEM Jupyter notebook].
 
-Specific deep dives into topics related to the methodology are available as Jupyter notebooks or pdf-s. We found this to be a usefull method to open the floor to feedback. Note that notebooks are currently sparsely maintained. If interested, let us know and we can update the notebook to the latest version. The specific topics are:
+Specific deep dives into topics related to the methodology are available as Jupyter notebooks or pdf-s. We found this to be a usefull method to open the floor to feedback. The main topics are:
  - Yield-curve calibration/projection [Term structure example] 
  - Equity pricing [Equity pricing example]
  - Fixed income pricing [Bond pricing example]
