@@ -46,7 +46,7 @@ To run the example:
  - Download the OSEM repository
  - Open the Anaconda command prompt
  - Make the OSEM repository the root folder
- - Run the script main.oy
+ - Run the script main.py
  - In the folder Output, look at the cash flow time-series
 
 ## Ask to the community
