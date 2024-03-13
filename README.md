@@ -49,6 +49,11 @@ To run the example:
  - Run the script main.py
  - In the folder Output, look at the cash flow time-series
 
+A simple summary of what goes into the run and what are the outputs can be found in the [Summary pdf]
+
+[Summary pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_SUMMARY%20OF%20THE%20EXAMPLE%20RUN.pdf
+
+
 ## Ask to the community
 Send us an email at gregor@osmodelling.com with feedback, comments, ideas on what we could do better etc. Do you want to help us on this open source project?
 Check our wiki page also on [GitHub Wiki]
