@@ -20,8 +20,6 @@ Financial institutions such as life insurers or pension funds have a fiduciary d
  - Evolution of liabilities
  - The trading strategy in response to outflows and inflows throughout time  
 
-Historically, these models were either implemented internally at a great cost to the organisation, or by a specialized vendor under a proprietary license. 
-
 ## Solution
 There might be a third way. An open implementation that can be upgraded and maintained by the wider community of interested parties. Actuaries, students, companies, regulators, and other interested professionals. The result of this thought is the Open Source Economic Model (OSEM). A project with the aim to write a model using technologies that are open-source and widely used (Pyhon and specific packages such as Pands, Numpy, Datetime etc.).
 
