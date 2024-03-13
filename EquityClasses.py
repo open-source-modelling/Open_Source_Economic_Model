@@ -539,13 +539,11 @@ class EquitySharePortfolio():
         :type cashflow_profile: list of dictionaries containing the size and date of each 
             cash-flow for the equity portfolio
 
-
-        :rtype dict list with two elements:
-            unique_dates
-            cash_flow_matrix
+        Returns
+        -------
+        :rtype list: list of sorted unique dates containing at least one cash flow
         """
 
-        # define list of unique dates
         unique_dates = []
         for one_dividend_array in cash_flow_profile.values():
             for one_dividend_date in list(one_dividend_array.keys()):  # for each dividend date of the selected equity

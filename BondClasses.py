@@ -294,14 +294,13 @@ class CorpBond:
 class CorpBondPortfolio():
     def __init__(self, corporate_bonds: dict[int,CorpBond] = None):
         """
-        Initialize the EquitySharePortfolio instance with the first EquityShare instance
+        Initialize the CorpBondPortfolio instance with the first CorpBond instance
 
         Parameters
         ----------        
         :type corporate_bonds: dict[int,CorpBond]
         """
-        
-        #logger.info("CorpBondPortfolio initializer called")        
+          
         self.corporate_bonds = corporate_bonds
 
     def IsEmpty(self)-> bool:
@@ -323,20 +322,20 @@ class CorpBondPortfolio():
 
     def create_aggregate_coupon_dates(self, modelling_date)->dict:
         """
-                Create the vector of dates at which the coupons are paid out and the total amounts for
-                all corporate bonds in the portfolio, for dates on or after the modelling date
+            Create the vector of dates at which the coupons are paid out and the total amounts for
+            all corporate bonds in the portfolio, for dates on or after the modelling date
 
-                Parameters
-                ----------
-                self : CorpBondPortfolio class instance
-                    The CorpBondPortfolio instance with populated initial portfolio.
+            Parameters
+            ----------
+            self : CorpBondPortfolio class instance
+                The CorpBondPortfolio instance with populated initial portfolio.
 
-                Returns
-                -------
-                CorporateBond.coupondates
-                    An array of datetimes, containing all the dates at which the coupons are paid out.
+            Returns
+            -------
+            CorporateBond.coupondates
+                An array of datetimes, containing all the dates at which the coupons are paid out.
 
-                """
+            """
 
         coupons: dict[date, float] = {}
         corp_bond: CorpBond
@@ -418,18 +417,16 @@ class CorpBondPortfolio():
 
         Parameters
         ----------
-        self: EquitySharePortfolio class instance
-            The EquitySharePortfolio instance with populated portfolio.
+        self: CorpBondPortfolio class instance
+            The CorpBondPortfolio instance with populated portfolio.
         :type cashflow_profile: list of dictionaries containing the size and date of each 
-            cash-flow for the equity portfolio
+            cash-flow for the corporate bond portfolio
 
-
-        :rtype dict list with two elements:
-            unique_dates
-            cash_flow_matrix
+        Returns
+        -------
+        :rtype list: list of sorted unique dates containing at least one cash flow
         """
 
-        # define list of unique dates
         unique_dates = []
         for one_dividend_array in cash_flow_profile.values():
             for one_dividend_date in list(one_dividend_array.keys()):  # for each dividend date of the selected equity
