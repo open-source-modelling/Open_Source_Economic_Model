@@ -53,11 +53,14 @@ A simple summary of what goes into the run and what are the outputs can be found
 
 [Summary pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_SUMMARY%20OF%20THE%20EXAMPLE%20RUN.pdf
 
+# Using Copilots for development
+If you use copilots to further develope the code, we have started assembling a modelingfile that can be used to refine the prompts. The file is located in the [llm_modelfile] folder.
 
 ## Ask to the community
 Send us an email at gregor@osmodelling.com with feedback, comments, ideas on what we could do better etc. Do you want to help us on this open source project?
 Check our wiki page also on [GitHub Wiki]
 
+[llm_modelfile]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/llm_modelfile
 [GitHub Wiki]: https://github.com/open-source-modelling/Open_Source_Economic_Model/wiki/Introduction
 [Documentation]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/Documentation
 [OSEM pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_Documentation_draft.pdf
