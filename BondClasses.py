@@ -497,6 +497,33 @@ class CorpBondPortfolio():
     
     def price_bond_portfolio(self, coupon_df, notional_df, settings, proj_period, curves, bond_zspread_df, bond_price_df, date_of_interest):
         """
+        Prices a portfolio of bonds based on provided data and settings.
+
+        Parameters
+        ----------
+        :type coupon_df (DataFrame): 
+            DataFrame containing coupon rates for each bond.
+        :type notional_df (DataFrame): 
+            DataFrame containing notional amounts for each bond.
+        :type settings: 
+            Settings object containing modeling date.
+        :type proj_period (int): 
+            Projection period for pricing.
+        :type curves: 
+            Curves data required for pricing.
+        :type bond_zspread_df (DataFrame): 
+            DataFrame containing bond z-spreads for each bond.
+        :type bond_price_df (DataFrame): 
+            DataFrame to store bond prices.
+        :type date_of_interest: 
+            Date of interest for pricing.
+
+        Returns
+        -------
+        :rtype DataFrame: 
+            DataFrame containing bond prices updated for the given date_of_interest.
+
+        Note: Assumes self.corporate_bonds is a dictionary with keys as asset IDs and values as CorpBond objects.
         To Do
         """
         for asset_id in coupon_df.index:
