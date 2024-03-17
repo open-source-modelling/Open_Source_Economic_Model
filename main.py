@@ -70,7 +70,7 @@ def main():
 
     # Import risk free rate curve
     logger.info("Importing risk free rate curve")
-    [maturities_country, curve_country, extra_param, Qb] = import_SWEiopa(settings.EIOPA_param_file,
+    [maturities_country, curve_country, extra_param, Qb] =  import_SWEiopa(settings.EIOPA_param_file,
                                                                           settings.EIOPA_curves_file, settings.country)
     
     # Curves object with information about term structure
@@ -113,6 +113,7 @@ def main():
     logger.info("Create dictionary of cash flows and dates for corporate bonds")
     cpn_flows = bd_portfolio.create_coupon_flows(settings.modelling_date, settings.end_date)
     not_flows = bd_portfolio.create_maturity_flows(terminal_date=settings.end_date)
+
     # Calculate date fractions based on modelling date
     # [all_date_frac, all_dates_considered] = equity_portfolio.create_dividend_fractions(settings.modelling_date, dividend_dates)
     # [all_dividend_date_frac, all_dividend_dates_considered] = equity_portfolio.create_terminal_fractions(settings.modelling_date, terminal_dates)
