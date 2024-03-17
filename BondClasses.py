@@ -471,8 +471,17 @@ class CorpBondPortfolio():
 
     def create_maturity_cashflow(self, modelling_date: date) -> dict:
         """
+        Generate a dictionary of cash flows from a collection of corporate bonds.
 
-        :rtype: dict
+        Parameters
+        ----------
+        :type modelling_date: date: 
+            The current date for modeling purposes.
+        
+        Returns
+        -------
+        :rtype Dict[date, float]: 
+            A dictionary where keys are maturity dates and values are total notional amounts.
         """
         maturities: dict[date, float] = {}
         corp_bond: CorpBond
@@ -480,7 +489,7 @@ class CorpBondPortfolio():
 
         for asset_id in self.corporate_bonds:
             corp_bond = self.corporate_bonds[asset_id]
-            if maturity_date in maturities:
+            if corp_bond.maturity_date in maturities:
                 maturities[maturity_date] += corp_bond.notional_amount
             else:
                 maturities.update({corp_bond.maturity_date:corp_bond.notional_amount})
