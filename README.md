@@ -39,6 +39,7 @@ Specific deep dives into topics related to the methodology are available as Jupy
  - Yield-curve calibration/projection [Term structure example] 
  - Equity pricing [Equity pricing example]
  - Fixed income pricing [Bond pricing example]
+ - Summary charts [Summary charts example]
 
 ## Getting started
 So far, we have produced a simple example that can be ran using the script `main.py`. A hypothetical portfolio of 3 equities and 3 corporate bonds and a single fixed liability cash flow profile. This example will grow as more development is committed to the main branch.
@@ -68,3 +69,4 @@ Check our wiki page also on [GitHub Wiki]
 [Term structure example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/_PROJECTION%20OF%20THE%20RISK%20FREE%20CURVE%20AND%20RECALIBRATION_v2.pdf
 [Equity pricing example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/_PROTOTYPE%20EQUITY%20PRICING_v2.pdf
 [Bond pricing example]: https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/_PROTOTYPE%20BOND%20PRICING_v2.pdf
+[[Summary charts example]]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_SUMMARY%20CHARTS%20FOR%20OSEM%20RUN.pdf
