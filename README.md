@@ -52,7 +52,7 @@ To run the example:
 
 A simple summary of what goes into the run and what are the outputs can be found in the [Summary pdf]
 
-[Summary pdf]https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_SUMMARY%20CHARTS%20FOR%20OSEM%20RUN.pdf
+[Summary pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_SUMMARY%20CHARTS%20FOR%20OSEM%20RUN.pdf
 
 ## Using Copilots for development
 If you use copilots to further develope the code, we have started assembling a modelingfile that can be used to refine the prompts. The file is located in the [llm_modelfile] folder.
