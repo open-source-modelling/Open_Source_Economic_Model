@@ -100,7 +100,7 @@ def main():
     eq_ptf = EquitySharePortfolio(eq_input)
 
     logger.info("Create bond portfolio")
-    bd_portfolio = CorpBondPortfolio(bond_input)
+    bd_ptf = CorpBondPortfolio(bond_input)
     # GENERATE ALL SYNTHETIC EQUITIES HERE
     # synt_equity_portfolio
 
@@ -111,8 +111,8 @@ def main():
                                                             terminal_rate=curves.ufr)
 
     logger.info("Create dictionary of cash flows and dates for corporate bonds")
-    cpn_flows = bd_portfolio.create_coupon_flows(settings.modelling_date, settings.end_date)
-    not_flows = bd_portfolio.create_maturity_flows(terminal_date=settings.end_date)
+    cpn_flows = bd_ptf.create_coupon_flows(settings.modelling_date, settings.end_date)
+    not_flows = bd_ptf.create_maturity_flows(terminal_date=settings.end_date)
 
     # Calculate date fractions based on modelling date
     # [all_date_frac, all_dates_considered] = equity_portfolio.create_dividend_fractions(settings.modelling_date, dividend_dates)
@@ -123,8 +123,8 @@ def main():
     unique_ter_dates = eq_ptf.unique_dates_profile(ter_dict)
 
     logger.info("Find all asset cash flow dates for corporate bonds")
-    unique_cpn_dates = bd_portfolio.unique_dates_profile(cpn_flows)
-    unique_not_dates = bd_portfolio.unique_dates_profile(not_flows)
+    unique_cpn_dates = bd_ptf.unique_dates_profile(cpn_flows)
+    unique_not_dates = bd_ptf.unique_dates_profile(not_flows)
 
     logger.info("Load all liability cash flows")
     liabilities = get_Liability(liability_cashflow_file)
@@ -135,7 +135,7 @@ def main():
     ### -------- PREPARE INITIAL DATA FRAMES --------###
     logger.info("Initialize market dataframes")
     [eq_price_df, eq_growth_df, eq_units_df] = eq_ptf.init_equity_portfolio_to_dataframe(settings.modelling_date)
-    [bd_price_df, bd_zspread_df, bd_units_df] = bd_portfolio.init_bond_portfolio_to_dataframe(settings.modelling_date)
+    [bd_price_df, bd_zspread_df, bd_units_df] = bd_ptf.init_bond_portfolio_to_dataframe(settings.modelling_date)
 
     bank_account = pd.DataFrame(data=[cash.bank_account], columns=[settings.modelling_date])
 
@@ -188,7 +188,7 @@ def main():
     proj_period = 0
 
     logger.info("Calibrate corporate bond z-spread")
-    bd_zspread_df=bd_portfolio.calibrate_bond_portfolio(bd_zspread_df, settings, proj_period, curves)
+    bd_zspread_df=bd_ptf.calibrate_bond_portfolio(bd_zspread_df, settings, proj_period, curves)
 
     # --------- START MAIN LOOP THAT MOVES FORWARD IN TIME --------
     logger.info("Start main loop")
@@ -240,7 +240,7 @@ def main():
         logger.info("Calculate market value of fixed income portfolio in new period")
         bd_price_df[current_date] = bd_price_df[previous_date]
         
-        bd_price_df = bd_portfolio.price_bond_portfolio(cpn_df, not_df, settings, proj_period, curves, bd_zspread_df, bd_price_df, current_date)
+        bd_price_df = bd_ptf.price_bond_portfolio(cpn_df, not_df, settings, proj_period, curves, bd_zspread_df, bd_price_df, current_date)
         
         total_market_value = sum(eq_units_df[current_date]*eq_price_df[current_date]) + sum(bd_price_df[current_date] * bd_units_df[current_date]) # Total value of portfolio after growth
         
