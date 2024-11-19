@@ -31,6 +31,8 @@ class EquityShare:
     units: float
     market_price: float
     growth_rate: float
+    spread_base: float
+    spread_individual: float
 
     def __post_init__(self) -> None:
         logger.info("Equity class initiated")
@@ -244,7 +246,9 @@ class EquityShare:
         date_frac = pd.DataFrame(data = date_frac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
         cash_flow = pd.DataFrame(data = cash_flow, columns = ["Cash flow"])
 
-        discount = curves.RetrieveRates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount")
+        spread = self.spread_base + self.spread_individual
+
+        discount = curves.RetrieveRates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
 
         nodisc_value = cash_flow.values*discount
         disc_value = sum(nodisc_value.values)
