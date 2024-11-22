@@ -31,14 +31,15 @@ class EquityShare:
     units: float
     market_price: float
     growth_rate: float
-    spread_base: float
-    spread_individual: float
+    spread_country: float
+    spread_sector: float
+    spread_stress: float
 
     def __post_init__(self) -> None:
         logger.info("Equity class initiated")
 
     # @property Look into what property does
-    @tracer
+#    @tracer
     def dividend_amount(self, market_price: float) -> float:
         """
         Calculate the size of the dividend for a share inside the EquityShare class.
@@ -58,7 +59,7 @@ class EquityShare:
         dividend_size = market_price * self.dividend_yield
         return dividend_size
 
-    @tracer
+#    @tracer
     def terminal_amount(self, market_price: float, growth_rate: float, terminal_rate: float) -> float:
         """
         Calculates the terminal value of an equity share. Currently set as the market value.
@@ -82,7 +83,7 @@ class EquityShare:
         #return market_price / (terminal_rate - growth_rate)
         return market_price
 
-    @tracer
+#    @tracer
     def generate_market_value(self, modelling_date: date, evaluated_date: date, market_price: float,
                               growth_rate: float) ->float:
         """
@@ -109,7 +110,7 @@ class EquityShare:
         t = (evaluated_date - modelling_date).days / 365.5
         return market_price * (1 + growth_rate) ** t
 
-    @tracer
+#    @tracer
     def generate_dividend_dates(self, modelling_date: date, end_date: date):
         """
         Generator yielding the dividend payment date starting from the first dividend
@@ -246,7 +247,7 @@ class EquityShare:
         date_frac = pd.DataFrame(data = date_frac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
         cash_flow = pd.DataFrame(data = cash_flow, columns = ["Cash flow"])
 
-        spread = self.spread_base + self.spread_individual
+        spread = self.spread_country + self.spread_sector+ self.spread_stress
 
         discount = curves.RetrieveRates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
 
