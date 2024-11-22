@@ -147,7 +147,10 @@ def get_corporate_bonds(filename: str) -> CorpBond:
                                  issue_date=datetime.strptime(row["Issue_Date"], "%d/%m/%Y").date(),
                                  maturity_date=datetime.strptime(row["Maturity_Date"], "%d/%m/%Y").date(),
                                  coupon_rate=float(row["Coupon_Rate"]),
+                                 spread_country=float(row["Spread_Country"]),
+                                 spread_sector=float(row["Spread_Sector"]),
                                  zspread=float(row["Z_Spread"]),
+                                 spread_stress=float(row["Spread_Stress"]),
                                  notional_amount=float(row["Notional_Amount"]),
                                  frequency=int(row["Frequency"]),
                                  recovery_rate=float(row["Recovery_Rate"]),
@@ -183,7 +186,10 @@ def get_EquityShare(filename: str):
                                        frequency=int(row["Frequency"]),
                                        units = float(row["Units"]),
                                        market_price=float(row["Market_Price"]),
-                                       growth_rate=float(row["Growth_Rate"]))
+                                       growth_rate=float(row["Growth_Rate"]),
+                                       spread_country=float(row["Spread_Country"]),
+                                       spread_sector=float(row["Spread_Sector"]),
+                                       spread_stress=float(row["Spread_Stress"]))
             yield equity_share
 
 

@@ -9,7 +9,6 @@ from FrequencyClass import Frequency
 from CurvesClass import Curves
 import logging
 
-
 logger=logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -29,7 +28,10 @@ class CorpBond:
     maturity_date: date
     coupon_rate: float
     notional_amount: float
+    spread_country: float
+    spread_sector: float
     zspread: float
+    spread_stress: float
     frequency: Frequency
     recovery_rate: float
     default_probability: float
@@ -79,7 +81,7 @@ class CorpBond:
         coupon = self.coupon_rate * self.notional_amount
         return coupon
 
-    def generate_coupon_dates(self, modelling_date: date, end_date: date) -> date:
+    def generate_coupon_dates(self, modelling_date: date, end_date: date) -> dt.date:
         """
         Generator yielding the coupon payment date starting from the first coupon
         paid after the modelling date. 
