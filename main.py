@@ -5,12 +5,11 @@ import os
 import pandas as pd
 from ConfigurationClass import Configuration
 from CurvesClass import Curves
-from EquityClasses import *
+from EquityClasses import EquitySharePortfolio
 from BondClasses import CorpBondPortfolio
-from MainLoop import *
-from ImportData import get_EquityShare, get_corporate_bonds, get_settings, import_SWEiopa, get_Cash, get_Liability, \
-    get_configuration
+from ImportData import get_configuration, get_settings, import_SWEiopa, get_Cash, get_EquityShare,get_corporate_bonds, get_Liability
 from TraceClass import tracer
+from MainLoop import create_cashflow_dataframe, create_liabilities_df, set_dates_of_interest, process_expired_cf, process_expired_liab, trade
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -248,7 +247,7 @@ def main():
         summary_df.loc[current_date, "Portfolio return"] = float(total_market_value/prev_mkt_value-1)
 
         logger.info("Trading of excess/deficit liquidity, rebalancing")
-        
+        # Proportional trading without factors
         [eq_units_df, bd_units_df, bank_account] = trade(current_date, bank_account, eq_units_df, eq_price_df, bd_units_df, bd_price_df)
 
         logger.info("Log final positions and prepare for entering next modelling period")
