@@ -66,7 +66,7 @@ Check our wiki page also on [GitHub Wiki]
 [Documentation]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/Documentation
 [OSEM pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_Documentation_draft.pdf
 [OSEM Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_Documentation_draft.ipynb
-[Term structure example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/_PROJECTION%20OF%20THE%20RISK%20FREE%20CURVE%20AND%20RECALIBRATION_v2.pdf
-[Equity pricing example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/_PROTOTYPE%20EQUITY%20PRICING_v2.pdf
-[Bond pricing example]: https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/_PROTOTYPE%20BOND%20PRICING_v2.pdf
+[Term structure example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/Archive/_PROJECTION%20OF%20THE%20RISK%20FREE%20CURVE%20AND%20RECALIBRATION_v2.pdf
+[Equity pricing example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/Archive/_PROTOTYPE%20EQUITY%20PRICING_v2.pdf
+[Bond pricing example]: https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/Archive/_PROTOTYPE%20BOND%20PRICING_v2.pdf
 [Summary charts example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_SUMMARY%20CHARTS%20FOR%20OSEM%20RUN.pdf
