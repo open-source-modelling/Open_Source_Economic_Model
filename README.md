@@ -21,7 +21,7 @@ Financial institutions such as life insurers or pension funds have a fiduciary d
  - The impact on profitability by different trading strategies in response to outflows and inflows throughout time  
 
 ## Description
-The aim of this project is to write a collection of models using technologies that are open-source and widely used (Pyhon and specific packages such as Pands, Numpy, Datetime etc.).
+The aim of this project is to write an Asset-Liability model that uses agent-based modelling concepts and LLMs to extract insight on the company's portfolio.  All technologies used are open-source and widely used (Pyhon and specific packages such as Pands, Numpy, Datetime etc., Ollama).
 
 Ultimately, OSEM should be able to take as input:
  - Description and size of investments
@@ -54,13 +54,19 @@ A simple summary of what goes into the run and what are the outputs can be found
 
 [Summary pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_SUMMARY%20CHARTS%20FOR%20OSEM%20RUN.pdf
 
-## Using Copilots for development
+## Llama agents
+OSEM uses a simple LLM agent for trading decisions. In particular we are excited to try mimicing human decisionmakers in the future versions. This was inspired by for example in [Generative Agent Simulations of 1,000 People]. This slows the model considerably since each decision must use the LLM inference call which is slower than deterministic logic. To make sure the agents run, first run [llama3.2] using [Ollama]. 
+
+## Modelfile
 If you use copilots to further develope the code, we have started assembling a modelingfile that can be used to refine the prompts. The file is located in the [llm_modelfile] folder.
 
 ## Ask to the community
 Send us an email at gregor@osmodelling.com with feedback, comments, ideas on what we could do better etc. Do you want to help us on this open source project?
 Check our wiki page also on [GitHub Wiki]
 
+[Generative Agent Simulations of 1,000 People]:https://arxiv.org/pdf/2411.10109
+[Ollama]:https://ollama.com/
+[llama3.2]: https://ollama.com/library/llama3.2
 [llm_modelfile]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/llm_modelfile
 [GitHub Wiki]: https://github.com/open-source-modelling/Open_Source_Economic_Model/wiki/Introduction
 [Documentation]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/Documentation
