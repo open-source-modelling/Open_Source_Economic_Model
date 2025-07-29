@@ -3,7 +3,7 @@ import pandas as pd
 import datetime
 import datetime as dt
 from LiabilityClasses import Liability
-from Agent import ollama_bigger
+#from Agent import ollama_bigger
 
 def create_cashflow_dataframe(cf_dict:dict, unique_dates:list) -> pd.DataFrame:
     """
@@ -182,22 +182,22 @@ def trade(current_date: dt.date, bank_account:pd.DataFrame, eq_units:pd.DataFram
     
     total_market_value = sum(eq_units[current_date]*eq_price[current_date])+sum(bd_units[current_date]*bd_price[current_date])  # Total value of portfolio after growth
 
-    response_MV = ollama_bigger(total_market_value)
-    response_bank = ollama_bigger(bank_account[current_date][0])
+    #response_MV = ollama_bigger(total_market_value)
+    # response_bank = ollama_bigger(bank_account[current_date][0])
     
-#    if total_market_value <= 0:
-    if response_MV["message"]["content"] == "N" or response_MV["message"]["content"] == "N.":
+    if total_market_value <= 0:
+#    if response_MV["message"]["content"] == "N" or response_MV["message"]["content"] == "N.":
         pass
-#    elif bank_account[current_date][0] < 0:  # Sell assets
-    elif response_bank["message"]["content"] == "N" or response_bank["message"]["content"] == "N.":  # Sell assets
+    elif bank_account[current_date][0] < 0:  # Sell assets
+#    elif response_bank["message"]["content"] == "N" or response_bank["message"]["content"] == "N.":  # Sell assets
         percent_to_sell = min(1, -bank_account[current_date][0] / total_market_value)  # How much of the portfolio needs to be sold
         eq_units[current_date] = eq_units[current_date] * (1 - percent_to_sell) 
         bd_units[current_date] = bd_units[current_date] * (1 - percent_to_sell)
 
         bank_account[current_date] += total_market_value - sum(eq_units[current_date]*eq_price[current_date])-sum(bd_units[current_date]*bd_price[current_date])  # Add cash to bank account equal to shares sold
         
-#    elif bank_account[current_date][0] > 0:  # Buy assets
-    elif response_bank["message"]["content"] =="Y" or response_bank["message"]["content"] =="Y.":  # Buy assets
+    elif bank_account[current_date][0] > 0:  # Buy assets
+#    elif response_bank["message"]["content"] =="Y" or response_bank["message"]["content"] =="Y.":  # Buy assets
         percent_to_buy = bank_account[current_date][0] / total_market_value  # What % of the portfolio is the excess cash
         eq_units[current_date] = eq_units[current_date] * (1 + percent_to_buy)  
         bd_units[current_date] = bd_units[current_date] * (1 + percent_to_buy)  
