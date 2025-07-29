@@ -73,7 +73,7 @@ def main():
                                                                           settings.EIOPA_curves_file, settings.country)
     
     # Curves object with information about term structure
-    curves = Curves(extra_param["UFR"] / 100, settings.precision, settings.tau, settings.modelling_date,
+    curves = Curves(extra_param["UFR"]/100, settings.precision, settings.tau, settings.modelling_date,
                     settings.country)
     logger.info("Process risk free rate curve")
     curves.SetObservedTermStructure(maturity_vec=curve_country.index.tolist(), yield_vec=curve_country.values)
@@ -245,6 +245,15 @@ def main():
         
         summary_df.loc[current_date, "After growth market value"] = float(total_market_value)
         summary_df.loc[current_date, "Portfolio return"] = float(total_market_value/prev_mkt_value-1)
+
+        # Increase market value of units by portfolio return
+        # Increase guaranteed value of untis by guarantee return
+        # Apply premium
+        # Apply management fee
+        # lapse and mortality
+        # new business
+        # migration between lifecycle funds
+    
 
         logger.info("Trading of excess/deficit liquidity, rebalancing")
         # Proportional trading without factors
