@@ -1,4 +1,4 @@
-﻿Asset_ID,Asset_Type,NACE,Issue_Date,Dividend_Yield,Frequency,Units,Market_Price, Terminal,Default_Probability,Growth_Rate,Spread_Base,Spread_Individual
-1125,Equity_Share,A1.4.5,3/12/2021,0.03,1,1,94,1,0.03,0.01,0,0
-2123,Equity_Share,B5.2.0,3/12/2021,0.05,1,1,92,1,0.03,0.02,0,0
-3232,Equity_Share,B8.9.3,3/12/2019,0.04,1,1,96,1,0.03,0.04,0,0
+﻿Asset_ID,Asset_Type,NACE,Issue_Date,Dividend_Yield,Frequency,Units,Market_Price, Terminal,Default_Probability,Growth_Rate,Spread_Base,Spread_Individual,Spread_Country,Spread_Sector,Spread_Stress
+1125,Equity_Share,A1.4.5,3/12/2021,0.03,1,1,94,1,0.03,0.01,0,0,0,0,0
+2123,Equity_Share,B5.2.0,3/12/2021,0.05,1,1,92,1,0.03,0.02,0,0,0,0,0
+3232,Equity_Share,B8.9.3,3/12/2019,0.04,1,1,96,1,0.03,0.04,0,0,0,0,0
