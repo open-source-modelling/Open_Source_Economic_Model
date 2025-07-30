@@ -530,7 +530,7 @@ class CorpBondPortfolio():
         """
         for asset_id in coupon_df.index:
             price = self.corporate_bonds[asset_id].price_bond(coupon_df.loc[asset_id],
-            notional_df.loc[asset_id],settings.modelling_date, proj_period,curves,bond_zspread_df.loc[asset_id][0])
+            notional_df.loc[asset_id],settings.modelling_date, proj_period,curves,bond_zspread_df.loc[asset_id].iloc[0])
             bond_price_df.loc[asset_id][date_of_interest] = price
         return bond_price_df
     
