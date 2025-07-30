@@ -159,7 +159,6 @@ def main():
     ### -------- PREPARE OUTPUT DATA FRAMES --------###
     prev_mkt_value = sum(eq_price_df[settings.modelling_date] * eq_units_df[settings.modelling_date])+ sum(bd_price_df[settings.modelling_date] * bd_units_df[settings.modelling_date])  # Value of the initial portfolio
 
-
     ini_out = {
         "Start cash": [None], 
         "End cash":[cash.bank_account], 
@@ -200,7 +199,7 @@ def main():
     
         bank_account[current_date] = bank_account[previous_date]
         
-        summary_df.loc[current_date, "Start cash"] = float(bank_account[previous_date])
+        summary_df.loc[current_date, "Start cash"] = float(bank_account[previous_date].iloc[0])
         summary_df.loc[current_date, "Start market value"] = float(init_mkt_value)
 
         logger.info("Calculate the fraction of time to move forward")
@@ -260,7 +259,7 @@ def main():
         [eq_units_df, bd_units_df, bank_account] = trade(current_date, bank_account, eq_units_df, eq_price_df, bd_units_df, bd_price_df)
 
         logger.info("Log final positions and prepare for entering next modelling period")
-        summary_df.loc[current_date, "End cash"] = float(bank_account[current_date])
+        summary_df.loc[current_date, "End cash"] = float(bank_account[current_date].iloc[0])
         summary_df.loc[current_date, "End market value"] = float(sum(eq_units_df[current_date]*eq_price_df[current_date])) + sum(bd_price_df[current_date] * bd_units_df[current_date])    
 
         previous_date = current_date
