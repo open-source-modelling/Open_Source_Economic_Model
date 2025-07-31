@@ -83,6 +83,8 @@ def get_configuration(ini_file: str, op_sys=os, config_parser=configparser.Confi
         configuration.input_parameters = op_sys.path.join(input_path, inp["parameters"])
         configuration.input_liability_cashflow = op_sys.path.join(input_path,
                                                                   inp["liability"])
+        configuration.input_mortality = op_sys.path.join(input_path, inp["mortality"])
+        
         inp = config_parser["INPUT"]
         output_path = os.path.join(configuration.base_folder, inp["output_path"])
         configuration.output_path = output_path
