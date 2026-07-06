@@ -203,7 +203,7 @@ def main():
         summary_df.loc[current_date, "Start market value"] = float(init_mkt_value)
 
         logger.info("Calculate the fraction of time to move forward")
-        time_frac = (current_date - previous_date).days / 365.5
+        time_frac = (current_date - previous_date).days / 365.25
 
         logger.info("Calculate expired dividends, remove them from cash flows and add to bank account")
         cash, div_df, unique_div_dates = process_expired_cf(unique_div_dates, current_date, div_df, eq_units_df)
