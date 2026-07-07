@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -8,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 from CurvesClass import Curves
 from FrequencyClass import Frequency
 from TraceClass import Trace, tracer
+from typing import Dict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ logger.addHandler(file_handler)
 class EquityShare:
     asset_id: int
     nace: str
-    issuer: str
+    issuer: Optional[str]
     issue_date: date
     dividend_yield: float
     frequency: Frequency
@@ -138,7 +139,7 @@ class EquityShare:
             if this_date <= end_date:
                 yield this_date  # ? What is the advantage of yield here?
 
-    def create_single_cash_flows(self, modelling_date: date, end_date: date, growth_rate: float)->dict:
+    def create_single_cash_flows(self, modelling_date: date, end_date: date, growth_rate: float)->Dict[date, float]:
         """
         Create a dictionary of dividend cash flows using information about an equity share. The 
         return dictionary has dates of the cash flows as keys and monetary amounts as values. 
@@ -176,7 +177,7 @@ class EquityShare:
         return dividends
 
 
-    def create_single_terminal(self, modelling_date: date, end_date: date, terminal_rate: float, growth_rate: float)-> dict:
+    def create_single_terminal(self, modelling_date: date, end_date: date, terminal_rate: float, growth_rate: float)->Dict[date, float]:
         """
         Create a dictionary of terminal cash flows using information about an equity share. The 
         return dictionary has dates of the cash flows as keys and monetary amounts as values. 
@@ -207,7 +208,7 @@ class EquityShare:
         terminals.update({end_date: terminal_amount})
         return terminals
 
-    def price_share(self, dividends: dict, terminal: dict, modelling_date: date, proj_period: int, curves: Curves)->float:
+    def price_share(self, dividends: Dict[date, float], terminal: Dict[date, float], modelling_date: date, proj_period: int, curves: Curves)->float:
         """
         Calculate the price of an equity share using the yield curve obtained
         from the curves object.  
@@ -216,7 +217,7 @@ class EquityShare:
         ----------
         self: EquityShare instance
             The EquityShare instance with the equity position of interest.
-        :type dividends: dict
+        :type dividends: Dict[date, float]
             A dictionary with dates of dividend cashflows as keys and monetary amounts as values.
         :type terminal: dict
             A dictionary with dates of terminal sale as keys and monetary amounts as values.              
@@ -345,7 +346,7 @@ class EquitySharePortfolio():
         else:
             self.equity_share.update({equity_share.asset_id: equity_share})
 
-    def create_dividend_flows(self, modelling_date: date, end_date: date) -> list:
+    def create_dividend_flows(self, modelling_date: date, end_date: date) -> Dict[int, Dict[date, float]]:
         """
         Create the list of dictionaries containing dates at which the dividends are paid out and the total amounts for
         all equity shares in the portfolio, for dates on or after the modelling date but not after the terminal date.
@@ -364,7 +365,7 @@ class EquitySharePortfolio():
         :rtype all_dividends
             A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the coupons are paid out.
         """
-        all_dividends = {}
+        all_dividends: Dict[int, Dict[date, float]] = {}
         equity_share: EquityShare
         for asset_id in self.equity_share:
             equity_share = self.equity_share[asset_id]  # Select one asset position
@@ -372,7 +373,7 @@ class EquitySharePortfolio():
             all_dividends[asset_id] = dividends
         return all_dividends
 
-    def create_terminal_flows(self, modelling_date: date, terminal_date: date, terminal_rate: float) -> dict:
+    def create_terminal_flows(self, modelling_date: date, terminal_date: date, terminal_rate: float) -> Dict[int, Dict[date, float]]:
         """
         Create the list of dictionaries containing dates at which the terminal cash-flows are paid out and the total amounts for
         all equity shares in the portfolio, for dates on or after the modelling date but not after the terminal date.
@@ -393,8 +394,8 @@ class EquitySharePortfolio():
         :rtype all_terminals
             A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the terminal cash-flows are paid out.
         """
-        all_terminals = {}
-        terminals: dict[date, float] = {}
+        all_terminals: Dict[int, Dict[date, float]] = {}
+        terminals: Dict[date, float] = {}
         equity_share: EquityShare
         terminal_date: date
 

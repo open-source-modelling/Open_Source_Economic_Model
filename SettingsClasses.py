@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from datetime import datetime as dt, timedelta
 from datetime import date
+from typing import Optional
 
 from dateutil.relativedelta import relativedelta
 
@@ -16,10 +16,12 @@ class Settings:
     tau: float
     compounding: int
     modelling_date: date
+    # Declared here so static analyzers (Pylance) know the attribute exists
+    end_date: Optional[date] = None
 
-    def __post_init__(self, ) -> None:
+    def __post_init__(self) -> None:
         self.end_date = self.modelling_date + relativedelta(years=self.n_proj_years)
-        pass
+        # Validation examples (uncomment if needed)
         # if self.n_proj_years <= 0:
         #     raise ValueError("n_proj_years must be greater than 0")
         # if self.precision < 0:

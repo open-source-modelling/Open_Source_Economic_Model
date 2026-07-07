@@ -5,7 +5,7 @@ import datetime as dt
 from LiabilityClasses import Liability
 #from Agent import ollama_bigger
 
-def create_cashflow_dataframe(cf_dict:dict, unique_dates:list) -> pd.DataFrame:
+def create_cashflow_dataframe(cf_dict: dict[int, dict[datetime.date, float]], unique_dates: list[datetime.date]) -> pd.DataFrame:
     """
     Create a dataframe with dates as columns and equity shares as rows. If a cell has a non zero value, that
     means that there is a cash flow from that particular share at that time.
@@ -28,10 +28,10 @@ def create_cashflow_dataframe(cf_dict:dict, unique_dates:list) -> pd.DataFrame:
     for asset_id in cf_dict.keys():
         keys = cf_dict[asset_id]
         for key in keys:
-            cash_flows[key].loc[asset_id] = keys[key]
+            cash_flows.loc[asset_id, key] = keys[key]
     return cash_flows
 
-def calculate_expired_dates(list_of_dates: list, deadline: dt.date) -> list:
+def calculate_expired_dates(list_of_dates: list[datetime.date], deadline: dt.date) -> list[datetime.date]:
     """
     Returns all dates before the deadline date.
     Parameters
@@ -50,7 +50,7 @@ def calculate_expired_dates(list_of_dates: list, deadline: dt.date) -> list:
 
     return list(a_date for a_date in list_of_dates if a_date <= deadline)
 
-def set_dates_of_interest(modelling_date: dt.date, end_date: dt.date, days_interval=365) -> pd.Series:
+def set_dates_of_interest(modelling_date: dt.date, end_date: dt.date, days_interval: int = 365) -> pd.Series:
     """
     Calculates all dates at which the modelling run will run.
 
@@ -98,7 +98,7 @@ def create_liabilities_df(liabilities: Liability) -> pd.DataFrame:
     cash_flows.index = [liabilities.liability_id]
     return cash_flows
 
-def process_expired_cf(unique_dates: list, expiration_date: dt.date, cash_flows: pd.DataFrame, units: pd.DataFrame)-> list:
+def process_expired_cf(unique_dates: list[datetime.date], expiration_date: dt.date, cash_flows: pd.DataFrame, units: pd.DataFrame) -> tuple[float, pd.DataFrame, list[datetime.date]]:
     """
     Remove columns with expired dates from dataframe and sum cashflows within those columns into cash.
         
@@ -129,7 +129,7 @@ def process_expired_cf(unique_dates: list, expiration_date: dt.date, cash_flows:
         unique_dates.remove(expired_date)
     return cash, cash_flows, unique_dates
 
-def process_expired_liab(unique_dates:list, date_of_interest: dt.date, cash_flows:pd.DataFrame) -> list:
+def process_expired_liab(unique_dates: list[datetime.date], date_of_interest: dt.date, cash_flows: pd.DataFrame) -> tuple[float, pd.DataFrame, list[datetime.date]]:
     """
     Remove columns with expired dates from dataframe and sum cashflows within those columns into cash.
     The cash flows are aggregated liabilities without any units
@@ -157,7 +157,7 @@ def process_expired_liab(unique_dates:list, date_of_interest: dt.date, cash_flow
         unique_dates.remove(expired_date)
     return cash, cash_flows, unique_dates
 
-def trade(current_date: dt.date, bank_account:pd.DataFrame, eq_units:pd.DataFrame, eq_price:pd.DataFrame, bd_units:pd.DataFrame, bd_price:pd.DataFrame) -> list:
+def trade(current_date: dt.date, bank_account: pd.DataFrame, eq_units: pd.DataFrame, eq_price: pd.DataFrame, bd_units: pd.DataFrame, bd_price: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     The trading algorithm that takes the price and unit number of equity positions and the bank account and
     invests/sells proportionally the assets to balance the bank account to 0.
@@ -206,4 +206,4 @@ def trade(current_date: dt.date, bank_account:pd.DataFrame, eq_units:pd.DataFram
     else:  # Remaining cash flow is equal to 0 so no trading needed
         pass
 
-    return [eq_units, bd_units, bank_account]
+    return eq_units, bd_units, bank_account

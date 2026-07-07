@@ -1,8 +1,10 @@
+import datetime
 import numpy as np
 import pandas as pd
+from typing import Sequence
 
 class Curves:
-    def __init__(self, ufr: float, precision: float, tau: float, initial_date, country: str):
+    def __init__(self, ufr: float, precision: float, tau: float, initial_date: datetime.date, country: str) -> None:
     
         self.initial_date = initial_date
         self.country = country
@@ -19,7 +21,7 @@ class Curves:
         self.alpha = pd.DataFrame(data=None, columns=["Alpha_year_0"], dtype="float64")
         self.b = pd.DataFrame(data=None, columns=["Calibration_year_0"])
 
-    def SetObservedTermStructure(self, maturity_vec, yield_vec):
+    def SetObservedTermStructure(self, maturity_vec: Sequence[float], yield_vec: Sequence[float]) -> None:
         """
         Set the initial vector of liquid maturities and the coresponding yield rates into the curves class. Both vectors are saved as dataframes into
         The vector of maturities is saved into the m_obs_ini property.
@@ -42,7 +44,7 @@ class Curves:
         self.r_obs_ini = pd.DataFrame(data= yield_vec, index=None, columns=["Yield"])
 
 
-    def CalcFwdRates(self):
+    def CalcFwdRates(self) -> None:
         """
         Calculate 1-year forward rates using the initial yield curve and maturities provided.
         
@@ -59,7 +61,7 @@ class Curves:
         self.fwd_rates = pd.DataFrame(data=out, index=None, columns=["Forward"])
 
 
-    def ProjectForwardRate(self, n_years: int):
+    def ProjectForwardRate(self, n_years: int) -> str | None:
         """
         Calculate the projected spot curve from the 1-year forward curve. Each column represents
         the spot curve starting 1 year later than the previous column. Calling this function populates
@@ -89,7 +91,7 @@ class Curves:
                 self.m_obs = self.m_obs.join(pd.Series(data=maturities.values[year:], index=None, name="Maturities_year_"+str(year)))
                 self.r_obs = self.r_obs.join(pd.Series(data=spot.values, index=None, name="Yield_year_"+str(year)))
 
-    def CalibrateProjected(self, n_years: int, ini_guess: float, end:float, max_iter:int):
+    def CalibrateProjected(self, n_years: int, ini_guess: float, end: float, max_iter: int) -> None:
         """
         Takes the projected yield curve from the m_obs and r_obs properties and uses the bisection algorithm
         to calibrate the alpha parameter if the Smith &Wilson algorithm. The calibration is done on the first
@@ -160,7 +162,7 @@ class Curves:
             
             self.b[calib_head] = b_calibrated
 
-    def RetrieveRates(self, proj_step: int, target_mat, type: str, spread: float):
+    def RetrieveRates(self, proj_step: int, target_mat: np.ndarray, type: str, spread: float) -> pd.DataFrame | None:
     
         maturity_name = "Maturities_year_" + str(proj_step)
         calibration_name = "Calibration_year_" + str(proj_step)
@@ -179,7 +181,7 @@ class Curves:
         else:
             pass
 
-    def SWHeart(self, u: np.ndarray, v: np.ndarray, alpha: float):
+    def SWHeart(self, u: np.ndarray, v: np.ndarray, alpha: float) -> np.ndarray:
         """
         SWHEART Calculate the heart of the Wilson function.
         SWHeart(u, v, alpha) calculates the matrix H (Heart of the Wilson
@@ -205,7 +207,7 @@ class Curves:
         v_mat = np.tile(v, [u.size, 1])
         return 0.5 * (alpha * (u_mat + v_mat) + np.exp(-alpha * (u_mat + v_mat)) - alpha * np.absolute(u_mat-v_mat) - np.exp(-alpha * np.absolute(u_mat-v_mat))); # Heart of the Wilson function from paragraph 132
 
-    def SWCalibrate(self, r: np.ndarray, M: np.ndarray, ufr: float, alpha: float):
+    def SWCalibrate(self, r: np.ndarray, M: np.ndarray, ufr: float, alpha: float) -> np.ndarray:
         """
         SWCALIBRATE Calculate the calibration vector using a Smith-Wilson algorithm
         b = SWCalibrate(r, T, ufr, alpha) calculates the vector b used for
@@ -234,7 +236,7 @@ class Curves:
 
         return np.linalg.inv(Q.transpose() @ H @ Q) @ (p-q)          # Calibration vector b from paragraph 149
     
-    def SWExtrapolate(self, m_target: np.ndarray, m_obs: np.ndarray, b: np.ndarray, ufr: float, alpha: float):
+    def SWExtrapolate(self, m_target: np.ndarray, m_obs: np.ndarray, b: np.ndarray, ufr: float, alpha: float) -> np.ndarray:
         """"
         SWEXTRAPOLATE Interpolate or/and extrapolate rates for targeted maturities using a Smith-Wilson algorithm.
         r = SWExtrapolate(m_target,m_obs, b, ufr, alpha) calculates the rates for maturities specified in M_Target using the calibration vector b.
@@ -262,7 +264,7 @@ class Curves:
         p = np.exp(-np.log(1+ufr)* m_target) + np.diag(np.exp(-np.log(1+ufr) * m_target)) @ H @ Q @ b # Discount pricing function for targeted maturities from paragraph 147
         return p ** (-1/ m_target) -1 # Convert obtained prices to rates and return prices
 
-    def Galfa(self, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, alpha: float, tau: float):
+    def Galfa(self, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, alpha: float, tau: float) -> float:
         """
         Calculates the gap at the convergence point between the allowable tolerance tau and the curve extrapolated using the Smith-Wilson algorithm.
         interpolation and extrapolation of rates.
@@ -307,7 +309,7 @@ class Curves:
         K = (1+alpha * m_obs @ Q@ b) / (np.sinh(alpha * m_obs.transpose())@ Q@ b) # Calculate kappa as defined in the paragraph 155
         return( alpha/np.abs(1 - K*np.exp(alpha*T))-tau) # Size of the gap at the convergence point between the allowable tolerance Tau and the actual curve. Defined in paragraph 158
 
-    def BisectionAlpha(self, x_start, x_end, m_obs, r_obs, ufr, tau, precision, max_iter):
+    def BisectionAlpha(self, x_start: float, x_end: float, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, tau: float, precision: float, max_iter: int) -> float | None:
         """
         Bisection root finding algorithm for finding the root of a function. The function here is the allowed difference between the ultimate forward rate and the extrapolated curve using Smith & Wilson.
 

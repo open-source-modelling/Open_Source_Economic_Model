@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import csv
 import configparser
+from typing import Any, Iterator, Optional
 from ConfigurationClass import Configuration
 from BondClasses import CorpBond
 from EquityClasses import EquityShare
@@ -11,7 +12,7 @@ from CashClass import Cash
 from LiabilityClasses import Liability
 
 
-def get_configuration(ini_file: str, op_sys=os, config_parser=configparser.ConfigParser()) -> Configuration:
+def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[configparser.ConfigParser] = None) -> Configuration:
     """
     Read the configuration parameters of the specific run and the logging settings.
 
@@ -36,6 +37,9 @@ def get_configuration(ini_file: str, op_sys=os, config_parser=configparser.Confi
         Populated Configuration class instance
     """
     configuration = Configuration()
+
+    if config_parser is None:
+        config_parser = configparser.ConfigParser()
 
     config_parser.read(ini_file)
 
@@ -92,7 +96,7 @@ def get_configuration(ini_file: str, op_sys=os, config_parser=configparser.Confi
     return configuration
 
 
-def import_SWEiopa(param_file, curves_file, country):
+def import_SWEiopa(param_file: str, curves_file: str, country: str) -> tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
     """
     Load the input files related to the risk free curve into an a list of liquid maturities, yields and the parameters related to the Smith&Wilson algorithm.
 
@@ -125,7 +129,7 @@ def import_SWEiopa(param_file, curves_file, country):
     return [maturities_country, curve_country, extra_param, Qb]
 
 
-def get_corporate_bonds(filename: str) -> CorpBond:
+def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
     """
     Load the bond input file into an EquityShare class generator.
 
@@ -162,7 +166,7 @@ def get_corporate_bonds(filename: str) -> CorpBond:
             yield corp_bond
 
 
-def get_EquityShare(filename: str):
+def get_EquityShare(filename: str) -> Iterator[EquityShare]:
     """
     Load an equity input file into an EquityShare class generator.
 
@@ -262,7 +266,7 @@ def get_settings(filename: str) -> Settings:
 
     """
     with open(filename, mode="r", encoding="utf-8-sig") as csvfile:
-        read_dict = {}
+        read_dict: dict[str, str] = {}
         reader = csv.DictReader(csvfile)
         for row in reader:
             read_dict[row["Parameter"]] = row["Value"]

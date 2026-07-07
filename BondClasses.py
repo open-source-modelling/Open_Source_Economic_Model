@@ -4,7 +4,7 @@ from datetime import datetime as dt, timedelta
 from datetime import date
 from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Iterator
 from FrequencyClass import Frequency
 from CurvesClass import Curves
 import logging
@@ -23,7 +23,7 @@ logger.addHandler(file_handler)
 class CorpBond:
     asset_id: int
     nace: str
-    issuer: str
+    issuer: Optional[str]
     issue_date: date
     maturity_date: date
     coupon_rate: float
@@ -81,7 +81,7 @@ class CorpBond:
         coupon = self.coupon_rate * self.notional_amount
         return coupon
 
-    def generate_coupon_dates(self, modelling_date: date, end_date: date) -> dt.date:
+    def generate_coupon_dates(self, modelling_date: date, end_date: date) -> Iterator[date]:
         """
         Generator yielding the coupon payment date starting from the first coupon
         paid after the modelling date. 
@@ -112,7 +112,7 @@ class CorpBond:
                 yield this_date
 
 
-    def create_single_cash_flows(self, modelling_date: date, end_date: date)->dict:
+    def create_single_cash_flows(self, modelling_date: date, end_date: date) -> Dict[date, float]:
         """
         Create a dictionary of coupon cash flows using information about a corporate bond. The 
         return dictionary has dates of the cash flows as keys and monetary amounts as values. 
@@ -133,7 +133,7 @@ class CorpBond:
         """
 
         coupon_size = 0
-        coupons = {}
+        coupons: Dict[date, float] = {}
         for coupon_date in self.generate_coupon_dates(modelling_date, end_date):
             if coupon_date in coupons:  # If two cash flows on same date
                 pass
@@ -144,7 +144,7 @@ class CorpBond:
         return coupons
     
 
-    def create_single_maturity(self, end_date: date)-> dict:
+    def create_single_maturity(self, end_date: date) -> Dict[date, float]:
         """
         Create a dictionary of terminal cash flows using information about a bond portfolio. The 
         return dictionary has dates of the cash flows as keys and monetary amounts as values. 
@@ -164,7 +164,7 @@ class CorpBond:
             List of dictionaries containing the cash flow date and the size.        
         """
         
-        principals = {}
+        principals: Dict[date, float] = {}
         terminal_amount = self.notional_amount
         terminal_date = min(end_date, self.maturity_date)
         principals.update({terminal_date: terminal_amount})
@@ -294,7 +294,7 @@ class CorpBond:
 
 
 class CorpBondPortfolio():
-    def __init__(self, corporate_bonds: dict[int,CorpBond] = None):
+    def __init__(self, corporate_bonds: Optional[Dict[int, CorpBond]] = None):
         """
         Initialize the CorpBondPortfolio instance with the first CorpBond instance
 
@@ -322,7 +322,7 @@ class CorpBondPortfolio():
         else:
             self.corporate_bonds = {corp_bond.asset_id: corp_bond}
 
-    def create_aggregate_coupon_dates(self, modelling_date)->dict:
+    def create_aggregate_coupon_dates(self, modelling_date:date) -> Dict[date, float]:
         """
             Create the vector of dates at which the coupons are paid out and the total amounts for
             all corporate bonds in the portfolio, for dates on or after the modelling date
@@ -339,7 +339,7 @@ class CorpBondPortfolio():
 
             """
 
-        coupons: dict[date, float] = {}
+        coupons: Dict[date, float] = {}
         corp_bond: CorpBond
         coupon_date: date
         for asset_id in self.corporate_bonds:
@@ -351,7 +351,7 @@ class CorpBondPortfolio():
                     coupons.update({coupon_date:corp_bond.coupon_amount()})
         return coupons
 
-    def create_coupon_flows(self, modelling_date: date, end_date: date) -> list:
+    def create_coupon_flows(self, modelling_date: date, end_date: date) -> Dict[int, Dict[date, float]]:
         """
         Create the list of dictionaries containing dates at which the coupons are paid out and the total amounts for
         all corporate bonds in the portfolio, for dates on or after the modelling date but not after the terminal date.
@@ -370,7 +370,7 @@ class CorpBondPortfolio():
         :rtype all_coupons
             A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the coupons are paid out.
         """
-        all_coupons = {}
+        all_coupons: Dict[int, Dict[date, float]] = {}
         corporate_bond: CorpBond
         for asset_id in self.corporate_bonds:
             corporate_bond = self.corporate_bonds[asset_id]  # Select one asset position
@@ -531,7 +531,7 @@ class CorpBondPortfolio():
         for asset_id in coupon_df.index:
             price = self.corporate_bonds[asset_id].price_bond(coupon_df.loc[asset_id],
             notional_df.loc[asset_id],settings.modelling_date, proj_period,curves,bond_zspread_df.loc[asset_id].iloc[0])
-            bond_price_df.loc[asset_id][date_of_interest] = price
+            bond_price_df.loc[asset_id, date_of_interest] = price
         return bond_price_df
     
     def calibrate_bond_portfolio(self, zspread_df: pd.DataFrame, settings, proj_period:int, curves) -> pd.DataFrame:
@@ -547,5 +547,5 @@ class CorpBondPortfolio():
                                         , curves=curves
                                         , precision= 0.00000001
                                         , max_iter=100000)
-            zspread_df.loc[asset_id][settings.modelling_date]=calibrated_spread    
+            zspread_df.loc[asset_id, settings.modelling_date] = calibrated_spread    
         return zspread_df

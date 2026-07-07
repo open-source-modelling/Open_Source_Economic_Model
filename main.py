@@ -1,5 +1,4 @@
 # Main script for POC
-import datetime
 import logging
 import os
 import pandas as pd
@@ -49,12 +48,12 @@ def main():
     tracer.enabled = conf.trace_enabled
     # set the logging level
     logging_level: int = get_logging_level(conf.logging_level)
-    # logging.basicConfig(format="blahh  %(levelname)s, (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])",
-    #                    level=logging_level) # datefmt = "%d/%m/%Y %I:%M:%S %p"
+    logging.basicConfig(format="blahh  %(levelname)s, (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])",
+                        level=logging_level) # datefmt = "%d/%m/%Y %I:%M:%S %p"
 
-    # logging.basicConfig(filename = conf.logging_file_name, level=logging_level, format="%(asctime)s")
+    logging.basicConfig(filename = conf.logging_file_name, level=logging_level, format="%(asctime)s")
 
-    logger.setLevel = conf.logging_level
+    logger.setLevel(logging_level)
     logger.info("Configuration loaded")
 
     parameters_file = conf.input_parameters
@@ -104,13 +103,13 @@ def main():
     # synt_equity_portfolio
 
     logger.info("Create dictionary of cash flows and dates for equities")
-    div_dict = eq_ptf.create_dividend_flows(settings.modelling_date, settings.end_date)
+    div_dict = eq_ptf.create_dividend_flows(modelling_date = settings.modelling_date, end_date = settings.end_date)
     ter_dict = eq_ptf.create_terminal_flows(modelling_date=settings.modelling_date,
                                                             terminal_date=settings.end_date,
                                                             terminal_rate=curves.ufr)
 
     logger.info("Create dictionary of cash flows and dates for corporate bonds")
-    cpn_flows = bd_ptf.create_coupon_flows(settings.modelling_date, settings.end_date)
+    cpn_flows = bd_ptf.create_coupon_flows(modelling_date=settings.modelling_date, end_date=settings.end_date)
     not_flows = bd_ptf.create_maturity_flows(terminal_date=settings.end_date)
 
     # Calculate date fractions based on modelling date
@@ -268,7 +267,7 @@ def main():
         proj_period+=1
 
     logger.info("Main loop finished, saving results")
-    summary_df.to_csv(conf.output_path+"\Results.csv")
+    summary_df.to_csv(os.path.join(conf.output_path, "Results.csv"))
     logger.info("Run completed")
 
 if __name__ == "__main__":
