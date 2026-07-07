@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Tuple
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -8,7 +8,6 @@ from dateutil.relativedelta import relativedelta
 from CurvesClass import Curves
 from FrequencyClass import Frequency
 from TraceClass import Trace, tracer
-from typing import Dict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -405,7 +404,7 @@ class EquitySharePortfolio():
             all_terminals[asset_id]=terminals
         return all_terminals
 
-    def create_dividend_fractions(self, modelling_date: date, dividend_array: list) -> list:
+    def create_dividend_fractions(self, modelling_date: date, dividend_array: Dict[int, Dict[date, float]]) -> Tuple[List[np.ndarray], List[np.ndarray]]:
         """
         Create the list of year-fractions at which each dividend is paid out (compared to the modelling date) and the list of
         relevant indices (aka. indices of cash flows that are within the modelling period)
@@ -433,18 +432,16 @@ class EquitySharePortfolio():
         # Remove numpy arrays in construction
 
         # Data structures list of lists for dividend payments
-        all_date_frac = ([])  # this will save the date fractions of dividends for the portfolio
-        all_dates_considered = (
-            [])  # this will save if a cash flow is already expired before the modelling date in the portfolio
+        all_date_frac: List[np.ndarray] = []  # this will save the date fractions of dividends for the portfolio
+        all_dates_considered: List[np.ndarray] = []  # this will save if a cash flow is already expired before the modelling date in the portfolio
 
         for one_dividend_array in dividend_array:
             # equity_share = self.equity_share[asset_id]
             #            one_dividend_array = dividend_array[asset_id]
 
             # Reset objects for the next asset
-            equity_date_frac = np.array([])  # this will save date fractions of dividends of a single asset
-            equity_dates_considered = np.array(
-                [])  # this will save the boolean, if the dividend date is after the modelling date
+            equity_date_frac: np.ndarray = np.array([])  # this will save date fractions of dividends of a single asset
+            equity_dates_considered: np.ndarray = np.array([])  # this will save the boolean, if the dividend date is after the modelling date
 
             dividend_counter = 0  # Counter of future dividend cash flows initialized to 0
 
@@ -466,12 +463,9 @@ class EquitySharePortfolio():
                 equity_dates_considered.astype(int)
             )  # append which cash flows are after the modelling date
 
-        return [
-            all_date_frac,
-            all_dates_considered
-        ]  # return all generated data structures (for now)
+        return (all_date_frac, all_dates_considered)
 
-    def create_terminal_fractions(self, modelling_date: date, terminal_array: dict) -> dict:
+    def create_terminal_fractions(self, modelling_date: date, terminal_array: Dict[int, Dict[date, float]]) -> Tuple[List[np.ndarray], List[np.ndarray]]:
         """
         Create the list of year-fractions at which the terminal amount is paid out (compared to the modelling date) and the list of
         relevant indices (aka. indices of cash flows that are within the modelling period)
@@ -499,16 +493,14 @@ class EquitySharePortfolio():
         # Remove numpy arrays in construction
 
         # Data structures list of lists for dividend payments
-        all_terminal_date_frac = ([])  # this will save the date fractions of dividends for the portfolio
-        all_terminal_dates_considered = (
-            [])  # this will save if a cash flow is already expired before the modelling date in the portfolio
+        all_terminal_date_frac: List[np.ndarray] = []  # this will save the date fractions of dividends for the portfolio
+        all_terminal_dates_considered: List[np.ndarray] = []  # this will save if a cash flow is already expired before the modelling date in the portfolio
 
         for one_terminal_array in terminal_array:
 
             # Reset objects for the next asset
-            equity_terminal_date_frac = np.array([])  # this will save date fractions of dividends of a single asset
-            equity_terminal_dates_considered = np.array(
-                [])  # this will save the boolean, if the dividend date is after the modelling date
+            equity_terminal_date_frac: np.ndarray = np.array([])  # this will save date fractions of dividends of a single asset
+            equity_terminal_dates_considered: np.ndarray = np.array([])  # this will save the boolean, if the dividend date is after the modelling date
 
             one_dividend_date = list(one_terminal_array.keys())[0]  # for each dividend date of the selected equity
             one_dividend_days = (one_dividend_date - modelling_date).days
@@ -527,12 +519,9 @@ class EquitySharePortfolio():
                 equity_terminal_dates_considered.astype(int)
             )  # append which cash flows are after the modelling date
 
-        return [
-            all_terminal_date_frac,
-            all_terminal_dates_considered
-        ]
+        return (all_terminal_date_frac, all_terminal_dates_considered)
 
-    def unique_dates_profile(self, cash_flow_profile: list):
+    def unique_dates_profile(self, cash_flow_profile: Dict[int, Dict[date, float]]) -> List[date]:
         """
         Create a sorted list of dates at which there is an cash-flow event in any of the assets inside the portfolio and
         a single numpy array (matrix) representing those cash flows.
@@ -550,19 +539,16 @@ class EquitySharePortfolio():
         :rtype list: list of sorted unique dates containing at least one cash flow
         """
 
-        unique_dates = []
+        unique_dates: List[date] = []
         for one_dividend_array in cash_flow_profile.values():
-            for one_dividend_date in list(one_dividend_array.keys()):  # for each dividend date of the selected equity
-                if one_dividend_date in unique_dates:  # If two cash flows on same date
-                    pass
-                    # Do nothing since dividend amounts are calibrated afterwards for equity
-                    # dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
-                else:  # New cash flow date
-                    unique_dates.append(one_dividend_date)
+            for one_dividend_date in one_dividend_array.keys():  # for each dividend date of the selected equity
+                if one_dividend_date in unique_dates:
+                    continue
+                unique_dates.append(one_dividend_date)
 
         return sorted(unique_dates)
 
-    def cash_flow_profile_list_to_matrix(self, cash_flow_profile: list) -> list:
+    def cash_flow_profile_list_to_matrix(self, cash_flow_profile: Dict[int, Dict[date, float]]) -> Tuple[List[date], np.ndarray]:
 
         unique_dates = self.unique_dates_profile(cash_flow_profile)
         width = len(unique_dates)
@@ -570,17 +556,12 @@ class EquitySharePortfolio():
 
         cash_flow_matrix = np.zeros((height, width))
         row = 0
-        for one_cash_flow_array in cash_flow_profile:
-            count = 0
-            values = list(one_cash_flow_array.values())
-            for one_cash_flow in one_cash_flow_array:
-                column = unique_dates.index(one_cash_flow)
-                cash_flow_matrix[row, column] = values[count]
-                count += 1
+        for one_cash_flow_array in cash_flow_profile.values():
+            for date_key, value in one_cash_flow_array.items():
+                column = unique_dates.index(date_key)
+                cash_flow_matrix[row, column] = value
             row += 1
-        return [
-            unique_dates,
-            cash_flow_matrix]
+        return (unique_dates, cash_flow_matrix)
 
     def init_equity_portfolio_to_dataframe(self, modelling_date: date)->list:
 

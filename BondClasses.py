@@ -4,9 +4,10 @@ from datetime import datetime as dt, timedelta
 from datetime import date
 from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
-from typing import List, Dict, Any, Optional, Iterator
+from typing import List, Dict, Any, Optional, Iterator, Tuple
 from FrequencyClass import Frequency
 from CurvesClass import Curves
+from SettingsClasses import Settings
 import logging
 
 logger=logging.getLogger(__name__)
@@ -190,7 +191,7 @@ class CorpBond:
     def gross_redemption_yield(self):
         pass
 
-    def price_bond(self, coupons: dict, notional: dict, modelling_date: date, proj_period: int, curves, spread: float)->float:
+    def price_bond(self, coupons: Dict[date, float], notional: Dict[date, float], modelling_date: date, proj_period: int, curves: Curves, spread: float) -> float:
         """
         Calculate the price of a bond with defined coupon and notional payments using the 
         yield curve obtained from the curves object with a fixed extra spread passed in spread.  
@@ -219,8 +220,8 @@ class CorpBond:
             The price of the bond.         
         """
 
-        date_frac = []
-        cash_flow = []
+        date_frac: List[float] = []
+        cash_flow: List[float] = []
         
         for key, value in coupons.items():
             date_tmp = (key-modelling_date).days/365.25
@@ -232,13 +233,13 @@ class CorpBond:
             date_frac.append(date_tmp)
             cash_flow.append(value)
         
-        date_frac = pd.DataFrame(data = date_frac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
-        cash_flow = pd.DataFrame(data = cash_flow, columns = ["Cash flow"])
+        date_frac = pd.DataFrame(data=date_frac, columns=["Date Fraction"])  # No need for DataFrames. Kept for compatibility
+        cash_flow = pd.DataFrame(data=cash_flow, columns=["Cash flow"])
 
         discount = curves.RetrieveRates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
 
-        nodisc_value = cash_flow.values*discount
-        disc_value = sum(nodisc_value.values)
+        nodisc_value = cash_flow.values * discount
+        disc_value: float = float(np.sum(nodisc_value))
         return disc_value
 
     def bisection_spread(self, x_start: float, x_end:float, modelling_date:date, end_date:date, proj_period:int, curves: Curves, precision: float, max_iter:int)->float:
@@ -264,11 +265,11 @@ class CorpBond:
 
         dividends = self.create_single_cash_flows(modelling_date, end_date)
         terminal = self.create_single_maturity(end_date)
-        y_start = self.price_bond(dividends, terminal, modelling_date, proj_period, curves, x_start)[0]-self.market_price
+        y_start = self.price_bond(dividends, terminal, modelling_date, proj_period, curves, x_start) - self.market_price
 
         dividends = self.create_single_cash_flows(modelling_date, end_date)
         terminal = self.create_single_maturity(end_date)
-        y_end = self.price_bond(dividends, terminal, modelling_date, proj_period, curves, x_end)[0]-self.market_price
+        y_end = self.price_bond(dividends, terminal, modelling_date, proj_period, curves, x_end) - self.market_price
 
         if np.abs(y_start) < precision:
             return x_start
@@ -280,7 +281,7 @@ class CorpBond:
 
             dividends = self.create_single_cash_flows(modelling_date, end_date)
             terminal = self.create_single_maturity(end_date)
-            y_mid = self.price_bond(dividends, terminal, modelling_date, proj_period, curves, x_mid)[0]-self.market_price
+            y_mid = self.price_bond(dividends, terminal, modelling_date, proj_period, curves, x_mid) - self.market_price
             if (y_mid == 0 or (x_end - x_start) / 2 < precision):  # Solution found
                 return x_mid
             else:  # Solution not found
@@ -378,7 +379,7 @@ class CorpBondPortfolio():
             all_coupons[asset_id] = coupons
         return all_coupons 
 
-    def create_maturity_flows(self, terminal_date: date) -> dict:
+    def create_maturity_flows(self, terminal_date: date) -> Dict[int, Dict[date, float]]:
         """
         Create the list of dictionaries containing dates at which each bond matures and its notional is paid out. If the maturity is after the 
         end of the modelling window, the bond returns the notional at the end of the modelling window.
@@ -399,8 +400,8 @@ class CorpBondPortfolio():
         :rtype all_terminals
             A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the terminal cash-flows are paid out.
         """
-        all_maturity = {}
-        principals: dict[date, float] = {}
+        all_maturity: Dict[int, Dict[date, float]] = {}
+        principals: Dict[date, float] = {}
         corp_bond: CorpBond
         terminal_date: date
 
@@ -411,7 +412,7 @@ class CorpBondPortfolio():
         return all_maturity
     
 
-    def unique_dates_profile(self, cash_flow_profile: list):
+    def unique_dates_profile(self, cash_flow_profile: Dict[int, Dict[date, float]]) -> List[date]:
         """
         Create a sorted list of dates at which there is an cash-flow event in any of the assets inside the portfolio and
         a single numpy array (matrix) representing those cash flows.
@@ -429,19 +430,16 @@ class CorpBondPortfolio():
         :rtype list: list of sorted unique dates containing at least one cash flow
         """
 
-        unique_dates = []
+        unique_dates: List[date] = []
         for one_dividend_array in cash_flow_profile.values():
-            for one_dividend_date in list(one_dividend_array.keys()):  # for each dividend date of the selected equity
-                if one_dividend_date in unique_dates:  # If two cash flows on same date
-                    pass
-                    # Do nothing since dividend amounts are calibrated afterwards for equity
-                    # dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
-                else:  # New cash flow date
-                    unique_dates.append(one_dividend_date)
+            for one_dividend_date in one_dividend_array.keys():  # for each dividend date of the selected asset
+                if one_dividend_date in unique_dates:
+                    continue
+                unique_dates.append(one_dividend_date)
 
         return sorted(unique_dates)
 
-    def init_bond_portfolio_to_dataframe(self, modelling_date: date)->list:
+    def init_bond_portfolio_to_dataframe(self, modelling_date: date) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
 
         asset_keys = self.corporate_bonds.keys()
 
@@ -471,7 +469,7 @@ class CorpBondPortfolio():
     """
 
 
-    def create_maturity_cashflow(self, modelling_date: date) -> dict:
+    def create_maturity_cashflow(self, modelling_date: date) -> Dict[date, float]:
         """
         Generate a dictionary of cash flows from a collection of corporate bonds.
 
@@ -485,7 +483,7 @@ class CorpBondPortfolio():
         :rtype Dict[date, float]: 
             A dictionary where keys are maturity dates and values are total notional amounts.
         """
-        maturities: dict[date, float] = {}
+        maturities: Dict[date, float] = {}
         corp_bond: CorpBond
         maturity_date: date
 
@@ -534,18 +532,33 @@ class CorpBondPortfolio():
             bond_price_df.loc[asset_id, date_of_interest] = price
         return bond_price_df
     
-    def calibrate_bond_portfolio(self, zspread_df: pd.DataFrame, settings, proj_period:int, curves) -> pd.DataFrame:
+    def calibrate_bond_portfolio(self, zspread_df: pd.DataFrame, settings: Settings, proj_period: int, curves: Curves) -> pd.DataFrame:
         """
-        To Do
+        Calibrate z-spreads for all corporate bonds in the portfolio using bisection.
+
+        Parameters
+        ----------
+        self: CorpBondPortfolio instance
+        zspread_df: DataFrame containing initial z-spreads for each bond
+        settings: Settings object with modelling dates and end date
+        proj_period: projection period index for curve retrieval
+        curves: Curves object with calibrated term structure
+
+        Returns
+        -------
+        pd.DataFrame
+            Updated z-spread DataFrame with calibrated spreads
         """
         for asset_id in zspread_df.index:
-            calibrated_spread = self.corporate_bonds[asset_id].bisection_spread(x_start=-0.2
-                                        , x_end=0.2
-                                        , modelling_date=settings.modelling_date
-                                        , end_date=settings.end_date
-                                        , proj_period=proj_period
-                                        , curves=curves
-                                        , precision= 0.00000001
-                                        , max_iter=100000)
-            zspread_df.loc[asset_id, settings.modelling_date] = calibrated_spread    
+            calibrated_spread = self.corporate_bonds[asset_id].bisection_spread(
+                x_start=-0.2,
+                x_end=0.2,
+                modelling_date=settings.modelling_date,
+                end_date=settings.end_date,
+                proj_period=proj_period,
+                curves=curves,
+                precision=1e-8,
+                max_iter=100000,
+            )
+            zspread_df.loc[asset_id, settings.modelling_date] = calibrated_spread
         return zspread_df

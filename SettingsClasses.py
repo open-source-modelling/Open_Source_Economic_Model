@@ -1,6 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
-from typing import Optional
 
 from dateutil.relativedelta import relativedelta
 
@@ -16,8 +15,8 @@ class Settings:
     tau: float
     compounding: int
     modelling_date: date
-    # Declared here so static analyzers (Pylance) know the attribute exists
-    end_date: Optional[date] = None
+    # Declared here and populated in __post_init__ so static analyzers know the attribute exists
+    end_date: date = field(init=False)
 
     def __post_init__(self) -> None:
         self.end_date = self.modelling_date + relativedelta(years=self.n_proj_years)

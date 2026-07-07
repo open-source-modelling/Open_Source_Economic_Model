@@ -1,23 +1,22 @@
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import List
+from datetime import date
 
 
 @dataclass
 class Liability:
     liability_id: int
-    cash_flow_dates: list
-    cash_flow_series: list
+    cash_flow_dates: List[date]
+    cash_flow_series: List[float]
 
-    def unique_dates_profile(self):
+    def unique_dates_profile(self) -> List[date]:
 
-        # define list of unique dates
-        unique_dates = []
+        # define list of unique dates (preserve original order)
+        unique_dates: List[date] = []
         for one_dividend_date in self.cash_flow_dates:  # for each dividend date of the selected equity
             if one_dividend_date in unique_dates:  # If two cash flows on same date
-                pass
-                # Do nothing since dividend amounts are calibrated afterwards for equity
-                # dividends[dividend_date] = dividend_amount + dividends[dividend_date] # ? Why is here a plus? (you agregate coupon amounts if same date?)
-            else:  # New cash flow date
-                unique_dates.append(one_dividend_date)
+                # Do nothing since amounts are calibrated elsewhere
+                continue
+            unique_dates.append(one_dividend_date)
 
         return unique_dates

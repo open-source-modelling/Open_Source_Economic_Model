@@ -2,6 +2,7 @@
 import logging
 import os
 import pandas as pd
+from typing import Dict, List, Optional
 from ConfigurationClass import Configuration
 from CurvesClass import Curves
 from EquityClasses import EquitySharePortfolio
@@ -68,8 +69,9 @@ def main():
 
     # Import risk free rate curve
     logger.info("Importing risk free rate curve")
-    [maturities_country, curve_country, extra_param, Qb] =  import_SWEiopa(settings.EIOPA_param_file,
-                                                                          settings.EIOPA_curves_file, settings.country)
+    [maturities_country, curve_country, extra_param, Qb] =  import_SWEiopa(param_file = settings.EIOPA_param_file,
+                                                                          curves_file = settings.EIOPA_curves_file, 
+                                                                          country = settings.country)
     
     # Curves object with information about term structure
     curves = Curves(extra_param["UFR"]/100, settings.precision, settings.tau, settings.modelling_date,
@@ -158,7 +160,7 @@ def main():
     ### -------- PREPARE OUTPUT DATA FRAMES --------###
     prev_mkt_value = sum(eq_price_df[settings.modelling_date] * eq_units_df[settings.modelling_date])+ sum(bd_price_df[settings.modelling_date] * bd_units_df[settings.modelling_date])  # Value of the initial portfolio
 
-    ini_out = {
+    ini_out: Dict[str, List[Optional[float]]] = {
         "Start cash": [None], 
         "End cash":[cash.bank_account], 
         "Start market value":[None], 
@@ -176,7 +178,7 @@ def main():
 
     # -------- GENERATE VECTOR OF NEXT PERIODS -------
     logger.info("Generate vector of future modelling periods")
-    dates_of_interest = set_dates_of_interest(settings.modelling_date, settings.end_date)
+    dates_of_interest = set_dates_of_interest(modelling_date = settings.modelling_date, end_date = settings.end_date)
 
     previous_date = settings.modelling_date
 
@@ -185,7 +187,7 @@ def main():
     proj_period = 0
 
     logger.info("Calibrate corporate bond z-spread")
-    bd_zspread_df=bd_ptf.calibrate_bond_portfolio(bd_zspread_df, settings, proj_period, curves)
+    bd_zspread_df=bd_ptf.calibrate_bond_portfolio(zspread_df=bd_zspread_df, settings=settings, proj_period=proj_period, curves=curves)
 
     # --------- START MAIN LOOP THAT MOVES FORWARD IN TIME --------
     logger.info("Start main loop")
@@ -205,22 +207,22 @@ def main():
         time_frac = (current_date - previous_date).days / 365.25
 
         logger.info("Calculate expired dividends, remove them from cash flows and add to bank account")
-        cash, div_df, unique_div_dates = process_expired_cf(unique_div_dates, current_date, div_df, eq_units_df)
+        cash, div_df, unique_div_dates = process_expired_cf(unique_dates = unique_div_dates, expiration_date = current_date, cash_flows = div_df, units = eq_units_df)
         summary_df.loc[current_date, "Dividend cash flow"] = float(cash)
         bank_account[current_date] += cash
 
         logger.info("Calculate expired coupons, remove them from cash flows and add to bank account")
-        cash, cpn_df, unique_cpn_dates = process_expired_cf(unique_cpn_dates, current_date, cpn_df, bd_units_df)
+        cash, cpn_df, unique_cpn_dates = process_expired_cf(unique_dates = unique_cpn_dates, expiration_date = current_date, cash_flows = cpn_df, units = bd_units_df)
         summary_df.loc[current_date, "Coupon cash flow"] = float(cash)
         bank_account[current_date] += cash
 
         logger.info("Calculate expired terminal flows, remove them from cash flows and add to bank account")
-        cash, ter_df, unique_ter_dates = process_expired_cf(unique_ter_dates, current_date, ter_df, eq_units_df)
+        cash, ter_df, unique_ter_dates = process_expired_cf(unique_dates = unique_ter_dates, expiration_date = current_date, cash_flows = ter_df, units = eq_units_df)
         summary_df.loc[current_date, "Terminal cash flow"] = float(cash)
         bank_account[current_date] += cash
 
         logger.info("Calculate expired notional flows, remove them from cash flows and add to bank account")
-        cash, not_df, unique_not_dates = process_expired_cf(unique_not_dates, current_date, not_df, bd_units_df)
+        cash, not_df, unique_not_dates = process_expired_cf(unique_dates = unique_not_dates, expiration_date = current_date, cash_flows = not_df, units = bd_units_df)
         summary_df.loc[current_date, "Notional cash flow"] = float(cash)
         bank_account[current_date] += cash
 

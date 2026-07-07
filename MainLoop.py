@@ -121,12 +121,15 @@ def process_expired_cf(unique_dates: list[datetime.date], expiration_date: dt.da
         and the list of remaining (non-expired) dates  
     """
 
-    expired_dates = calculate_expired_dates(unique_dates, expiration_date)        
-    cash = 0
-    for expired_date in expired_dates:  # Sum expired dividend flows
-        cash += sum(units[expiration_date]*cash_flows[expired_date])
-        cash_flows.drop(columns=expired_date)
-        unique_dates.remove(expired_date)
+    expired_dates = calculate_expired_dates(list_of_dates = unique_dates, 
+                                            deadline = expiration_date)
+ 
+    cash = 0.0
+    for expired_date in expired_dates:
+        cash += sum(units[expiration_date] * cash_flows[expired_date])
+    if expired_dates:
+        cash_flows = cash_flows.drop(columns=expired_dates)
+        unique_dates = [d for d in unique_dates if d not in expired_dates]
     return cash, cash_flows, unique_dates
 
 def process_expired_liab(unique_dates: list[datetime.date], date_of_interest: dt.date, cash_flows: pd.DataFrame) -> tuple[float, pd.DataFrame, list[datetime.date]]:
@@ -149,12 +152,13 @@ def process_expired_liab(unique_dates: list[datetime.date], date_of_interest: dt
         List with the DataFrame with remaining (non-expired) cash flow columns and the expired cashflows summed into cash  
     """
 
-    expired_dates = calculate_expired_dates(unique_dates, date_of_interest)        
-    cash = 0
-    for expired_date in expired_dates:  # Sum expired dividend flows
+    expired_dates = calculate_expired_dates(unique_dates, date_of_interest)
+    cash = 0.0
+    for expired_date in expired_dates:
         cash += sum(cash_flows[expired_date])
-        cash_flows.drop(columns=expired_date)
-        unique_dates.remove(expired_date)
+    if expired_dates:
+        cash_flows = cash_flows.drop(columns=expired_dates)
+        unique_dates = [d for d in unique_dates if d not in expired_dates]
     return cash, cash_flows, unique_dates
 
 def trade(current_date: dt.date, bank_account: pd.DataFrame, eq_units: pd.DataFrame, eq_price: pd.DataFrame, bd_units: pd.DataFrame, bd_price: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
