@@ -77,7 +77,7 @@ flowchart TB
 | File | Role |
 |------|------|
 | `main.py` | Orchestration: setup, pre-loop, annual loop, output |
-| `MainLoop.py` | Cash-flow matrices, date schedules, expiry processing, trading |
+| `MainLoop.py` | Cash-flow matrices, date schedules, expiry processing, portfolio valuation, trading |
 | `CurvesClass.py` | EIOPA Smith-Wilson term structure (calibration, projection, discounting) |
 | `EquityClasses.py` | Equity pricing, cash flows, portfolio wrapper |
 | `BondClasses.py` | Bond pricing, z-spread calibration, portfolio wrapper |
@@ -110,14 +110,23 @@ flowchart TB
 ### Trading
 
 - `trade()` in `MainLoop.py` proportionally buys or sells equities and bonds to drive `bank_account` toward zero
+- Use `portfolio_market_value()` for combined equity + bond market value at a date — do not repeat inline `sum(...)` expressions in `main.py` or `trade()`
+
+### Main loop helpers (`MainLoop.py`)
+
+| Function | Role |
+|----------|------|
+| `portfolio_market_value(eq_price, eq_units, bd_price, bd_units, as_of)` | Total invested assets MV at a date column; used in `main.py` (summary metrics) and `trade()` (pre/post rebalance) |
+| `process_expired_cf` / `process_expired_liab` | Expire cash flows, return cash amount and shrunk DataFrames |
+| `trade` | Proportional buy/sell to balance `bank_account` toward zero |
 
 ### Main loop steps (per `current_date`)
 
-1. Carry forward `eq_units_df`, `bd_units_df`, `bank_account` from `previous_date`
+1. Carry forward `eq_units_df`, `bd_units_df`, `bank_account` from `previous_date`; record start cash and `portfolio_market_value(...)` as start market value
 2. Expire asset cash flows (`process_expired_cf`) and liabilities (`process_expired_liab`); credit/debit `bank_account`; drop expired columns from cf DataFrames
-3. Mark-to-market: equity growth, bond DCF repricing
+3. Mark-to-market: equity growth, bond DCF repricing; record after-growth MV via `portfolio_market_value(...)`
 4. Proportional `trade()`
-5. Log period-end cash and market value to `summary_df`; advance `proj_period`
+5. Log period-end cash and `portfolio_market_value(...)` to `summary_df`; advance `proj_period`
 
 ## Coding conventions
 
@@ -148,6 +157,7 @@ flowchart TB
 ### General
 
 - Prefer minimal, focused diffs; match existing naming and patterns
+- Reuse `portfolio_market_value()` when computing combined portfolio market value
 - Update `unit_tests/` when changing public behaviour
 - Do not commit secrets or machine-specific paths
 

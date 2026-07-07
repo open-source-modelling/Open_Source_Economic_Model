@@ -39,7 +39,7 @@ def get_logging_level(logging_level: str) -> int:
     return logging.CRITICAL
 
 
-def main():
+def main() -> None:
     #logging.basicConfig(filename="ALM.log", level=logging.DEBUG)
 
     ####### PREPARATION OF ENVIRONMENT #######
@@ -70,9 +70,11 @@ def main():
 
     # Import risk free rate curve
     logger.info("Importing risk free rate curve")
-    [maturities_country, curve_country, extra_param, Qb] =  import_SWEiopa(param_file = settings.EIOPA_param_file,
-                                                                          curves_file = settings.EIOPA_curves_file, 
-                                                                          country = settings.country)
+    maturities_country, curve_country, extra_param, Qb = import_SWEiopa(
+        param_file=settings.EIOPA_param_file,
+        curves_file=settings.EIOPA_curves_file,
+        country=settings.country,
+    )
     
     # Curves object with information about term structure
     curves = Curves(extra_param["UFR"]/100, settings.precision, settings.tau, settings.modelling_date,
@@ -138,8 +140,12 @@ def main():
 
     ### -------- PREPARE INITIAL DATA FRAMES --------###
     logger.info("Initialize market dataframes")
-    [eq_price_df, eq_growth_df, eq_units_df] = eq_ptf.init_equity_portfolio_to_dataframe(modelling_date = settings.modelling_date)
-    [bd_price_df, bd_zspread_df, bd_units_df] = bd_ptf.init_bond_portfolio_to_dataframe(modelling_date = settings.modelling_date)
+    eq_price_df, eq_growth_df, eq_units_df = eq_ptf.init_equity_portfolio_to_dataframe(
+        modelling_date=settings.modelling_date
+    )
+    bd_price_df, bd_zspread_df, bd_units_df = bd_ptf.init_bond_portfolio_to_dataframe(
+        modelling_date=settings.modelling_date
+    )
 
     bank_account = pd.DataFrame(data=[cash.bank_account], columns=[settings.modelling_date])
 
@@ -147,16 +153,16 @@ def main():
 
     ### -------- PREPARE DATA STRUCTURES WITH CASH FLOWS -------- ###
     # Dataframe with equity dividend cash flows
-    div_df = create_cashflow_dataframe(div_dict, unique_div_dates)
-    
+    div_df = create_cashflow_dataframe(cf_dict = div_dict, unique_dates = unique_div_dates)
+
     # Dataframe with equity terminal cash flows
-    ter_df = create_cashflow_dataframe(ter_dict, unique_ter_dates)
+    ter_df = create_cashflow_dataframe(cf_dict = ter_dict, unique_dates = unique_ter_dates)
 
     # Dataframe with bond coupon cash flows
-    cpn_df = create_cashflow_dataframe(cpn_flows, unique_cpn_dates)
+    cpn_df = create_cashflow_dataframe(cf_dict = cpn_flows, unique_dates = unique_cpn_dates)
 
     # Dataframe with bond notional cash flows
-    not_df = create_cashflow_dataframe(not_flows, unique_not_dates)
+    not_df = create_cashflow_dataframe(cf_dict = not_flows, unique_dates = unique_not_dates)
 
     # DataFrame with liability cash flows
     liab_df = create_liabilities_df(liabilities)
@@ -267,12 +273,14 @@ def main():
 
         logger.info("Trading of excess/deficit liquidity, rebalancing")
         # Proportional trading without factors
-        [eq_units_df, bd_units_df, bank_account] = trade(current_date = current_date, 
-                                                         bank_account = bank_account, 
-                                                         eq_units = eq_units_df, 
-                                                         eq_price = eq_price_df, 
-                                                         bd_units = bd_units_df, 
-                                                         bd_price = bd_price_df)
+        eq_units_df, bd_units_df, bank_account = trade(
+            current_date=current_date,
+            bank_account=bank_account,
+            eq_units=eq_units_df,
+            eq_price=eq_price_df,
+            bd_units=bd_units_df,
+            bd_price=bd_price_df,
+        )
 
 
         logger.info("Log final positions and prepare for entering next modelling period")

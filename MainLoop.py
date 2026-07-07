@@ -97,27 +97,59 @@ def create_liabilities_df(liabilities: Liability) -> pd.DataFrame:
     cash_flows.index = [liabilities.liability_id]
     return cash_flows
 
-def process_expired_cf(unique_dates: list[datetime.date], expiration_date: dt.date, cash_flows: pd.DataFrame, units: pd.DataFrame) -> tuple[float, pd.DataFrame, list[datetime.date]]:
+def portfolio_market_value(
+    eq_price: pd.DataFrame,
+    eq_units: pd.DataFrame,
+    bd_price: pd.DataFrame,
+    bd_units: pd.DataFrame,
+    as_of: dt.date,
+) -> float:
     """
-    Remove columns with expired dates from dataframe and sum cashflows within those columns into cash.
-        
+    Calculate total market value of the equity and bond portfolios at a given date.
+
     Parameters
     ----------
-    :type unique_dates: list
-        The list of unoque dates at which cash flows occur
-    :type expiration_date: date
-        The date befor which, all cash flows are expired
-    :type cash_flows: DataFrame
-        The dataframe of all cashflows (per unit)
-    :type units: DataFrame
-        The dataframe showing the number of units of each position
+    eq_price : pd.DataFrame
+        Per-asset equity prices indexed by asset_id with date columns.
+    eq_units : pd.DataFrame
+        Per-asset equity units indexed by asset_id with date columns.
+    bd_price : pd.DataFrame
+        Per-asset bond prices indexed by asset_id with date columns.
+    bd_units : pd.DataFrame
+        Per-asset bond units indexed by asset_id with date columns.
+    as_of : date
+        Valuation date (column name in the price and units DataFrames).
 
-        
     Returns
     -------
-    :type: list
-        List with the DataFrame with remaining (non-expired) cash flows, the expired cashflows summed into cash 
-        and the list of remaining (non-expired) dates  
+    float
+        Combined market value of equities and bonds at as_of.
+    """
+    return float(
+        sum(eq_units[as_of] * eq_price[as_of])
+        + sum(bd_units[as_of] * bd_price[as_of])
+    )
+
+def process_expired_cf(unique_dates: list[datetime.date], expiration_date: dt.date, cash_flows: pd.DataFrame, units: pd.DataFrame) -> tuple[float, pd.DataFrame, list[datetime.date]]:
+    """
+    Remove columns with expired dates from the cash-flow DataFrame and sum
+    per-unit expired flows into cash.
+
+    Parameters
+    ----------
+    unique_dates : list
+        Dates at which cash flows may occur (not yet expired).
+    expiration_date : date
+        Period-end date; flows on or before this date are treated as expired.
+    cash_flows : DataFrame
+        Per-unit cash flows (rows = asset_id, columns = dates).
+    units : DataFrame
+        Holdings per asset_id; the expiration_date column is used for unit counts.
+
+    Returns
+    -------
+    tuple[float, pd.DataFrame, list]
+        Expired cash total, remaining cash-flow DataFrame, and remaining dates.
     """
 
     expired_dates = calculate_expired_dates(list_of_dates = unique_dates, 
@@ -139,11 +171,11 @@ def process_expired_liab(unique_dates: list[datetime.date], date_of_interest: dt
     Parameters
     ----------
     :type unique_dates: list
-        The list of unoque dates at which cash flows occur
-    :type expiration_date: date
-        The date befor which, all cash flows are expired
+        The list of unique dates at which cash flows occur
+    :type date_of_interest: date
+        The period-end date; cash flows on or before this date are treated as expired
     :type cash_flows: DataFrame
-        The dataframe of all cashflows (per unit)
+        The dataframe of aggregated liability cash flows (absolute amounts, not per unit)
         
     Returns
     -------
@@ -162,28 +194,30 @@ def process_expired_liab(unique_dates: list[datetime.date], date_of_interest: dt
 
 def trade(current_date: dt.date, bank_account: pd.DataFrame, eq_units: pd.DataFrame, eq_price: pd.DataFrame, bd_units: pd.DataFrame, bd_price: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    The trading algorithm that takes the price and unit number of equity positions and the bank account and
-    invests/sells proportionally the assets to balance the bank account to 0.
-        
+    Proportionally buy or sell equities and bonds to drive the bank account toward zero.
+
     Parameters
     ----------
-    :type current_date: date
-        The date of the period at which the modell currently operates
-    :type bank_account: DataFrame
-        The dataframe with the bank_account balance at each modelling date 
-    :type units: DataFrame
-        The dataframe of all cashflows (per unit)
-    :type units: DataFrame
-        The dataframe showing the number of units of each position
-                
+    current_date : date
+        The modelling date for this trading step.
+    bank_account : DataFrame
+        Cash balance at each modelling date (single row).
+    eq_units : DataFrame
+        Equity units per asset_id at each modelling date.
+    eq_price : DataFrame
+        Equity prices per asset_id at each modelling date.
+    bd_units : DataFrame
+        Bond units per asset_id at each modelling date.
+    bd_price : DataFrame
+        Bond prices per asset_id at each modelling date.
+
     Returns
     -------
-    :type: list
-        List with the Dataframe documenting the  number of units after trading and the bank_account DataFrame with the
-        updated bank account balance for the modelling date.  
+    tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
+        Updated eq_units, bd_units, and bank_account DataFrames.
     """
     
-    total_market_value = sum(eq_units[current_date]*eq_price[current_date])+sum(bd_units[current_date]*bd_price[current_date])  # Total value of portfolio after growth
+    total_market_value = portfolio_market_value(eq_price, eq_units, bd_price, bd_units, current_date)
 
     if total_market_value <= 0:
         pass
@@ -192,14 +226,18 @@ def trade(current_date: dt.date, bank_account: pd.DataFrame, eq_units: pd.DataFr
         eq_units[current_date] = eq_units[current_date] * (1 - percent_to_sell) 
         bd_units[current_date] = bd_units[current_date] * (1 - percent_to_sell)
 
-        bank_account[current_date] += total_market_value - sum(eq_units[current_date]*eq_price[current_date])-sum(bd_units[current_date]*bd_price[current_date])  # Add cash to bank account equal to shares sold
+        bank_account[current_date] += total_market_value - portfolio_market_value(
+            eq_price, eq_units, bd_price, bd_units, current_date
+        )
         
     elif bank_account[current_date][0] > 0:  # Buy assets
         percent_to_buy = bank_account[current_date][0] / total_market_value  # What % of the portfolio is the excess cash
         eq_units[current_date] = eq_units[current_date] * (1 + percent_to_buy)  
         bd_units[current_date] = bd_units[current_date] * (1 + percent_to_buy)  
                     
-        bank_account[current_date] += total_market_value - sum(eq_units[current_date]*eq_price[current_date])-sum(bd_units[current_date]*bd_price[current_date])  # Bank account reduced for cash spent on buying shares
+        bank_account[current_date] += total_market_value - portfolio_market_value(
+            eq_price, eq_units, bd_price, bd_units, current_date
+        )
     else:  # Remaining cash flow is equal to 0 so no trading needed
         pass
 

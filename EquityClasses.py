@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Dict, Tuple, Iterator
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -111,7 +111,7 @@ class EquityShare:
         return market_price * (1 + growth_rate) ** t
 
 #    @tracer
-    def generate_dividend_dates(self, modelling_date: date, end_date: date):
+    def generate_dividend_dates(self, modelling_date: date, end_date: date) -> Iterator[date]:
         """
         Generator yielding the dividend payment date starting from the first dividend
         paid after the modelling date. 
@@ -126,8 +126,8 @@ class EquityShare:
 
         Returns
         -------
-        :type yield float
-            The date at which the dividend occurs
+        Iterator[date]
+            Dividend payment dates after modelling_date and on or before end_date.
         """
         delta = relativedelta(months=(12 // self.frequency))
         this_date = self.issue_date - delta
@@ -328,7 +328,7 @@ class EquitySharePortfolio():
             return True
         return False
 
-    def add(self, equity_share: EquityShare):
+    def add(self, equity_share: EquityShare) -> None:
         """
         Add a new EquityShare to the EquitySharePortfolio instance
 

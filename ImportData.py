@@ -131,7 +131,7 @@ def import_SWEiopa(param_file: str, curves_file: str, country: str) -> tuple[pd.
 
 def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
     """
-    Load the bond input file into an EquityShare class generator.
+    Load the bond input file into a CorpBond generator.
 
     Parameters
     ----------
@@ -141,7 +141,7 @@ def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
     Returns
     -------
     :type generator
-        Generator returning a filled CorpBond class of a single position
+        Generator yielding one CorpBond instance per CSV row
     """
 
     with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
@@ -224,7 +224,7 @@ def get_Cash(filename: str) -> Cash:
 
 def get_Liability(filename: str) -> Liability:
     """
-    Load the initial cash input file into a Liability class object.
+    Load the liability cash-flow input file into a Liability object.
 
     Parameters
     ----------
@@ -233,8 +233,8 @@ def get_Liability(filename: str) -> Liability:
 
     Returns
     -------
-    :type Liability class
-        Returning a filled Cash class with the initial cash position
+    :type Liability
+        A Liability instance with cash flow dates and amounts from the CSV
 
     """
     liability_id = 1  # To Remove and abstract away

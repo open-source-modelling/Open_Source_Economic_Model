@@ -313,10 +313,14 @@ class CorpBondPortfolio():
             return True
         return False
 
-    def add(self,corp_bond: CorpBond) :
+    def add(self, corp_bond: CorpBond) -> None:
         """
+        Add a CorpBond position to the portfolio.
 
-        :type corp_bond: CorpBond
+        Parameters
+        ----------
+        corp_bond : CorpBond
+            The bond position to add, keyed by asset_id in the portfolio dict.
         """
         if self.corporate_bonds is not None:
             self.corporate_bonds.update({corp_bond.asset_id: corp_bond})
