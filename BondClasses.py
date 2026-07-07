@@ -495,7 +495,7 @@ class CorpBondPortfolio():
                 maturities.update({corp_bond.maturity_date:corp_bond.notional_amount})
         return maturities
     
-    def price_bond_portfolio(self, coupon_df: pd.DataFrame, notional_df: pd.DataFrame, settings, proj_period: int, curves, bond_zspread_df: pd.DataFrame, bond_price_df: pd.DataFrame, date_of_interest: date) -> pd.DataFrame:
+    def price_bond_portfolio(self, coupon_df: pd.DataFrame, notional_df: pd.DataFrame, settings: Settings, proj_period: int, curves: Curves, bond_zspread_df: pd.DataFrame, bond_price_df: pd.DataFrame, date_of_interest: date) -> pd.DataFrame:
         """
         Prices a portfolio of bonds based on provided data and settings.
 

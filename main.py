@@ -134,8 +134,8 @@ def main():
 
     ### -------- PREPARE INITIAL DATA FRAMES --------###
     logger.info("Initialize market dataframes")
-    [eq_price_df, eq_growth_df, eq_units_df] = eq_ptf.init_equity_portfolio_to_dataframe(settings.modelling_date)
-    [bd_price_df, bd_zspread_df, bd_units_df] = bd_ptf.init_bond_portfolio_to_dataframe(settings.modelling_date)
+    [eq_price_df, eq_growth_df, eq_units_df] = eq_ptf.init_equity_portfolio_to_dataframe(modelling_date = settings.modelling_date)
+    [bd_price_df, bd_zspread_df, bd_units_df] = bd_ptf.init_bond_portfolio_to_dataframe(modelling_date = settings.modelling_date)
 
     bank_account = pd.DataFrame(data=[cash.bank_account], columns=[settings.modelling_date])
 
@@ -239,8 +239,14 @@ def main():
         logger.info("Calculate market value of fixed income portfolio in new period")
         bd_price_df[current_date] = bd_price_df[previous_date]
         
-        bd_price_df = bd_ptf.price_bond_portfolio(cpn_df, not_df, settings, proj_period, curves, bd_zspread_df, bd_price_df, current_date)
-        
+        bd_price_df = bd_ptf.price_bond_portfolio(coupon_df = cpn_df, 
+                                                  notional_df = not_df, 
+                                                  settings = settings, 
+                                                  proj_period = proj_period, 
+                                                  curves = curves, 
+                                                  bond_zspread_df = bd_zspread_df, 
+                                                  bond_price_df = bd_price_df, 
+                                                  date_of_interest = current_date)
         total_market_value = sum(eq_units_df[current_date]*eq_price_df[current_date]) + sum(bd_price_df[current_date] * bd_units_df[current_date]) # Total value of portfolio after growth
         
         summary_df.loc[current_date, "After growth market value"] = float(total_market_value)
@@ -257,7 +263,13 @@ def main():
 
         logger.info("Trading of excess/deficit liquidity, rebalancing")
         # Proportional trading without factors
-        [eq_units_df, bd_units_df, bank_account] = trade(current_date, bank_account, eq_units_df, eq_price_df, bd_units_df, bd_price_df)
+        [eq_units_df, bd_units_df, bank_account] = trade(current_date = current_date, 
+                                                         bank_account = bank_account, 
+                                                         eq_units = eq_units_df, 
+                                                         eq_price = eq_price_df, 
+                                                         bd_units = bd_units_df, 
+                                                         bd_price = bd_price_df)
+
 
         logger.info("Log final positions and prepare for entering next modelling period")
         summary_df.loc[current_date, "End cash"] = float(bank_account[current_date].iloc[0])

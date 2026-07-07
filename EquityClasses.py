@@ -563,7 +563,7 @@ class EquitySharePortfolio():
             row += 1
         return (unique_dates, cash_flow_matrix)
 
-    def init_equity_portfolio_to_dataframe(self, modelling_date: date)->list:
+    def init_equity_portfolio_to_dataframe(self, modelling_date: date) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
 
         asset_keys = self.equity_share.keys()
 
