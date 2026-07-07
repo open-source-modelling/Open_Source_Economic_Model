@@ -1,8 +1,9 @@
 # Main script for POC
 import logging
 import os
+from datetime import date
 import pandas as pd
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast
 from ConfigurationClass import Configuration
 from CurvesClass import Curves
 from EquityClasses import EquitySharePortfolio
@@ -181,9 +182,9 @@ def main():
 
     # -------- GENERATE VECTOR OF NEXT PERIODS -------
     logger.info("Generate vector of future modelling periods")
-    dates_of_interest = set_dates_of_interest(modelling_date = settings.modelling_date, end_date = settings.end_date)
+    dates_of_interest: pd.Series = set_dates_of_interest(modelling_date = settings.modelling_date, end_date = settings.end_date)
 
-    previous_date = settings.modelling_date
+    previous_date: date = settings.modelling_date
 
     # --------- TIME 0 PREPARATIONS TO START THE MAIN LOOP --------
 
@@ -203,7 +204,7 @@ def main():
     
         bank_account[current_date] = bank_account[previous_date]
         
-        summary_df.loc[current_date, "Start cash"] = float(bank_account[previous_date].iloc[0])
+        summary_df.loc[current_date, "Start cash"] = float(bank_account.loc[0, previous_date])
         summary_df.loc[current_date, "Start market value"] = float(init_mkt_value)
 
         logger.info("Calculate the fraction of time to move forward")
@@ -275,7 +276,7 @@ def main():
 
 
         logger.info("Log final positions and prepare for entering next modelling period")
-        summary_df.loc[current_date, "End cash"] = float(bank_account[current_date].iloc[0])
+        summary_df.loc[current_date, "End cash"] = float(bank_account.loc[0, current_date])
         summary_df.loc[current_date, "End market value"] = float(sum(eq_units_df[current_date]*eq_price_df[current_date])) + sum(bd_price_df[current_date] * bd_units_df[current_date])    
 
         previous_date = current_date

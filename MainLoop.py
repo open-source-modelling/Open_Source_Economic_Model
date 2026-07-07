@@ -70,9 +70,9 @@ def set_dates_of_interest(modelling_date: dt.date, end_date: dt.date, days_inter
     :type: pd.Series
         Series of dates at which the modell will run   
     """
-    next_date_of_interest = modelling_date
+    next_date_of_interest: dt.date = modelling_date
 
-    dates_of_interest = []
+    dates_of_interest: list[dt.date] = []
     while next_date_of_interest <= end_date:
         next_date_of_interest += datetime.timedelta(days=days_interval)
         dates_of_interest.append(next_date_of_interest)
