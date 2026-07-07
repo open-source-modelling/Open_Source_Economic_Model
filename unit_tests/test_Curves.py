@@ -14,14 +14,12 @@ def curves_1():
     return curves
 
 @pytest.fixture
-def term_structure_maturity():
-    maturity_vec = [1, 2, 3, 4, 8, 10]
-    return maturity_vec
+def term_structure_maturity() -> np.ndarray:
+    return np.array([1, 2, 3, 4, 8, 10], dtype=float)
 
 @pytest.fixture
-def term_structure_yield():
-    yield_vec = [0.01, 0.012, 0.014, 0.018, 0.023, 0.025]
-    return yield_vec
+def term_structure_yield() -> np.ndarray:
+    return np.array([0.01, 0.012, 0.014, 0.018, 0.023, 0.025], dtype=float)
 
 def test_Initialize():
     ufr = 1
@@ -39,8 +37,8 @@ def test_Initialize():
  
 def test_set_observed(curves_1, term_structure_maturity, term_structure_yield):
     curves_1.SetObservedTermStructure(maturity_vec=term_structure_maturity, yield_vec=term_structure_yield)
-    assert all(curves_1.m_obs_ini["Maturity"].values == term_structure_maturity)
-    assert all(curves_1.r_obs_ini["Yield"].values == term_structure_yield)
+    assert np.array_equal(curves_1.m_obs_ini["Maturity"].values, term_structure_maturity)
+    assert np.array_equal(curves_1.r_obs_ini["Yield"].values, term_structure_yield)
 
 def test_CalcFwdRates(curves_1, term_structure_maturity, term_structure_yield):
     curves_1.SetObservedTermStructure(maturity_vec=term_structure_maturity, yield_vec=term_structure_yield)

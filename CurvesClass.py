@@ -21,7 +21,7 @@ class Curves:
         self.alpha = pd.DataFrame(data=None, columns=["Alpha_year_0"], dtype="float64")
         self.b = pd.DataFrame(data=None, columns=["Calibration_year_0"])
 
-    def SetObservedTermStructure(self, maturity_vec: Sequence[float], yield_vec: Sequence[float]) -> None:
+    def SetObservedTermStructure(self, maturity_vec: np.ndarray, yield_vec: np.ndarray) -> None:
         """
         Set the initial vector of liquid maturities and the coresponding yield rates into the curves class. Both vectors are saved as dataframes into
         The vector of maturities is saved into the m_obs_ini property.
@@ -31,9 +31,9 @@ class Curves:
         ----------
         self: Curves class instance
             The Curves class instance
-        :type maturity_vec: list
+        :type maturity_vec: np.ndarray
             List of maturities for which yields are provided
-        :type yield_vec: list
+        :type yield_vec: np.ndarray
             List of yield rates for the maturities in maturity_vec
 
         Note that the current assumption is that the yields are provided for every year from time 0 to the end of the modelling window

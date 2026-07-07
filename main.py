@@ -77,7 +77,10 @@ def main():
     curves = Curves(extra_param["UFR"]/100, settings.precision, settings.tau, settings.modelling_date,
                     settings.country)
     logger.info("Process risk free rate curve")
-    curves.SetObservedTermStructure(maturity_vec=curve_country.index.tolist(), yield_vec=curve_country.values)
+    curves.SetObservedTermStructure(
+        maturity_vec=curve_country.index.to_numpy(dtype=float),
+        yield_vec=curve_country.values,
+    )
     logger.info("Calculate 1-year forward rate")
     curves.CalcFwdRates()
     logger.info("Calculate projected spot rates")
