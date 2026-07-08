@@ -8,3 +8,5 @@ Precision,1E-10
 Tau,0.0001
 compounding,-1
 Modelling_Date,29/04/2023
+liability_mode,cashflow
+random_seed,42

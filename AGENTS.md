@@ -18,8 +18,8 @@ The entry point is `main.py`. Configuration comes from `ALM.ini` and CSV files u
 
 | Layer | Contents | Mutated during the main loop? |
 |-------|----------|-------------------------------|
-| Static dataclasses | `EquityShare`, `CorpBond`, `Cash`, `Liability` — loaded once from CSV | No |
-| pandas DataFrames | Prices, units, spreads, bank account, cash-flow matrices, summary | Yes |
+| Static dataclasses | `EquityShare`, `CorpBond`, `Cash`, `Liability`, `UnitLinkedPolicy`, `UnitLinkedFund`, `Society` — loaded once from CSV | No |
+| pandas DataFrames | Prices, units, spreads, bank account, company account, cash-flow matrices, UL policy state, summary | Yes |
 
 Individual `EquityShare` / `CorpBond` instances hold metadata and pricing logic. All simulation state evolves in DataFrames. Do not write back to dataclass instances after import.
 
@@ -83,19 +83,21 @@ flowchart TB
 | `BondClasses.py` | Bond pricing, z-spread calibration, portfolio wrapper |
 | `LiabilityClasses.py` | Aggregated liability cash-flow profile |
 | `ImportData.py` | Load `ALM.ini`, CSV inputs, EIOPA curve files |
-| `ConfigurationClass.py` / `SettingsClasses.py` | Config and run parameters |
+| `ConfigurationClass.py` / `SettingsClasses.py` | Config and run parameters (`liability_mode`, `random_seed`) |
 | `CashClass.py` | Initial cash balance |
+| `SocietyClass.py` | Mortality tables for unit-linked decrements |
 | `TraceClass.py` | Optional call tracing (`tracer`); enabled via `ALM.ini` `[TRACE]` |
 | `FrequencyClass.py` | Dividend/coupon frequency enums used by equity and bond classes |
 | `ALM.ini` | Paths, logging, trace flags, intermediate output, input file names |
-| `Input/` | Portfolio CSVs, parameters, curves, liabilities |
+| `Input/` | Portfolio CSVs, parameters, curves, liabilities, UL inputs |
 | `unit_tests/` | pytest suite — update when changing public behaviour |
+| `Documentation/Unit_Linked_Methodology.md` | Unit-linked methodology (MVP) |
+| `Liability_Dev/Unit_Linked_Methodology.html` | Visual UL methodology guide |
 
 **Stub / not wired into `main.py` yet:**
 
 | File | Role |
 |------|------|
-| `SocietyClass.py` | Mortality/lapse stub — `input_mortality` is configured but not loaded in the main loop |
 | `PropertyClasses.py` | Real-estate asset prototype; not used in the POC run |
 | `ExportData.py` | CSV export helper; not used in the POC run |
 | `PathsClasses.py` | Path helper for tests only |
@@ -127,13 +129,15 @@ Note: `Configuration` also stores paths for `input_curves`, `input_param_no_VA`,
 
 ### Liabilities
 
-- **Current POC:** precomputed absolute cash flows from `Input/Liability_Cashflow.csv` (single aggregated row)
-- **Planned, not yet in main loop:** mortality/lapse from `Input/mortality.csv` via `SocietyClass` (path configured in `ALM.ini` as `mortality` → `Configuration.input_mortality`)
+Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cashflow`):
+
+- **`cashflow`:** precomputed absolute cash flows from `Input/Liability_Cashflow.csv` (single aggregated row); expired via `process_expired_liab`
+- **`unit_linked`:** policy-level simulation from `Input/Unit_Linked_Policies.csv`, `Input/Unit_Linked_Fund.csv`, and `Input/mortality.csv` via `Society`; state in `ul_mv_df` / `ul_gv_df` / `ul_premium_df` / `ul_active_df`; `process_unit_linked_period` after growth and before `trade()`; insurer fees go to `company_account` (not traded). See `Documentation/Unit_Linked_Methodology.md`
 
 ### Trading
 
 - `trade()` in `MainLoop.py` proportionally buys or sells equities and bonds to drive `bank_account` toward zero
-- Use `portfolio_market_value()` for combined equity + bond market value at a date. It is used inside `trade()`; `main.py` still has inline `sum(...)` expressions that should be refactored to call this helper — do not add new inline sums in `main.py` or `trade()`
+- Use `portfolio_market_value()` for combined equity + bond market value at a date (used in `trade()` and `main.py`)
 
 ### Main loop helpers (`MainLoop.py`)
 
@@ -142,20 +146,22 @@ Note: `Configuration` also stores paths for `input_curves`, `input_param_no_VA`,
 | `create_cashflow_dataframe(cf_dict, unique_dates)` | Build per-asset cash-flow matrix (rows = asset_id, columns = dates) |
 | `create_liabilities_df(liabilities)` | Build liability cash-flow DataFrame from `Liability` |
 | `set_dates_of_interest(modelling_date, end_date)` | Annual projection date schedule |
-| `portfolio_market_value(eq_price, eq_units, bd_price, bd_units, as_of)` | Total invested assets MV at a date column; used in `trade()`; should also be used in `main.py` summary metrics |
+| `portfolio_market_value(eq_price, eq_units, bd_price, bd_units, as_of)` | Total invested assets MV at a date column |
 | `process_expired_cf` / `process_expired_liab` | Expire cash flows, return cash amount and shrunk DataFrames |
 | `calculate_expired_dates` | Internal helper: dates on or before the deadline |
 | `trade` | Proportional buy/sell to balance `bank_account` toward zero |
+| `process_unit_linked_period` / `capitalize_policies` / `apply_premiums` / `apply_admin_fees` / `apply_mortality` / `apply_lapse` | Unit-linked period mechanics |
 
 ### Main loop steps (per `current_date`)
 
-1. Carry forward `eq_units_df`, `bd_units_df`, `bank_account` from `previous_date`; record start cash and start market value
+1. Carry forward `eq_units_df`, `bd_units_df`, `bank_account` (and `company_account` if UL) from `previous_date`; record start cash and start market value
 2. Expire cash flows in sequence, crediting/debiting `bank_account` and logging each to `summary_df`:
    - Dividends (`div_df`), coupons (`cpn_df`), equity terminal (`ter_df`), bond notional (`not_df`) via `process_expired_cf`
-   - Liabilities (`liab_df`) via `process_expired_liab` (debited from `bank_account`)
+   - Liabilities (`liab_df`) via `process_expired_liab` when `liability_mode=cashflow`
 3. Mark-to-market: apply equity growth using `eq_growth_df[modelling_date]` and `time_frac`; carry bond prices forward then reprice via `price_bond_portfolio`; record after-growth MV and portfolio return
-4. Proportional `trade()`
-5. Log period-end cash and end market value to `summary_df`; set `previous_date = current_date`; advance `proj_period`
+4. If `liability_mode=unit_linked`: `process_unit_linked_period` (capitalize, premiums, fees, mortality, lapse); update `bank_account` and `company_account`
+5. Proportional `trade()`
+6. Log period-end cash and end market value to `summary_df`; set `previous_date = current_date`; advance `proj_period`
 
 ## Coding conventions
 
@@ -201,15 +207,16 @@ instrument.create_single_cash_flows()
 |-----------|-------|---------|
 | `eq_price_df`, `eq_units_df`, `bd_price_df`, `bd_units_df`, `bd_zspread_df` | `asset_id` | modelling dates |
 | `div_df`, `cpn_df`, `ter_df`, `not_df` | `asset_id` | cash-flow dates |
-| `bank_account` | single row (`loc[0, date]`) | modelling dates |
+| `bank_account` / `company_account` | single row (`loc[0, date]`) | modelling dates |
 | `liab_df` | `liability_id` | liability payment dates |
+| `ul_mv_df`, `ul_gv_df`, `ul_premium_df`, `ul_active_df` | `policy_id` | modelling dates |
 
 When adding a new date column in the loop, carry forward from `previous_date`, then update in place for `current_date`.
 
 ### CSV import (`ImportData.py`)
 
-- Single-object loaders: `get_configuration()`, `get_settings()`, `get_Cash()`, `get_Liability()`.
-- Row iterators: `get_EquityShare()`, `get_corporate_bonds()` → `Iterator` (one instance per CSV row).
+- Single-object loaders: `get_configuration()`, `get_settings()`, `get_Cash()`, `get_Liability()`, `get_unit_linked_fund()`, `get_society()`.
+- Row iterators: `get_EquityShare()`, `get_corporate_bonds()`, `get_unit_linked_policies()` → `Iterator` (one instance per CSV row).
 - Use `encoding="utf-8-sig"`, `csv.DictReader`, dates as `'%d/%m/%Y'`.
 - CSV column names are `Pascal_Case` (`Asset_ID`, `Market_Price`, etc.).
 - Do not read CSVs inline in `main.py` — add a `get_*` function in `ImportData.py`.
@@ -317,8 +324,9 @@ Method naming is mixed (`IsEmpty` is PascalCase; most others are `snake_case`). 
 | Portfolios | `Input/Cash_Portfolio.csv`, `Input/Equity_Portfolio.csv`, `Input/Bond_Portfolio.csv` |
 | EIOPA curves | `Input/Param_no_VA.csv`, `Input/Curves_no_VA.csv` (paths in `Settings`) |
 | Sector spreads | `Input/Sector_Spread.csv` (configured in `ALM.ini`; not yet used in main loop) |
-| Liabilities | `Input/Liability_Cashflow.csv` |
-| Mortality (planned) | `Input/mortality.csv` (configured in `ALM.ini`; not yet loaded in main loop) |
+| Liabilities | `Input/Liability_Cashflow.csv` (`cashflow` mode) |
+| Unit-linked policies / fund | `Input/Unit_Linked_Policies.csv`, `Input/Unit_Linked_Fund.csv` (`unit_linked` mode) |
+| Mortality | `Input/mortality.csv` (used in `unit_linked` mode via `Society`) |
 | Output | `Output/Results.csv` (`summary_df`) |
 
 `summary_df` columns written per modelling date:
@@ -329,12 +337,17 @@ Method naming is mixed (`IsEmpty` is PascalCase; most others are `snake_case`). 
 | `Start market value` / `After growth market value` / `End market value` | Portfolio MV before flows, after growth, after trading |
 | `Portfolio return` | After-growth MV / previous end MV − 1 |
 | `Dividend cash flow` / `Coupon cash flow` / `Terminal cash flow` / `Notional cash flow` | Expired asset cash flows credited to bank account |
-| `Liability cash flow` | Expired liability outflow (stored as negative of cash debited) |
+| `Liability cash flow` | Expired liability outflow (cashflow mode; stored as negative of cash debited) |
+| `UL gross premium cash flow` / `UL entry fee cash flow` / `UL admin fee cash flow` | Unit-linked premium and fee flows (UL mode) |
+| `UL mortality cash flow` / `UL lapse cash flow` | Liquidation outflows (negative; UL mode) |
+| `UL reserve` / `Company account` | Active policy MV sum; insurer fee balance |
+| `UL policies in force` / `UL deaths` / `UL lapses` | Policy counts (UL mode) |
 
 ## Deeper documentation
 
 Do not duplicate full methodology here. Refer to:
 
+- `Documentation/Unit_Linked_Methodology.md` / `Liability_Dev/Unit_Linked_Methodology.html` — unit-linked MVP
 - `Archive/OSEM_Documentation_draft.pdf` — methodology draft (PDF)
 - `Documentation/OSEM_Documentation_draft.ipynb` — same content as notebook
 - `Archive/` — yield-curve, equity, and bond pricing prototypes (notebooks and PDFs)

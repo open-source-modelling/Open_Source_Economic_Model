@@ -9,7 +9,8 @@ from EquityClasses import EquityShare
 from SettingsClasses import Settings
 from datetime import datetime
 from CashClass import Cash
-from LiabilityClasses import Liability
+from LiabilityClasses import Liability, UnitLinkedPolicy, UnitLinkedFund
+from SocietyClass import Society
 
 
 def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[configparser.ConfigParser] = None) -> Configuration:
@@ -88,7 +89,15 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
         configuration.input_liability_cashflow = op_sys.path.join(input_path,
                                                                   inp["liability"])
         configuration.input_mortality = op_sys.path.join(input_path, inp["mortality"])
-        
+        if "unit_linked_policies" in inp:
+            configuration.input_unit_linked_policies = op_sys.path.join(
+                input_path, inp["unit_linked_policies"]
+            )
+        if "unit_linked_fund" in inp:
+            configuration.input_unit_linked_fund = op_sys.path.join(
+                input_path, inp["unit_linked_fund"]
+            )
+
         inp = config_parser["INPUT"]
         output_path = os.path.join(configuration.base_folder, inp["output_path"])
         configuration.output_path = output_path
@@ -279,6 +288,88 @@ def get_settings(filename: str) -> Settings:
                            precision=float(read_dict["Precision"]),
                            tau=float(read_dict["Tau"]),
                            compounding=int(read_dict["compounding"]),
-                           modelling_date=datetime.strptime(read_dict["Modelling_Date"], '%d/%m/%Y').date())
+                           modelling_date=datetime.strptime(read_dict["Modelling_Date"], '%d/%m/%Y').date(),
+                           liability_mode=read_dict.get("liability_mode", "cashflow").strip(),
+                           random_seed=int(read_dict.get("random_seed", "42")))
 
         return setting
+
+
+def get_unit_linked_policies(filename: str) -> Iterator[UnitLinkedPolicy]:
+    """
+    Load unit-linked in-force policies from CSV into a UnitLinkedPolicy generator.
+
+    Parameters
+    ----------
+    :type filename: string
+        Relative path to the unit-linked policies input file
+
+    Returns
+    -------
+    :type generator
+        Generator yielding one UnitLinkedPolicy instance per CSV row
+    """
+
+    with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
+        reader = csv.DictReader(csv_file)
+        for row in reader:
+            policy = UnitLinkedPolicy(
+                policy_id=int(row["Policy_ID"]),
+                birth_date=datetime.strptime(row["Birth_Date"], "%d/%m/%Y").date(),
+                is_female=bool(int(row["Is_Female"])),
+                is_guaranteed=bool(int(row["Is_Guaranteed"])),
+                premium=float(row["Premium"]),
+                mv=float(row["MV"]),
+                gv=float(row["GV"]),
+            )
+            yield policy
+
+
+def get_unit_linked_fund(filename: str) -> UnitLinkedFund:
+    """
+    Load single-pool unit-linked fund parameters from CSV.
+
+    Parameters
+    ----------
+    :type filename: string
+        Relative path to the unit-linked fund input file
+
+    Returns
+    -------
+    :type UnitLinkedFund
+        Fund parameters from the first CSV data row
+    """
+
+    with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
+        reader = csv.DictReader(csv_file)
+        for row in reader:
+            return UnitLinkedFund(
+                fund_id=int(row["Fund_ID"]),
+                lapse_rate=float(row["Lapse_Rate"]),
+                admin_fee=float(row["Admin_Fee"]),
+                entry_fee=float(row["Entry_Fee"]),
+                premium_growth=float(row["Premium_Growth"]),
+            )
+    raise ValueError(f"No fund row found in {filename}")
+
+
+def get_society(filename: str) -> Society:
+    """
+    Load mortality rates from CSV into a Society object.
+
+    Parameters
+    ----------
+    :type filename: string
+        Relative path to mortality.csv (AGE, MALE, FEMALE columns)
+
+    Returns
+    -------
+    :type Society
+        Populated Society with male and female mortality series
+    """
+
+    mortality_df = pd.read_csv(filename, encoding="utf-8-sig")
+    mortality_df = mortality_df.set_index("AGE")
+    male = mortality_df["MALE"].astype(float)
+    female = mortality_df["FEMALE"].astype(float)
+    return Society(mortality_male=male, mortality_female=female)

@@ -21,6 +21,8 @@ class Configuration:
     input_parameters: str
     input_liability_cashflow: str
     input_mortality: str
+    input_unit_linked_policies: str
+    input_unit_linked_fund: str
     output_path: str
 
     def __init__(self) -> None:
@@ -45,4 +47,6 @@ class Configuration:
         self.input_parameters: str = ""
         self.input_liability_cashflow: str = ""
         self.input_mortality: str = ""
+        self.input_unit_linked_policies: str = ""
+        self.input_unit_linked_fund: str = ""
         self.output_path: str = ""

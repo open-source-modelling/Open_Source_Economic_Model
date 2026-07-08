@@ -15,13 +15,12 @@ class Settings:
     tau: float
     compounding: int
     modelling_date: date
+    liability_mode: str = "cashflow"
+    random_seed: int = 42
     # Declared here and populated in __post_init__ so static analyzers know the attribute exists
     end_date: date = field(init=False)
 
     def __post_init__(self) -> None:
         self.end_date = self.modelling_date + relativedelta(years=self.n_proj_years)
-        # Validation examples (uncomment if needed)
-        # if self.n_proj_years <= 0:
-        #     raise ValueError("n_proj_years must be greater than 0")
-        # if self.precision < 0:
-        #     raise ValueError("precision must be positive")
+        if self.liability_mode not in ("cashflow", "unit_linked"):
+            raise ValueError("liability_mode must be 'cashflow' or 'unit_linked'")

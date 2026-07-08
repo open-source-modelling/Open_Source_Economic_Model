@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unit-Linked Liability Methodology — OSEM</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --accent: #0d9488;
+      --accent-light: #ccfbf1;
+      --accent-dark: #0f766e;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --cashflow: #6366f1;
+      --ul: #0d9488;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 16px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      max-width: 1200px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    nav.toc {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 1.5rem 1rem;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+    }
+
+    nav.toc h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    nav.toc a {
+      display: block;
+      padding: 0.35rem 0.5rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      border-radius: 4px;
+    }
+
+    nav.toc a:hover { background: var(--accent-light); color: var(--accent-dark); }
+
+    main {
+      padding: 2.5rem 3rem 4rem;
+      max-width: 900px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      line-height: 1.25;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    section {
+      margin-bottom: 3rem;
+      scroll-margin-top: 1.5rem;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      color: var(--accent-dark);
+      border-bottom: 2px solid var(--accent-light);
+      padding-bottom: 0.4rem;
+      margin-bottom: 1rem;
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      margin: 1.25rem 0 0.6rem;
+      color: var(--text);
+    }
+
+    p { margin-bottom: 0.85rem; }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-light);
+      color: var(--accent-dark);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+
+    .callout {
+      background: var(--card);
+      border-left: 4px solid var(--accent);
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      border-radius: 0 6px 6px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .callout.cashflow { border-left-color: var(--cashflow); }
+    .callout.warn { border-left-color: #f59e0b; background: #fffbeb; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .concept-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+    }
+
+    .concept-card h4 {
+      color: var(--accent-dark);
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .concept-card p { font-size: 0.9rem; margin: 0; color: var(--text-muted); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin: 1rem 0;
+      background: var(--card);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    th, td {
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .formula {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-family: "Cambria Math", "Times New Roman", serif;
+      font-size: 1rem;
+      margin: 0.5rem 0;
+      text-align: center;
+    }
+
+    .formula-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .formula-card .step-num {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 1.5rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-right: 0.5rem;
+    }
+
+    .formula-card h4 { display: inline; font-size: 0.95rem; }
+    .formula-card .formula { margin-top: 0.6rem; text-align: left; font-size: 0.95rem; }
+
+    .diagram-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.25rem 0;
+      overflow-x: auto;
+    }
+
+    .diagram-wrap figcaption {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 0.75rem;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 1.25rem 0;
+    }
+
+    .chart-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .chart-box.full { grid-column: 1 / -1; }
+
+    .chart-box h4 {
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .chart-label {
+      font-size: 0.75rem;
+      color: #b45309;
+      background: #fef3c7;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 0.5rem;
+    }
+
+    ul, ol { margin: 0.5rem 0 0.85rem 1.5rem; }
+    li { margin-bottom: 0.35rem; }
+
+    .refs a { color: var(--accent-dark); }
+    .refs li { margin-bottom: 0.5rem; }
+
+    .phase-roadmap { margin: 1.5rem 0; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      nav.toc {
+        position: static;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      main { padding: 1.5rem; }
+      .grid-2, .chart-grid { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      nav.toc { display: none; }
+      .layout { display: block; }
+      main { max-width: 100%; padding: 0; }
+      .chart-box { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <a href="#summary">Executive summary</a>
+    <a href="#comparison">Current vs proposed</a>
+    <a href="#concepts">Core concepts</a>
+    <a href="#inputs">Data inputs</a>
+    <a href="#loop">ALM main loop</a>
+    <a href="#pipeline">Calculation pipeline</a>
+    <a href="#dual-accounts">Dual cash accounts</a>
+    <a href="#cashflows">Cash conventions</a>
+    <a href="#sampling">Stochastic sampling</a>
+    <a href="#charts">Illustrative charts</a>
+    <a href="#modes">Liability modes</a>
+    <a href="#reconciliation">Reconciliation</a>
+    <a href="#roadmap">Future phases</a>
+    <a href="#refs">References</a>
+  </nav>
+
+  <main>
+    <span class="badge">OSEM · Liability Extension · MVP</span>
+    <h1>Unit-Linked Liability Methodology</h1>
+    <p class="subtitle">A visual guide to modelling unit-linked pension business in the Open-Source Economic Model</p>
+
+    <!-- 1. Executive summary -->
+    <section id="summary">
+      <h2>1. Executive summary</h2>
+      <p>
+        <strong>Unit-linked (UL)</strong> pension products link the policyholder's benefit to the
+        performance of underlying investments. Unlike traditional fixed liability cash-flow profiles,
+        UL policies do <em>not</em> generate a pre-scheduled outflow table at import time. Instead,
+        cash flows emerge each modelling period from evolving policy state: account values, premiums,
+        fees, and demographic decrements.
+      </p>
+      <div class="callout">
+        <strong>MVP scope:</strong> Single pooled asset portfolio (all policies share the same portfolio
+        return <em>r</em>), in-force policy file at t<sub>0</sub>, <strong>stochastic per-policy decrements</strong>
+        (mortality first, then lapse on survivors), <strong>dual cash accounts</strong> (fund
+        <code>bank_account</code> vs insurer <code>company_account</code>), entry fee as a fixed
+        percentage of gross premium, and a fixed <code>random_seed</code> in <code>Parameters.csv</code>
+        for reproducible liquidation outcomes. Periods need not be exactly one year — all annual
+        rates are scaled by <code>time_frac = (current_date − previous_date).days / 365.25</code>,
+        matching the asset-side convention in <code>main.py</code>.
+      </div>
+      <p>
+        This methodology extends the OSEM proof-of-concept described in
+        <a href="../AGENTS.md">AGENTS.md</a>. Prototype exploration lives in
+        <a href="LIABILITY_PROTOTYPE.ipynb">LIABILITY_PROTOTYPE.ipynb</a>.
+      </p>
+    </section>
+
+    <!-- 2. Current vs proposed -->
+    <section id="comparison">
+      <h2>2. Current vs proposed liability model</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Aspect</th>
+            <th>Current (<code>cashflow</code> mode)</th>
+            <th>Proposed (<code>unit_linked</code> mode)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Input</td>
+            <td>Pre-uploaded dated outflows (<code>Liability_Cashflow.csv</code>)</td>
+            <td>Policy in-force file + fund parameters + mortality table</td>
+          </tr>
+          <tr>
+            <td>Reserve</td>
+            <td>Implicit in the cash-flow schedule</td>
+            <td>Sum of policy account values (MV)</td>
+          </tr>
+          <tr>
+            <td>Cash flows</td>
+            <td>Fixed at import; expired each period</td>
+            <td>Generated dynamically from policy state</td>
+          </tr>
+          <tr>
+            <td>Demographics</td>
+            <td>Not used</td>
+            <td>Age/sex mortality lookup; lapse rate from fund params</td>
+          </tr>
+          <tr>
+            <td>Asset link</td>
+            <td>Independent of portfolio return</td>
+            <td>MV capitalized by portfolio return <em>r</em> each period</td>
+          </tr>
+          <tr>
+            <td>Fee routing</td>
+            <td>N/A</td>
+            <td>Entry and admin fees → <code>company_account</code> (insurer), not investable fund cash</td>
+          </tr>
+          <tr>
+            <td>Period length</td>
+            <td>N/A</td>
+            <td>Sub-annual steps via <code>time_frac</code>; annual rates converted per period</td>
+          </tr>
+          <tr>
+            <td>Decrements</td>
+            <td>N/A</td>
+            <td>Stochastic Bernoulli sampling; full liquidation if sampled</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <figure class="diagram-wrap">
+        <svg viewBox="0 0 720 220" width="100%" role="img" aria-label="Comparison of cashflow and unit-linked paths">
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/>
+            </marker>
+          </defs>
+          <!-- Cashflow path -->
+          <text x="10" y="22" font-size="12" font-weight="600" fill="#6366f1">cashflow mode</text>
+          <rect x="10" y="32" width="110" height="36" rx="6" fill="#eef2ff" stroke="#6366f1"/>
+          <text x="65" y="54" text-anchor="middle" font-size="11" fill="#1e293b">Liability_Cashflow.csv</text>
+          <line x1="120" y1="50" x2="155" y2="50" stroke="#64748b" marker-end="url(#arrow)"/>
+          <rect x="158" y="32" width="90" height="36" rx="6" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="203" y="54" text-anchor="middle" font-size="11">liab_df matrix</text>
+          <line x1="248" y1="50" x2="283" y2="50" stroke="#64748b" marker-end="url(#arrow)"/>
+          <rect x="286" y="32" width="120" height="36" rx="6" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="346" y="54" text-anchor="middle" font-size="11">process_expired_liab</text>
+          <line x1="406" y1="50" x2="441" y2="50" stroke="#64748b" marker-end="url(#arrow)"/>
+          <rect x="444" y="32" width="100" height="36" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="494" y="54" text-anchor="middle" font-size="11">bank_account</text>
+
+          <!-- Unit-linked path -->
+          <text x="10" y="112" font-size="12" font-weight="600" fill="#0d9488">unit_linked mode</text>
+          <rect x="10" y="122" width="130" height="36" rx="6" fill="#ccfbf1" stroke="#0d9488"/>
+          <text x="75" y="144" text-anchor="middle" font-size="10" fill="#1e293b">Policies + Fund + Mortality</text>
+          <line x1="140" y1="140" x2="175" y2="140" stroke="#64748b" marker-end="url(#arrow)"/>
+          <rect x="178" y="122" width="100" height="36" rx="6" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="228" y="144" text-anchor="middle" font-size="11">ul_mv_df state</text>
+          <line x1="278" y1="140" x2="313" y2="140" stroke="#64748b" marker-end="url(#arrow)"/>
+          <rect x="316" y="122" width="130" height="36" rx="6" fill="#ccfbf1" stroke="#0d9488"/>
+          <text x="381" y="144" text-anchor="middle" font-size="10">process_unit_linked_period</text>
+          <line x1="446" y1="140" x2="481" y2="140" stroke="#64748b" marker-end="url(#arrow)"/>
+          <rect x="484" y="122" width="90" height="36" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="529" y="138" text-anchor="middle" font-size="9">bank_account</text>
+          <text x="529" y="150" text-anchor="middle" font-size="8" fill="#64748b">fund</text>
+          <rect x="580" y="122" width="90" height="36" rx="6" fill="#e0e7ff" stroke="#6366f1"/>
+          <text x="625" y="138" text-anchor="middle" font-size="8">company_acct</text>
+          <text x="625" y="150" text-anchor="middle" font-size="8" fill="#64748b">insurer</text>
+          <line x1="446" y1="132" x2="478" y2="132" stroke="#6366f1" stroke-dasharray="3"/>
+          <line x1="478" y1="132" x2="478" y2="118" stroke="#6366f1" stroke-dasharray="3"/>
+          <line x1="478" y1="118" x2="580" y2="118" stroke="#6366f1" stroke-dasharray="3" marker-end="url(#arrow)"/>
+          <text x="520" y="112" font-size="7" fill="#6366f1">fees</text>
+
+          <!-- Shared trade -->
+          <line x1="494" y1="68" x2="494" y2="95" stroke="#94a3b8" stroke-dasharray="4"/>
+          <line x1="534" y1="158" x2="534" y2="175" stroke="#94a3b8"/>
+          <line x1="494" y1="95" x2="534" y2="95" stroke="#94a3b8"/>
+          <line x1="534" y1="95" x2="534" y2="122" stroke="#94a3b8"/>
+          <rect x="570" y="80" width="80" height="36" rx="6" fill="#f1f5f9" stroke="#64748b"/>
+          <text x="610" y="102" text-anchor="middle" font-size="11">trade()</text>
+          <line x1="544" y1="98" x2="570" y2="98" stroke="#64748b" marker-end="url(#arrow)"/>
+        </svg>
+        <figcaption>Unit-linked mode splits fees to company_account; fund bank_account feeds trade()</figcaption>
+      </figure>
+    </section>
+
+    <!-- 3. Core concepts -->
+    <section id="concepts">
+      <h2>3. Core concepts</h2>
+      <div class="grid-2">
+        <div class="concept-card">
+          <h4>Account value (MV)</h4>
+          <p>Policy reserve / unit-linked account balance. Tracked per policy in simulation DataFrames. Not a separate asset book — capitalized by the shared portfolio return.</p>
+        </div>
+        <div class="concept-card">
+          <h4>Guaranteed value (GV)</h4>
+          <p>Optional floor tracked when <code>Is_Guaranteed = 1</code>. Capitalized at the same rate <em>r</em> in MVP; guarantee mechanics can be extended later.</p>
+        </div>
+        <div class="concept-card">
+          <h4>Single pool</h4>
+          <p>All policies share one asset mix. Portfolio return <em>r</em> = After-growth MV ÷ previous End MV − 1, already computed on the asset side.</p>
+        </div>
+        <div class="concept-card">
+          <h4>Stochastic decrements</h4>
+          <p>Per-policy Bernoulli draws using period-scaled q and lapse. If sampled, pay full MV and remove policy; otherwise MV unchanged. Mortality before lapse.</p>
+        </div>
+        <div class="concept-card">
+          <h4>Company account</h4>
+          <p>Insurer cash balance (<code>company_account</code>). Receives entry fee (gross − net premium) and admin fee — never passed through <code>trade()</code>.</p>
+        </div>
+        <div class="concept-card">
+          <h4>time_frac</h4>
+          <p>Elapsed year fraction between dates. Annual premium growth, admin fee, lapse, and mortality rates are converted to the actual period length.</p>
+        </div>
+        <div class="concept-card">
+          <h4>Random seed</h4>
+          <p>Fixed <code>random_seed</code> in Parameters.csv ensures reproducible sampling across runs with identical inputs.</p>
+        </div>
+      </div>
+
+      <figure class="diagram-wrap">
+        <svg viewBox="0 0 600 280" width="100%" role="img" aria-label="Policy state diagram">
+          <rect x="20" y="20" width="260" height="240" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+          <text x="150" y="48" text-anchor="middle" font-size="13" font-weight="600" fill="#475569">Static (loaded once)</text>
+          <rect x="40" y="62" width="100" height="28" rx="4" fill="#fff" stroke="#94a3b8"/>
+          <text x="90" y="80" text-anchor="middle" font-size="11">policy_id</text>
+          <rect x="150" y="62" width="110" height="28" rx="4" fill="#fff" stroke="#94a3b8"/>
+          <text x="205" y="80" text-anchor="middle" font-size="11">birth_date</text>
+          <rect x="40" y="98" width="100" height="28" rx="4" fill="#fff" stroke="#94a3b8"/>
+          <text x="90" y="116" text-anchor="middle" font-size="11">is_female</text>
+          <rect x="150" y="98" width="110" height="28" rx="4" fill="#fff" stroke="#94a3b8"/>
+          <text x="205" y="116" text-anchor="middle" font-size="11">is_guaranteed</text>
+
+          <rect x="320" y="20" width="260" height="240" rx="8" fill="#ccfbf1" stroke="#0d9488"/>
+          <text x="450" y="48" text-anchor="middle" font-size="13" font-weight="600" fill="#0f766e">Evolving (per period)</text>
+          <rect x="340" y="62" width="90" height="28" rx="4" fill="#fff" stroke="#0d9488"/>
+          <text x="385" y="80" text-anchor="middle" font-size="11">premium</text>
+          <rect x="440" y="62" width="120" height="28" rx="4" fill="#fff" stroke="#0d9488"/>
+          <text x="500" y="80" text-anchor="middle" font-size="11">MV (account)</text>
+          <rect x="340" y="98" width="90" height="28" rx="4" fill="#fff" stroke="#0d9488"/>
+          <text x="385" y="116" text-anchor="middle" font-size="11">GV</text>
+
+          <text x="450" y="155" text-anchor="middle" font-size="10" fill="#64748b">Stored in ul_premium_df, ul_mv_df, ul_gv_df</text>
+          <text x="450" y="175" text-anchor="middle" font-size="10" fill="#64748b">rows = policy_id · columns = dates</text>
+
+          <line x1="280" y1="140" x2="320" y2="140" stroke="#0d9488" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="300" y="130" text-anchor="middle" font-size="9" fill="#0d9488">each period</text>
+        </svg>
+        <figcaption>Two-layer design: static policy metadata + evolving state in DataFrames (mirrors equity/bond pattern)</figcaption>
+      </figure>
+    </section>
+
+    <!-- 4. Data inputs -->
+    <section id="inputs">
+      <h2>4. Data inputs</h2>
+
+      <h3>4.1 Unit_Linked_Policies.csv (in-force at t<sub>0</sub>)</h3>
+      <table>
+        <thead><tr><th>Column</th><th>Type</th><th>Example</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Policy_ID</td><td>int</td><td>1001</td><td>Unique policy identifier</td></tr>
+          <tr><td>Birth_Date</td><td>dd/mm/yyyy</td><td>15/03/1970</td><td>For age-based mortality lookup</td></tr>
+          <tr><td>Is_Female</td><td>0 / 1</td><td>1</td><td>Selects male or female mortality column</td></tr>
+          <tr><td>Is_Guaranteed</td><td>0 / 1</td><td>0</td><td>Whether GV is tracked and capitalized</td></tr>
+          <tr><td>Premium</td><td>float</td><td>5000</td><td>Annual premium (grows each period)</td></tr>
+          <tr><td>MV</td><td>float</td><td>120000</td><td>Opening account value</td></tr>
+          <tr><td>GV</td><td>float</td><td>0</td><td>Opening guaranteed value (0 if not guaranteed)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>4.2 Unit_Linked_Fund.csv (single-pool parameters)</h3>
+      <table>
+        <thead><tr><th>Column</th><th>Example</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Fund_ID</td><td>1</td><td>Single row for pooled MVP</td></tr>
+          <tr><td>Lapse_Rate</td><td>0.03</td><td>Annual lapse rate (converted via time_frac)</td></tr>
+          <tr><td>Admin_Fee</td><td>0.005</td><td>Annual fee as proportion of MV → company_account</td></tr>
+          <tr><td>Entry_Fee</td><td>0.02</td><td>Fixed % of gross premium → company_account</td></tr>
+          <tr><td>Premium_Growth</td><td>0.02</td><td>Annual growth rate applied to premium (via time_frac)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>4.3 mortality.csv (existing file)</h3>
+      <table>
+        <thead><tr><th>Column</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>AGE</td><td>Integer age 0–110</td></tr>
+          <tr><td>MALE</td><td>Annual mortality rate q<sub>x</sub> for males</td></tr>
+          <tr><td>FEMALE</td><td>Annual mortality rate q<sub>x</sub> for females</td></tr>
+        </tbody>
+      </table>
+
+      <h3>4.4 Parameters.csv — random seed</h3>
+      <table>
+        <thead><tr><th>Parameter</th><th>Example</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>random_seed</td><td>42</td><td>Integer seed for reproducible per-policy mortality and lapse draws</td></tr>
+          <tr><td>liability_mode</td><td>unit_linked</td><td><code>cashflow</code> (default) or <code>unit_linked</code></td></tr>
+        </tbody>
+      </table>
+
+      <figure class="diagram-wrap">
+        <svg viewBox="0 0 560 200" width="100%" role="img" aria-label="Input entity relationships">
+          <rect x="30" y="60" width="140" height="70" rx="8" fill="#ccfbf1" stroke="#0d9488"/>
+          <text x="100" y="90" text-anchor="middle" font-size="12" font-weight="600">Policies</text>
+          <text x="100" y="110" text-anchor="middle" font-size="10" fill="#64748b">age, sex, MV, premium</text>
+
+          <rect x="210" y="20" width="130" height="55" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="275" y="45" text-anchor="middle" font-size="11" font-weight="600">Fund params</text>
+          <text x="275" y="62" text-anchor="middle" font-size="9" fill="#64748b">lapse, fees, growth</text>
+
+          <rect x="210" y="120" width="130" height="55" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="275" y="145" text-anchor="middle" font-size="11" font-weight="600">Mortality table</text>
+          <text x="275" y="162" text-anchor="middle" font-size="9" fill="#64748b">lookup by age + sex</text>
+
+          <rect x="400" y="60" width="140" height="70" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="470" y="95" text-anchor="middle" font-size="12" font-weight="600">Period engine</text>
+          <text x="470" y="115" text-anchor="middle" font-size="10" fill="#64748b">MV updates + cash flows</text>
+
+          <line x1="170" y1="85" x2="210" y2="48" stroke="#64748b" marker-end="url(#arrow)"/>
+          <text x="185" y="58" font-size="9" fill="#64748b">all policies</text>
+          <line x1="170" y1="105" x2="210" y2="148" stroke="#64748b" marker-end="url(#arrow)"/>
+          <text x="178" y="135" font-size="9" fill="#64748b">age, sex</text>
+          <line x1="340" y1="48" x2="400" y2="85" stroke="#64748b" marker-end="url(#arrow)"/>
+          <line x1="340" y1="148" x2="400" y2="105" stroke="#64748b" marker-end="url(#arrow)"/>
+        </svg>
+        <figcaption>Input data relationships for the unit-linked period engine</figcaption>
+      </figure>
+    </section>
+
+    <!-- 5. ALM main loop -->
+    <section id="loop">
+      <h2>5. Position in the ALM main loop</h2>
+      <p>
+        Unit-linked processing runs <strong>after</strong> portfolio mark-to-market growth and
+        <strong>before</strong> proportional <code>trade()</code> — the same slot as the placeholder
+        comments in <code>main.py</code>.
+      </p>
+
+      <figure class="diagram-wrap">
+        <svg viewBox="0 0 700 90" width="100%" role="img" aria-label="Main loop timeline">
+          <rect x="10" y="30" width="85" height="40" rx="6" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="52" y="55" text-anchor="middle" font-size="9">Carry forward</text>
+          <rect x="105" y="30" width="95" height="40" rx="6" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="152" y="50" text-anchor="middle" font-size="8">Expire asset</text>
+          <text x="152" y="62" text-anchor="middle" font-size="8">&amp; static liab CFs</text>
+          <rect x="210" y="30" width="95" height="40" rx="6" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="257" y="55" text-anchor="middle" font-size="9">Mark-to-market</text>
+          <rect x="315" y="25" width="110" height="50" rx="6" fill="#ccfbf1" stroke="#0d9488" stroke-width="2"/>
+          <text x="370" y="48" text-anchor="middle" font-size="9" font-weight="600" fill="#0f766e">Unit-linked</text>
+          <text x="370" y="62" text-anchor="middle" font-size="9" font-weight="600" fill="#0f766e">period</text>
+          <rect x="435" y="30" width="85" height="40" rx="6" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="477" y="55" text-anchor="middle" font-size="9">trade()</text>
+          <rect x="530" y="30" width="85" height="40" rx="6" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="572" y="55" text-anchor="middle" font-size="9">Log summary</text>
+          <polygon points="625,50 640,42 640,58" fill="#0d9488"/>
+          <text x="655" y="55" font-size="9" fill="#64748b">next period</text>
+        </svg>
+        <figcaption>Modelling period (any length) — UL block highlighted between growth and trading</figcaption>
+      </figure>
+
+      <div class="callout">
+        In <code>cashflow</code> mode, static liability outflows are expired earlier in the loop (step 2).
+        In <code>unit_linked</code> mode, that step is skipped and UL cash flows are generated in step 4 instead.
+      </div>
+    </section>
+
+    <!-- 6. Calculation pipeline -->
+    <section id="pipeline">
+      <h2>6. Per-period calculation pipeline</h2>
+      <p>
+        Let <em>r</em> = annual portfolio return rate and <code>time_frac = (current_date − previous_date).days / 365.25</code>.
+        Steps run after growth, before <code>trade()</code>. Mortality is sampled before lapse (survivors only).
+        Period portfolio return in summary = (1 + <em>r</em>)<sup>time_frac</sup> − 1. Annual fund parameters are converted via <code>time_frac</code>.
+      </p>
+
+      <div class="formula-card">
+        <span class="step-num">1</span><h4>Capitalize</h4>
+        <div class="formula">MV ← MV × (1 + r)<sup>time_frac</sup> &nbsp;&nbsp;|&nbsp;&nbsp; GV ← GV × (1 + r)<sup>time_frac</sup> if guaranteed</div>
+      </div>
+      <div class="formula-card">
+        <span class="step-num">2</span><h4>Premiums and entry fee</h4>
+        <div class="formula">gross_premium ← premium × (1 + premium_growth)<sup>time_frac</sup><br>
+        entry_fee_cash ← gross_premium × entry_fee &nbsp;&nbsp;# = gross − net<br>
+        net_premium ← gross_premium − entry_fee_cash<br>
+        bank_account += gross_premium<br>
+        company_account += entry_fee_cash<br>
+        MV += net_premium</div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin:0.5rem 0 0"><code>bank_account</code> receives the full gross premium (entry fee is <em>not</em> debited). <code>company_account</code> records the entry-fee portion (gross − net) as insurer revenue. Net premium is allocated to MV only.</p>
+      </div>
+      <div class="formula-card">
+        <span class="step-num">3</span><h4>Admin fee</h4>
+        <div class="formula">admin_fee_cash ← MV × (1 − (1 − admin_fee)<sup>time_frac</sup>) &nbsp;;&nbsp; MV ← MV − admin_fee_cash &nbsp;;&nbsp; company_account += admin_fee_cash</div>
+      </div>
+      <div class="formula-card">
+        <span class="step-num">4</span><h4>Mortality sampling (stochastic)</h4>
+        <div class="formula">For each active policy: q<sub>annual</sub> ← mortality_table[sex, age] &nbsp;;&nbsp; q<sub>period</sub> ← 1 − (1 − q<sub>annual</sub>)<sup>time_frac</sup><br>
+        Draw u ~ Uniform(0,1) using random_seed. If u &lt; q<sub>period</sub>: bank_account −= MV ; remove policy. Else: keep MV unchanged.</div>
+      </div>
+      <div class="formula-card">
+        <span class="step-num">5</span><h4>Lapse sampling (survivors only)</h4>
+        <div class="formula">lapse<sub>period</sub> ← 1 − (1 − lapse_rate)<sup>time_frac</sup><br>
+        For each remaining policy: draw u ~ Uniform(0,1). If u &lt; lapse<sub>period</sub>: bank_account −= MV ; remove policy. Else: keep MV unchanged.</div>
+      </div>
+      <div class="formula-card">
+        <span class="step-num">6</span><h4>Reserve</h4>
+        <div class="formula">UL reserve = Σ MV across <strong>remaining active policies only</strong></div>
+      </div>
+
+      <h3 id="sampling">Per-policy sampling flow</h3>
+      <figure class="diagram-wrap">
+        <svg viewBox="0 0 520 340" width="100%" role="img" aria-label="Per-policy sampling flowchart">
+          <rect x="190" y="10" width="140" height="32" rx="6" fill="#ccfbf1" stroke="#0d9488"/>
+          <text x="260" y="30" text-anchor="middle" font-size="11" font-weight="600">Active policy</text>
+          <line x1="260" y1="42" x2="260" y2="58" stroke="#64748b" marker-end="url(#arrow)"/>
+          <rect x="170" y="58" width="180" height="28" rx="4" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="260" y="76" text-anchor="middle" font-size="10">1. Capitalize MV × (1+r)^time_frac</text>
+          <line x1="260" y1="86" x2="260" y2="102" stroke="#64748b" marker-end="url(#arrow)"/>
+          <rect x="150" y="102" width="220" height="28" rx="4" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="260" y="120" text-anchor="middle" font-size="10">2. Gross prem → bank; entry fee → company (no bank debit)</text>
+          <line x1="260" y1="130" x2="260" y2="146" stroke="#64748b" marker-end="url(#arrow)"/>
+          <rect x="155" y="146" width="210" height="28" rx="4" fill="#e0e7ff" stroke="#6366f1"/>
+          <text x="260" y="164" text-anchor="middle" font-size="10">3. Admin fee → company_account</text>
+          <line x1="260" y1="174" x2="260" y2="190" stroke="#64748b" marker-end="url(#arrow)"/>
+          <polygon points="260,190 310,210 260,230 210,210" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="260" y="214" text-anchor="middle" font-size="9">u &lt; q<sub>x</sub>?</text>
+          <line x1="310" y1="210" x2="380" y2="210" stroke="#dc2626" marker-end="url(#arrow)"/>
+          <text x="340" y="202" font-size="9" fill="#dc2626">yes</text>
+          <rect x="385" y="192" width="120" height="36" rx="4" fill="#fee2e2" stroke="#ef4444"/>
+          <text x="445" y="208" text-anchor="middle" font-size="9">Pay full MV</text>
+          <text x="445" y="220" text-anchor="middle" font-size="9">Remove policy</text>
+          <line x1="260" y1="230" x2="260" y2="250" stroke="#64748b" marker-end="url(#arrow)"/>
+          <text x="248" y="244" font-size="9" fill="#64748b">no</text>
+          <polygon points="260,250 310,270 260,290 210,270" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="260" y="274" text-anchor="middle" font-size="9">u &lt; lapse?</text>
+          <line x1="310" y1="270" x2="380" y2="270" stroke="#dc2626" marker-end="url(#arrow)"/>
+          <text x="340" y="262" font-size="9" fill="#dc2626">yes</text>
+          <rect x="385" y="252" width="120" height="36" rx="4" fill="#fee2e2" stroke="#ef4444"/>
+          <text x="445" y="268" text-anchor="middle" font-size="9">Pay full MV</text>
+          <text x="445" y="280" text-anchor="middle" font-size="9">Remove policy</text>
+          <line x1="260" y1="290" x2="260" y2="310" stroke="#16a34a" marker-end="url(#arrow)"/>
+          <text x="248" y="304" font-size="9" fill="#64748b">no</text>
+          <rect x="195" y="310" width="130" height="28" rx="4" fill="#ccfbf1" stroke="#0d9488"/>
+          <text x="260" y="328" text-anchor="middle" font-size="10" font-weight="600">Keep in portfolio</text>
+        </svg>
+        <figcaption>Mortality sampled first; lapse only among policies that survive death draw</figcaption>
+      </figure>
+
+      <h3>Illustrative waterfall — surviving policy (MV<sub>0</sub> = 100,000)</h3>
+      <p style="font-size:0.9rem;color:var(--text-muted)">Fee path only (policy survives both draws): r = 5%, gross premium = 5,100, entry_fee = 2%, admin_fee = 0.5%. Decrements are <em>not</em> proportional MV reductions — they are all-or-nothing liquidations.</p>
+
+      <figure class="diagram-wrap">
+        <svg viewBox="0 0 480 300" width="100%" role="img" aria-label="MV waterfall chart fees only">
+          <text x="70" y="25" text-anchor="middle" font-size="10" fill="#64748b">Start</text>
+          <rect x="40" y="40" width="60" height="180" fill="#94a3b8" rx="3"/>
+          <text x="70" y="32" text-anchor="middle" font-size="11" font-weight="600">100k</text>
+          <text x="150" y="25" text-anchor="middle" font-size="10" fill="#64748b">+5% cap</text>
+          <rect x="120" y="32" width="60" height="188" fill="#0d9488" rx="3"/>
+          <text x="150" y="24" text-anchor="middle" font-size="10" font-weight="600">105k</text>
+          <text x="230" y="25" text-anchor="middle" font-size="10" fill="#64748b">+net prem</text>
+          <rect x="200" y="28" width="60" height="192" fill="#0d9488" rx="3"/>
+          <text x="230" y="20" text-anchor="middle" font-size="10" font-weight="600">109.9k</text>
+          <text x="310" y="25" text-anchor="middle" font-size="10" fill="#64748b">−admin</text>
+          <rect x="280" y="30" width="60" height="190" fill="#0d9488" rx="3"/>
+          <text x="310" y="22" text-anchor="middle" font-size="10" font-weight="600">109.4k</text>
+          <line x1="30" y1="220" x2="360" y2="220" stroke="#e2e8f0"/>
+          <text x="200" y="248" text-anchor="middle" font-size="11" fill="#64748b">End MV = 109,400 if policy survives</text>
+          <text x="70" y="268" font-size="9" fill="#6366f1">entry fee 102 → company</text>
+          <text x="230" y="268" font-size="9" fill="#6366f1">admin fee 550 → company</text>
+          <text x="70" y="282" font-size="9" fill="#16a34a">gross prem → bank; net → MV; entry fee → company (ledger)</text>
+        </svg>
+        <figcaption>Waterfall for fee and capitalization steps on one surviving policy (stochastic decrements excluded)</figcaption>
+      </figure>
+    </section>
+
+    <!-- Dual accounts section inserted before cash conventions -->
+    <section id="dual-accounts">
+      <h2>7. Dual cash accounts</h2>
+      <p>Fees belong to the <strong>company</strong>, not the fund. Two separate balances are tracked each period:</p>
+      <table>
+        <thead>
+          <tr><th>Account</th><th>Owner</th><th>Credits</th><th>Debits</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>bank_account</code></td>
+            <td>Fund / policyholder pool</td>
+            <td>Gross premium inflows (full amount; entry fee not debited)</td>
+            <td>Full MV on liquidations</td>
+          </tr>
+          <tr>
+            <td><code>company_account</code></td>
+            <td>Insurer</td>
+            <td>Entry fee, admin fee</td>
+            <td>— (accumulates; payout not modelled in MVP)</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <strong>Key rule:</strong> Fees never pass through <code>trade()</code> — they are insurer revenue, not investable fund liquidity.
+      </div>
+      <figure class="diagram-wrap">
+        <svg viewBox="0 0 640 200" width="100%" role="img" aria-label="Dual account architecture">
+          <rect x="20" y="70" width="110" height="60" rx="6" fill="#ccfbf1" stroke="#0d9488"/>
+          <text x="75" y="95" text-anchor="middle" font-size="11" font-weight="600">Policies</text>
+          <text x="75" y="112" text-anchor="middle" font-size="9" fill="#64748b">premiums, MV</text>
+          <rect x="180" y="50" width="120" height="100" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="240" y="88" text-anchor="middle" font-size="11" font-weight="600">bank_account</text>
+          <text x="240" y="105" text-anchor="middle" font-size="9" fill="#64748b">fund · trade()</text>
+          <rect x="180" y="165" width="120" height="28" rx="4" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="240" y="183" text-anchor="middle" font-size="9">trade() rebalancing</text>
+          <line x1="240" y1="150" x2="240" y2="165" stroke="#64748b" marker-end="url(#arrow)"/>
+          <rect x="350" y="50" width="130" height="100" rx="6" fill="#e0e7ff" stroke="#6366f1"/>
+          <text x="415" y="88" text-anchor="middle" font-size="11" font-weight="600">company_account</text>
+          <text x="415" y="105" text-anchor="middle" font-size="9" fill="#64748b">insurer revenue</text>
+          <rect x="520" y="40" width="100" height="45" rx="6" fill="#fee2e2" stroke="#ef4444"/>
+          <text x="570" y="62" text-anchor="middle" font-size="10">Beneficiaries</text>
+          <text x="570" y="76" text-anchor="middle" font-size="9" fill="#64748b">death payouts</text>
+          <rect x="520" y="115" width="100" height="45" rx="6" fill="#fee2e2" stroke="#ef4444"/>
+          <text x="570" y="137" text-anchor="middle" font-size="10">Surrenders</text>
+          <text x="570" y="151" text-anchor="middle" font-size="9" fill="#64748b">lapse payouts</text>
+          <path d="M130,90 L175,90" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="148" y="82" font-size="8" fill="#16a34a">gross prem</text>
+          <path d="M130,110 L175,110 L175,130 L350,130" fill="none" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="250" y="125" font-size="8" fill="#6366f1">entry fee (gross−net) + admin</text>
+          <path d="M300,85 Q410,55 520,62" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M300,115 Q410,145 520,138" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow)"/>
+        </svg>
+        <figcaption>Fund bank receives gross premium then transfers entry fee to company_account; admin fees go directly to company</figcaption>
+      </figure>
+    </section>
+
+    <!-- 8. Cash conventions -->
+    <section id="cashflows">
+      <h2>8. Cash flow and sign conventions</h2>
+      <table>
+        <thead>
+          <tr><th>Flow</th><th>Destination</th><th>Summary column</th><th>Sign in output</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Gross premium</td><td><code>bank_account</code> (then split)</td><td>UL gross premium cash flow</td><td>Positive</td></tr>
+          <tr><td>Entry fee (gross − net)</td><td><code>company_account</code></td><td>UL entry fee cash flow</td><td>Positive</td></tr>
+          <tr><td>Net premium (fund retained)</td><td><code>bank_account</code></td><td>UL net premium cash flow</td><td>Positive</td></tr>
+          <tr><td>Admin fee</td><td><code>company_account</code></td><td>UL admin fee cash flow</td><td>Positive</td></tr>
+          <tr><td>Death benefit (liquidation)</td><td><code>bank_account</code> debit</td><td>UL mortality cash flow</td><td>Negative</td></tr>
+          <tr><td>Surrender (liquidation)</td><td><code>bank_account</code> debit</td><td>UL lapse cash flow</td><td>Negative</td></tr>
+          <tr><td>UL reserve</td><td>—</td><td>UL reserve</td><td>Level (active policies only)</td></tr>
+          <tr><td>Company balance</td><td>—</td><td>Company account</td><td>Level</td></tr>
+          <tr><td>Policy counts</td><td>—</td><td>UL policies in force / UL deaths / UL lapses</td><td>Count</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 9. Charts -->
+    <section id="charts">
+      <h2>9. Illustrative charts</h2>
+      <div class="callout warn">
+        <strong>Illustrative data only.</strong> Synthetic toy numbers. Mortality and lapse bars show
+        <em>realized</em> liquidation cash (full MV × policies removed), not expected MV × q.
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-box full">
+          <span class="chart-label">Illustrative</span>
+          <h4>Total UL reserve over 10 periods (active policies)</h4>
+          <canvas id="chartReserve" height="80"></canvas>
+        </div>
+        <div class="chart-box">
+          <span class="chart-label">Illustrative</span>
+          <h4>Policies in force over time</h4>
+          <canvas id="chartInForce" height="120"></canvas>
+        </div>
+        <div class="chart-box">
+          <span class="chart-label">Illustrative</span>
+          <h4>Period cash flows (fund vs company)</h4>
+          <canvas id="chartCashflows" height="120"></canvas>
+        </div>
+        <div class="chart-box full">
+          <span class="chart-label">Illustrative</span>
+          <h4>Company account balance</h4>
+          <canvas id="chartFeeAccount" height="70"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. Liability modes -->
+    <section id="modes">
+      <h2>10. Liability mode switch</h2>
+      <p>
+        A run parameter <code>liability_mode</code> in <code>Parameters.csv</code> selects which
+        liability path is active. Default is <code>cashflow</code> so existing runs are unchanged.
+      </p>
+
+      <figure class="diagram-wrap">
+        <svg viewBox="0 0 480 200" width="100%" role="img" aria-label="Liability mode decision tree">
+          <rect x="190" y="10" width="100" height="36" rx="18" fill="#f1f5f9" stroke="#64748b"/>
+          <text x="240" y="33" text-anchor="middle" font-size="11">liability_mode?</text>
+
+          <line x1="200" y1="46" x2="80" y2="80" stroke="#64748b"/>
+          <line x1="240" y1="46" x2="240" y2="80" stroke="#64748b"/>
+          <line x1="280" y1="46" x2="400" y2="80" stroke="#64748b" stroke-dasharray="4"/>
+
+          <rect x="20" y="80" width="120" height="50" rx="6" fill="#eef2ff" stroke="#6366f1"/>
+          <text x="80" y="102" text-anchor="middle" font-size="11" font-weight="600">cashflow</text>
+          <text x="80" y="118" text-anchor="middle" font-size="9" fill="#64748b">default · static CSV</text>
+
+          <rect x="180" y="80" width="120" height="50" rx="6" fill="#ccfbf1" stroke="#0d9488"/>
+          <text x="240" y="102" text-anchor="middle" font-size="11" font-weight="600">unit_linked</text>
+          <text x="240" y="118" text-anchor="middle" font-size="9" fill="#64748b">dynamic UL engine</text>
+
+          <rect x="340" y="80" width="120" height="50" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="4"/>
+          <text x="400" y="102" text-anchor="middle" font-size="11" fill="#94a3b8">both</text>
+          <text x="400" y="118" text-anchor="middle" font-size="9" fill="#94a3b8">future · not MVP</text>
+
+          <rect x="20" y="155" width="120" height="32" rx="4" fill="#f1f5f9" stroke="#94a3b8"/>
+          <text x="80" y="175" text-anchor="middle" font-size="9">Liability_Cashflow.csv</text>
+
+          <rect x="160" y="155" width="160" height="32" rx="4" fill="#ccfbf1" stroke="#0d9488"/>
+          <text x="240" y="175" text-anchor="middle" font-size="9">Policies + Fund + Mortality CSVs</text>
+        </svg>
+        <figcaption>Decision tree for liability_mode parameter</figcaption>
+      </figure>
+    </section>
+
+    <!-- 11. Reconciliation -->
+    <section id="reconciliation">
+      <h2>11. Reconciliation checks</h2>
+      <p>When implemented, these identities should hold each period (within rounding tolerance):</p>
+      <ul>
+        <li><strong>Reserve bridge:</strong> Δ(UL reserve) reflects capitalization + net premiums − admin fees on survivors, minus full MV of liquidated policies (not proportional q × MV)</li>
+        <li><strong>t₀ consistency:</strong> UL reserve at modelling date = sum of uploaded in-force MV values</li>
+        <li><strong>Fund cash bridge:</strong> Start cash + asset cash flows + net UL premiums − liquidation payouts + trade effect ≈ End cash</li>
+        <li><strong>Company account bridge:</strong> closing = opening + entry fees + admin fees</li>
+        <li><strong>Policy count:</strong> policies in force + deaths + lapses = previous period in force</li>
+        <li><strong>Reproducibility:</strong> identical inputs and <code>random_seed</code> → identical death/lapse outcomes</li>
+        <li><strong>Sign consistency:</strong> Benefit columns negative; premium and fee inflow columns positive</li>
+      </ul>
+    </section>
+
+    <!-- 12. Roadmap -->
+    <section id="roadmap">
+      <h2>12. Out of scope — future phases</h2>
+      <figure class="diagram-wrap phase-roadmap">
+        <svg viewBox="0 0 700 120" width="100%" role="img" aria-label="Implementation roadmap">
+          <line x1="50" y1="60" x2="650" y2="60" stroke="#e2e8f0" stroke-width="4"/>
+          <!-- Phase 1 -->
+          <circle cx="100" cy="60" r="14" fill="#0d9488"/>
+          <text x="100" y="30" text-anchor="middle" font-size="11" font-weight="600" fill="#0f766e">Phase 1 · MVP</text>
+          <text x="100" y="95" text-anchor="middle" font-size="9" fill="#64748b">fees · stochastic decrements</text>
+          <!-- Phase 2 -->
+          <circle cx="300" cy="60" r="12" fill="#94a3b8"/>
+          <text x="300" y="30" text-anchor="middle" font-size="11" font-weight="600" fill="#475569">Phase 2</text>
+          <text x="300" y="95" text-anchor="middle" font-size="9" fill="#64748b">New business</text>
+          <text x="300" y="108" text-anchor="middle" font-size="9" fill="#64748b">lifecycle fund migration</text>
+          <!-- Phase 3 -->
+          <circle cx="500" cy="60" r="12" fill="#94a3b8"/>
+          <text x="500" y="30" text-anchor="middle" font-size="11" font-weight="600" fill="#475569">Phase 3</text>
+          <text x="500" y="95" text-anchor="middle" font-size="9" fill="#64748b">Full RESERVE() DCF</text>
+          <text x="500" y="108" text-anchor="middle" font-size="9" fill="#64748b">fee payouts to shareholders</text>
+          <!-- Phase 4 -->
+          <circle cx="620" cy="60" r="12" fill="#cbd5e1"/>
+          <text x="620" y="30" text-anchor="middle" font-size="11" font-weight="600" fill="#94a3b8">Phase 4</text>
+          <text x="620" y="95" text-anchor="middle" font-size="9" fill="#94a3b8">morbidity · retirement</text>
+          <text x="620" y="108" text-anchor="middle" font-size="9" fill="#94a3b8">multi-fund buckets</text>
+        </svg>
+        <figcaption>Planned evolution beyond the MVP scope</figcaption>
+      </figure>
+      <table>
+        <thead><tr><th>Feature</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>New business</td><td>Future</td><td>Add policies each period from New_Business.csv</td></tr>
+          <tr><td>Lifecycle fund migration</td><td>Future</td><td>Transition age, per-fund asset buckets</td></tr>
+          <tr><td>Full RESERVE() DCF</td><td>Future</td><td>Yield curve + future CF projection</td></tr>
+          <tr><td>Company account payouts</td><td>Future</td><td>Company account currently accumulates only</td></tr>
+          <tr><td>Morbidity / retirement</td><td>Future</td><td>SocietyClass stubs exist</td></tr>
+          <tr><td>Multi-fund asset allocation</td><td>Future</td><td>MVP: single pooled portfolio</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 13. References -->
+    <section id="refs" class="refs">
+      <h2>13. References</h2>
+      <ul>
+        <li><a href="LIABILITY_PROTOTYPE.ipynb">Liability_Dev/LIABILITY_PROTOTYPE.ipynb</a> — original unit-linked pension prototype</li>
+        <li><a href="../Documentation/Unit_Linked_Methodology.md">Documentation/Unit_Linked_Methodology.md</a> — concise text summary</li>
+        <li><a href="../AGENTS.md">AGENTS.md</a> — OSEM architecture, main loop, and coding conventions</li>
+        <li><a href="../main.py">main.py</a> — ALM orchestration (UL placeholder comments at lines 265–271)</li>
+        <li><a href="../Documentation/OSEM_Documentation_draft.ipynb">Documentation/OSEM_Documentation_draft.ipynb</a> — broader methodology draft</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<script>
+  Chart.defaults.font.family = "system-ui, sans-serif";
+  Chart.defaults.color = "#64748b";
+
+  new Chart(document.getElementById("chartReserve"), {
+    type: "line",
+    data: {
+      labels: ["t0","t1","t2","t3","t4","t5","t6","t7","t8","t9","t10"],
+      datasets: [{
+        label: "UL reserve (€m)",
+        data: [72.0, 74.5, 71.2, 73.0, 68.5, 70.1, 66.8, 68.0, 64.5, 65.2, 62.0],
+        borderColor: "#0d9488",
+        backgroundColor: "rgba(13,148,136,0.1)",
+        fill: true,
+        tension: 0.2,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: false, title: { display: true, text: "€ millions" } } }
+    }
+  });
+
+  new Chart(document.getElementById("chartInForce"), {
+    type: "line",
+    data: {
+      labels: ["t0","t1","t2","t3","t4","t5","t6","t7","t8","t9","t10"],
+      datasets: [{
+        label: "Policies in force",
+        data: [5, 5, 4, 4, 3, 3, 2, 2, 2, 1, 1],
+        borderColor: "#6366f1",
+        backgroundColor: "rgba(99,102,241,0.1)",
+        fill: true,
+        stepped: true,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, title: { display: true, text: "Count" } } }
+    }
+  });
+
+  new Chart(document.getElementById("chartCashflows"), {
+    type: "bar",
+    data: {
+      labels: ["t1","t2","t3","t4","t5"],
+      datasets: [
+        { label: "Net premium (fund)", data: [24, 23, 22, 20, 18], backgroundColor: "#16a34a" },
+        { label: "Entry fee (company)", data: [0.5, 0.48, 0.45, 0.42, 0.38], backgroundColor: "#6366f1" },
+        { label: "Admin fee (company)", data: [0.36, 0.35, 0.33, 0.30, 0.28], backgroundColor: "#0d9488" },
+        { label: "Death liquidation (fund)", data: [0, -120, 0, -250, 0], backgroundColor: "#ef4444" },
+        { label: "Lapse liquidation (fund)", data: [0, 0, -75, 0, -95], backgroundColor: "#dc2626" }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 9 } } } },
+      scales: {
+        x: { stacked: true },
+        y: { stacked: true, title: { display: true, text: "€ thousands" } }
+      }
+    }
+  });
+
+  new Chart(document.getElementById("chartFeeAccount"), {
+    type: "line",
+    data: {
+      labels: ["t0","t1","t2","t3","t4","t5","t6","t7","t8","t9","t10"],
+      datasets: [{
+        label: "Company account (€k)",
+        data: [0, 0.86, 1.69, 2.47, 3.19, 3.87, 4.50, 5.13, 5.71, 6.26, 6.78],
+        borderColor: "#6366f1",
+        backgroundColor: "rgba(99,102,241,0.15)",
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, title: { display: true, text: "€ thousands" } } }
+    }
+  });
+</script>
+</body>
+</html>
