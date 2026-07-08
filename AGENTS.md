@@ -167,7 +167,7 @@ flowchart TB
 |------|--------|
 | Configuration | `ALM.ini` → `Configuration` |
 | Run parameters | `Input/Parameters.csv` → `Settings` |
-| Portfolios | `Input/*_Portfolio_test.csv` |
+| Portfolios | `Input/*_Portfolio.csv` |
 | EIOPA curves | paths in `Settings` |
 | Liabilities | `Input/Liability_Cashflow.csv` |
 | Output | `Output/Results.csv` (`summary_df`) |
