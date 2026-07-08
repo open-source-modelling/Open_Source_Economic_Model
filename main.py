@@ -3,7 +3,7 @@ import logging
 import os
 from datetime import date
 import pandas as pd
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, Optional
 from ConfigurationClass import Configuration
 from CurvesClass import Curves
 from EquityClasses import EquitySharePortfolio
