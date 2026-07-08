@@ -70,7 +70,7 @@ def main() -> None:
 
     # Import risk free rate curve
     logger.info("Importing risk free rate curve")
-    maturities_country, curve_country, extra_param, Qb = import_SWEiopa(
+    _, curve_country, extra_param, _ = import_SWEiopa(
         param_file=settings.EIOPA_param_file,
         curves_file=settings.EIOPA_curves_file,
         country=settings.country,
