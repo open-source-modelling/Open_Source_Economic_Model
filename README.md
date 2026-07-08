@@ -43,12 +43,23 @@ Specific deep dives into topics related to the methodology are available as Jupy
 
 ## Getting started
 So far, we have produced a simple example that can be ran using the script `main.py`. A hypothetical portfolio of 3 equities and 3 corporate bonds and a single fixed liability cash flow profile. This example will grow as more development is committed to the main branch.
-To run the example:
- - Download the OSEM repository
- - Open the Anaconda command prompt
- - Make the OSEM repository the root folder
- - Run the script main.py
- - In the folder Output, look at the cash flow time-series
+
+### Install and run
+
+From the repository root (Python 3.10+):
+
+```bash
+pip install -r requirements.txt && python main.py
+```
+
+Alternatively, install from `pyproject.toml`:
+
+```bash
+pip install -e .
+python main.py
+```
+
+Results are written to `Output/Results.csv`.
 
 A simple summary of what goes into the run and what are the outputs can be found in the [Summary pdf]
 
