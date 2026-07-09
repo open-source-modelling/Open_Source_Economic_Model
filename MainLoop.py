@@ -254,8 +254,7 @@ def capitalize_policies(
     active_df: pd.DataFrame,
     policies: Dict[int, UnitLinkedPolicy],
     current_date: dt.date,
-    portfolio_return: float,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+    portfolio_return: float) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Capitalize active policy MV (and GV if guaranteed) by the period portfolio return.
 
@@ -295,7 +294,7 @@ def apply_premiums(
     active_df: pd.DataFrame,
     fund: UnitLinkedFund,
     current_date: dt.date,
-    time_frac: float,
+    time: float,
 ) -> tuple[pd.DataFrame, pd.DataFrame, float, float]:
     """
     Grow premiums, allocate net to MV, and record gross premium and entry fee cash.
@@ -312,7 +311,7 @@ def apply_premiums(
         Fund parameters (premium_growth, entry_fee).
     :type current_date: date
         Current modelling date column.
-    :type time_frac: float
+    :type time: float
         Elapsed year fraction for the period.
 
     Returns
@@ -326,7 +325,7 @@ def apply_premiums(
         if active_df.loc[policy_id, current_date] <= 0:
             continue
         prev_premium = float(premium_df.loc[policy_id, current_date])
-        gross = prev_premium * ((1.0 + fund.premium_growth) ** time_frac)
+        gross = prev_premium * ((1.0 + fund.premium_growth) ** time)
         entry = gross * fund.entry_fee
         net = gross - entry
         premium_df.loc[policy_id, current_date] = gross
@@ -341,7 +340,7 @@ def apply_admin_fees(
     active_df: pd.DataFrame,
     fund: UnitLinkedFund,
     current_date: dt.date,
-    time_frac: float,
+    time: float,
 ) -> tuple[pd.DataFrame, float]:
     """
     Deduct period-scaled admin fees from MV of active policies.
@@ -356,7 +355,7 @@ def apply_admin_fees(
         Fund parameters (admin_fee).
     :type current_date: date
         Current modelling date column.
-    :type time_frac: float
+    :type time: float
         Elapsed year fraction for the period.
 
     Returns
@@ -364,7 +363,7 @@ def apply_admin_fees(
     :rtype: tuple[pd.DataFrame, float]
         Updated mv_df and total admin fee cash.
     """
-    fee_factor = 1.0 - ((1.0 - fund.admin_fee) ** time_frac)
+    fee_factor = 1.0 - ((1.0 - fund.admin_fee) ** time)
     admin_total = 0.0
     for policy_id in sorted(mv_df.index):
         if active_df.loc[policy_id, current_date] <= 0:
@@ -382,7 +381,7 @@ def apply_mortality(
     policies: Dict[int, UnitLinkedPolicy],
     society: Society,
     current_date: dt.date,
-    time_frac: float,
+    time: float,
     rng: random.Random,
 ) -> tuple[pd.DataFrame, pd.DataFrame, float, int]:
     """
@@ -400,7 +399,7 @@ def apply_mortality(
         Mortality tables.
     :type current_date: date
         Current modelling date column.
-    :type time_frac: float
+    :type time: float
         Elapsed year fraction.
     :type rng: random.Random
         Seeded random number generator.
@@ -417,7 +416,7 @@ def apply_mortality(
             continue
         policy = policies[policy_id]
         q_annual = society.mortality_rate(policy.age_at(current_date), policy.is_female)
-        q_period = 1.0 - ((1.0 - q_annual) ** time_frac)
+        q_period = 1.0 - ((1.0 - q_annual) ** time)
         if rng.random() < q_period:
             mv = float(mv_df.loc[policy_id, current_date])
             death_total += mv
@@ -432,7 +431,7 @@ def apply_lapse(
     active_df: pd.DataFrame,
     fund: UnitLinkedFund,
     current_date: dt.date,
-    time_frac: float,
+    time: float,
     rng: random.Random,
 ) -> tuple[pd.DataFrame, pd.DataFrame, float, int]:
     """
@@ -448,7 +447,7 @@ def apply_lapse(
         Fund parameters (lapse_rate).
     :type current_date: date
         Current modelling date column.
-    :type time_frac: float
+    :type time: float
         Elapsed year fraction.
     :type rng: random.Random
         Seeded random number generator.
@@ -458,7 +457,7 @@ def apply_lapse(
     :rtype: tuple[pd.DataFrame, pd.DataFrame, float, int]
         Updated mv_df, active_df, surrender total, and lapse count.
     """
-    lapse_period = 1.0 - ((1.0 - fund.lapse_rate) ** time_frac)
+    lapse_period = 1.0 - ((1.0 - fund.lapse_rate) ** time)
     surrender_total = 0.0
     lapse_count = 0
     for policy_id in sorted(mv_df.index):
@@ -477,7 +476,7 @@ def process_unit_linked_period(
     current_date: dt.date,
     previous_date: dt.date,
     portfolio_return: float,
-    time_frac: float,
+    time: float,
     mv_df: pd.DataFrame,
     gv_df: pd.DataFrame,
     premium_df: pd.DataFrame,
@@ -487,7 +486,7 @@ def process_unit_linked_period(
     society: Society,
     random_seed: int,
     proj_period: int,
-    rng: Optional[random.Random] = None,
+    rng: Optional[random.Random] = None
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, float]]:
     """
     Run one unit-linked period: carry forward, capitalize, premiums, fees, mortality, lapse.
@@ -500,7 +499,7 @@ def process_unit_linked_period(
         Previous modelling date to carry forward from.
     :type portfolio_return: float
         Period portfolio return from asset MTM.
-    :type time_frac: float
+    :type time: float
         Elapsed year fraction.
     :type mv_df: pd.DataFrame
         Market-value state matrix.
@@ -540,14 +539,14 @@ def process_unit_linked_period(
         mv_df, gv_df, active_df, policies, current_date, portfolio_return
     )
     mv_df, premium_df, gross_premium, entry_fee = apply_premiums(
-        mv_df, premium_df, active_df, fund, current_date, time_frac
+        mv_df, premium_df, active_df, fund, current_date, time
     )
-    mv_df, admin_fee = apply_admin_fees(mv_df, active_df, fund, current_date, time_frac)
+    mv_df, admin_fee = apply_admin_fees(mv_df, active_df, fund, current_date, time)
     mv_df, active_df, death, deaths = apply_mortality(
-        mv_df, active_df, policies, society, current_date, time_frac, rng
+        mv_df, active_df, policies, society, current_date, time, rng
     )
     mv_df, active_df, surrender, lapses = apply_lapse(
-        mv_df, active_df, fund, current_date, time_frac, rng
+        mv_df, active_df, fund, current_date, time, rng
     )
 
     in_force = int(active_df[current_date].sum())

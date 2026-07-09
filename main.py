@@ -331,7 +331,7 @@ def main() -> None:
                 current_date=current_date,
                 previous_date=previous_date,
                 portfolio_return=portfolio_return,
-                time_frac=time_frac,
+                time=time_frac,
                 mv_df=ul_mv_df,
                 gv_df=ul_gv_df,
                 premium_df=ul_premium_df,
@@ -340,7 +340,7 @@ def main() -> None:
                 fund=ul_fund,
                 society=society,
                 random_seed=settings.random_seed,
-                proj_period=proj_period,
+                proj_period=proj_period
             )
             bank_account[current_date] += ul_cfs["gross_premium"]
             bank_account[current_date] -= ul_cfs["death"] + ul_cfs["surrender"]
