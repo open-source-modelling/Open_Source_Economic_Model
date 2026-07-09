@@ -321,12 +321,12 @@ def main() -> None:
             eq_price_df, eq_units_df, bd_price_df, bd_units_df, current_date
         )
         
+        portfolio_return = float(total_market_value/prev_mkt_value-1)
         summary_df.loc[current_date, "After growth market value"] = float(total_market_value)
-        summary_df.loc[current_date, "Portfolio return"] = float(total_market_value/prev_mkt_value-1)
+        summary_df.loc[current_date, "Portfolio return"] = portfolio_return
 
         if use_unit_linked:
             logger.info("Process unit-linked period (capitalize, premiums, fees, mortality, lapse)")
-            portfolio_return = float(summary_df.loc[current_date, "Portfolio return"])
             ul_mv_df, ul_gv_df, ul_premium_df, ul_active_df, ul_cfs = process_unit_linked_period(
                 current_date=current_date,
                 previous_date=previous_date,
