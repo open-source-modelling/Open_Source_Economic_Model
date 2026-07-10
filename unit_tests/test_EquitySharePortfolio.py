@@ -133,7 +133,7 @@ def test_generate_market_value_one_equity(equity_share_1):
     equity_share_portfolio.add(equity_share_1)
     market_value = equity_share_1.generate_market_value(modelling_date, system_time, equity_share_1.market_price,
                                                         equity_share_1.growth_rate)
-    t_manual = (system_time - modelling_date).days / 365.5
+    t_manual = (system_time - modelling_date).days / 365.25
     market_value_manual = equity_share_1.market_price * (1 + equity_share_1.growth_rate) ** t_manual
     assert market_value == market_value_manual
 
@@ -154,8 +154,8 @@ def test_generate_market_value_two_equities(equity_share_1, equity_share_2):
                                                           equity_share_portfolio.equity_share[1].market_price,
                                                           equity_share_portfolio.equity_share[1].growth_rate)
 
-    t_manual_1 = (dividend_date_1 - modelling_date).days / 365.5
-    t_manual_2 = (dividend_date_2 - modelling_date).days / 365.5
+    t_manual_1 = (dividend_date_1 - modelling_date).days / 365.25
+    t_manual_2 = (dividend_date_2 - modelling_date).days / 365.25
     market_value_manual_1 = equity_share_1.market_price * (1 + equity_share_1.growth_rate) ** t_manual_1
     market_value_manual_2 = equity_share_portfolio.equity_share[1].market_price * (
                 1 + equity_share_portfolio.equity_share[1].growth_rate) ** t_manual_2
@@ -172,7 +172,7 @@ def test_generate_terminal_value_one_equity(equity_share_1):
     ufr = 0.05
     terminal_value_1 = equity_share_portfolio.create_terminal_flows(modelling_date=modelling_date,
                                                                     terminal_date=end_date, terminal_rate=ufr)
-    t_manual_1 = (end_date - modelling_date).days / 365.5
+    t_manual_1 = (end_date - modelling_date).days / 365.25
     #terminal_manual_1 = equity_share_1.market_price * (1 + equity_share_1.growth_rate) ** t_manual_1 / (
     #            ufr - equity_share_1.growth_rate)
     terminal_manual_1 = equity_share_1.market_price* (1 + equity_share_1.growth_rate)** t_manual_1

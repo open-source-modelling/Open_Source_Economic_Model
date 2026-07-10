@@ -107,7 +107,7 @@ class EquityShare:
             The market value at the later date of interest 
         """
 
-        t = (evaluated_date - modelling_date).days / 365.5
+        t = (evaluated_date - modelling_date).days / 365.25
         return market_price * (1 + growth_rate) ** t
 
 #    @tracer
