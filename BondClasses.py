@@ -54,6 +54,8 @@ class CorpBond:
             raise ValueError("Default probability cannot be negative")
         if self.default_probability > 1:
             raise ValueError("Default probability cannot be greater than 1")
+        if self.units <= 0:
+            raise ValueError("Units must be greater than 0")
         if self.market_price < 0:
             raise ValueError("Market price cannot be negative")
         if self.frequency not in [Frequency.MONTHLY, Frequency.QUARTERLY,Frequency.TRIANNUAL, Frequency.BIANNUAL, Frequency.ANNUAL]:
@@ -62,7 +64,6 @@ class CorpBond:
             raise ValueError("Notional amount must be greater than 0")
         if self.maturity_date <= self.issue_date:
             raise ValueError("Maturity date cannot be before issue date")
-
 
 
     def coupon_amount(self) -> float:
