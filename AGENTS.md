@@ -351,7 +351,9 @@ Do not duplicate full methodology here. Refer to:
 - `Archive/OSEM_Documentation_draft.pdf` — methodology draft (PDF)
 - `Documentation/OSEM_Documentation_draft.ipynb` — same content as notebook
 - `Archive/` — yield-curve, equity, and bond pricing prototypes (notebooks and PDFs)
-- `*_PROTOTYPE*.ipynb` — topic-specific deep dives at repo root, in `Liability_Dev/`, and in `Archive/`
+- `notebooks/prototypes/` — maintained topic-specific deep dives and their rendered PDFs
+- `notebooks/examples/` — maintained example-output notebooks and their rendered PDFs
+- `Archive/` — historical notebooks and other superseded development artifacts
 
 ## Maintenance
 

@@ -35,11 +35,15 @@ OSEM should be able to produce a projection of what would happen to the balance 
 ## Methodology
 The development of the OSEM model is still very much an ongoing project. However, a draft of the methodology document can be found in the [Documentation] folder as [OSEM pdf] or a [OSEM Jupyter notebook].
 
-Specific deep dives into topics related to the methodology are available as Jupyter notebooks or pdf-s. The topics covered so far are:
- - Yield-curve calibration/projection [Term structure example] 
+Specific deep dives into topics related to the methodology are available as Jupyter notebooks or PDFs in the [`notebooks/`](notebooks/) directory:
+ - Yield-curve calibration/projection [Term structure example]
  - Equity pricing [Equity pricing example]
  - Fixed income pricing [Bond pricing example]
+ - Unit-linked liabilities [Unit-linked example]
+ - Trading and rebalancing [Trading example]
  - Summary charts [Summary charts example]
+
+See the [`notebooks/README.md`](notebooks/README.md) index for the notebook categories and guidance on adding new exploratory work.
 
 ## Getting started
 So far, we have produced a simple example that can be ran using the script `main.py`. A hypothetical portfolio of 3 equities and 3 corporate bonds and a single fixed liability cash flow profile. This example will grow as more development is committed to the main branch.
@@ -63,7 +67,7 @@ Results are written to `Output/Results.csv`.
 
 A simple summary of what goes into the run and what are the outputs can be found in the [Summary pdf]
 
-[Summary pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_SUMMARY%20CHARTS%20FOR%20OSEM%20RUN.pdf
+[Summary pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/notebooks/examples/summary_charts.pdf
 
 ## Modelfile
 
@@ -79,7 +83,9 @@ Check our wiki page also on [GitHub Wiki]
 [Documentation]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/Documentation
 [OSEM pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_Documentation_draft.pdf
 [OSEM Jupyter notebook]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_Documentation_draft.ipynb
-[Term structure example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_PROJECTION%20OF%20THE%20RISK%20FREE%20CURVE%20AND%20RECALIBRATION.pdf
-[Equity pricing example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_PROTOTYPE%20EQUITY%20PRICING.pdf
-[Bond pricing example]: https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_PROTOTYPE%20BOND%20PRICING.pdf
-[Summary charts example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/_SUMMARY%20CHARTS%20FOR%20OSEM%20RUN.pdf
+[Term structure example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/notebooks/prototypes/risk_free_curve_projection.pdf
+[Equity pricing example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/notebooks/prototypes/equity_pricing.pdf
+[Bond pricing example]: https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/notebooks/prototypes/bond_pricing.pdf
+[Unit-linked example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/notebooks/prototypes/unit_linked.pdf
+[Trading example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/notebooks/prototypes/trading.pdf
+[Summary charts example]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/notebooks/examples/summary_charts.pdf
