@@ -16,4 +16,5 @@ The [`Documentation/`](../Documentation/) directory contains the maintained meth
 - Use lowercase `snake_case` names.
 - Put a notebook and its rendered PDF in the same topic directory.
 - Add a short entry here when introducing a maintained notebook.
+- Notebooks locate the repository root by finding `ALM.ini`, so they can be opened and run from either their own directory or the repository root.
 - Do not commit `.ipynb_checkpoints/`; these are generated automatically by Jupyter.
