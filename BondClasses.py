@@ -80,8 +80,8 @@ class CorpBond:
         :rtype float 
             The monetary amount of the coupon
         """
-        coupon = self.coupon_rate * self.notional_amount
-        return coupon
+        coupon_size = self.coupon_rate * self.notional_amount
+        return coupon_size
 
     def generate_coupon_dates(self, modelling_date: date, end_date: date) -> Iterator[date]:
         """
@@ -328,7 +328,7 @@ class CorpBondPortfolio():
         else:
             self.corporate_bonds = {corp_bond.asset_id: corp_bond}
 
-    def create_aggregate_coupon_dates(self, modelling_date:date) -> Dict[date, float]:
+    def create_aggregate_coupon_dates(self, modelling_date:date, end_date:date) -> Dict[date, float]:
         """
             Create the vector of dates at which the coupons are paid out and the total amounts for
             all corporate bonds in the portfolio, for dates on or after the modelling date
@@ -337,6 +337,12 @@ class CorpBondPortfolio():
             ----------
             self : CorpBondPortfolio class instance
                 The CorpBondPortfolio instance with populated initial portfolio.
+
+            modelling_date: datetime.date
+                The current assumed date inside the model
+
+            end_date: datetime.date
+                The end of the modelling window. No cash flows after this date are considered.
 
             Returns
             -------
@@ -350,7 +356,7 @@ class CorpBondPortfolio():
         coupon_date: date
         for asset_id in self.corporate_bonds:
             corp_bond = self.corporate_bonds[asset_id]
-            for coupon_date in corp_bond.generate_coupon_dates(modelling_date):
+            for coupon_date in corp_bond.generate_coupon_dates(modelling_date, end_date):
                 if coupon_date in coupons:
                     coupons[coupon_date] += corp_bond.coupon_amount()
                 else:
