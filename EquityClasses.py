@@ -36,6 +36,8 @@ class EquityShare:
     spread_stress: float
 
     def __post_init__(self) -> None:
+        if self.frequency not in [Frequency.MONTHLY, Frequency.QUARTERLY, Frequency.TRIANNUAL, Frequency.BIANNUAL, Frequency.ANNUAL]:
+            raise ValueError("Frequency must be either Monthly, Quarterly, Triannual, Biannual or Annual")
         logger.info("Equity class initiated")
 
     # @property Look into what property does

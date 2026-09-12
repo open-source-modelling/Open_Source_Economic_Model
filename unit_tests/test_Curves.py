@@ -107,6 +107,45 @@ def test_ProjectForwardRateObs(curves_1, term_structure_maturity, term_structure
     assert "Yield_year_3" not in curves_1.r_obs
     assert len(curves_1.r_obs["Yield_year_0"].values) == input_size
 
+def test_RetrieveRates_year0_not_flat_ufr(curves_1, term_structure_maturity, term_structure_yield):
+    """
+    Regression test: RetrieveRates(proj_step=0, ...) used to slice with [:-proj_step],
+    and [:-0] is equivalent to [:0] in Python, which discarded the entire calibration
+    vector and maturities. That collapsed SWExtrapolate to pure UFR discounting, so the
+    year-0 curve came back flat at the UFR for every maturity instead of the calibrated
+    term structure.
+    """
+    n_year = 3
+    curves_1.SetObservedTermStructure(maturity_vec=term_structure_maturity, yield_vec=term_structure_yield)
+    curves_1.CalcFwdRates()
+    curves_1.ProjectForwardRate(n_year)
+    curves_1.CalibrateProjected(n_year, ini_guess=0.05, end=0.5, max_iter=1000)
+
+    target = np.array([1.0, 3.0, 8.0])
+    year0_yields = curves_1.RetrieveRates(0, target, "Yield", 0.0)["Yield"].values
+
+    # Must not have collapsed to a flat line at the UFR
+    assert not np.allclose(year0_yields, curves_1.ufr)
+
+    # Must match SWExtrapolate run directly on the full (untruncated) year-0
+    # calibration vector and maturities
+    calib_b = curves_1.b["Calibration_year_0"].values
+    calib_m = curves_1.m_obs["Maturities_year_0"].values
+    calib_alpha = curves_1.alpha["Alpha_year_0"][0]
+    expected = curves_1.SWExtrapolate(target, calib_m, calib_b, curves_1.ufr, calib_alpha)
+
+    assert year0_yields == pytest.approx(expected)
+
+    # proj_step=1 (unaffected by the bug) must remain internally consistent too:
+    # it should use the year-1 calibration vector truncated by exactly 1 element.
+    target_1 = curves_1.RetrieveRates(1, target, "Yield", 0.0)["Yield"].values
+    calib_b_1 = curves_1.b["Calibration_year_1"].values[:-1]
+    calib_m_1 = curves_1.m_obs["Maturities_year_1"].values[:-1]
+    calib_alpha_1 = curves_1.alpha["Alpha_year_1"][0]
+    expected_1 = curves_1.SWExtrapolate(target, calib_m_1, calib_b_1, curves_1.ufr, calib_alpha_1)
+    assert target_1 == pytest.approx(expected_1)
+
+
 #def test_CalibrateProjected(curves_1, term_structure_maturity, term_structure_yield):
 #    n_year = 3
 #    curves_1.SetObservedTermStructure(maturity_vec=term_structure_maturity, yield_vec=term_structure_yield)

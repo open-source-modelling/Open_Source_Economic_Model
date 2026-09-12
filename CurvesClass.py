@@ -167,8 +167,8 @@ class Curves:
         maturity_name = "Maturities_year_" + str(proj_step)
         calibration_name = "Calibration_year_" + str(proj_step)
         alpha_name = "Alpha_year_" + str(proj_step)
-        calib_b = self.b[calibration_name][:-proj_step].values
-        calib_maturities = self.m_obs[maturity_name][:-proj_step].values
+        calib_b = self.b[calibration_name].iloc[: len(self.b[calibration_name]) - proj_step].values
+        calib_maturities = self.m_obs[maturity_name].iloc[: len(self.m_obs[maturity_name]) - proj_step].values
         calib_alpha = self.alpha[alpha_name][0]
         yield_result = self.SWExtrapolate(target_mat, calib_maturities, calib_b, self.ufr, calib_alpha) + spread
 

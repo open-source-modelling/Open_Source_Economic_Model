@@ -24,6 +24,9 @@ def equity_share() -> EquityShare:
                                , units =units
                                , market_price=market_price
                                , growth_rate=growth_rate
+                               , spread_country=0.0
+                               , spread_sector=0.0
+                               , spread_stress=0.0
                                )
     return equity_share
 
@@ -45,9 +48,12 @@ def test_construct():
                                , issue_date=issue_date
                                , dividend_yield=dividend_yield
                                , frequency=frequency
-                               , units = units 
+                               , units = units
                                , market_price=market_price
                                , growth_rate=growth_rate
+                               , spread_country=0.0
+                               , spread_sector=0.0
+                               , spread_stress=0.0
                                )
 
     assert test_share_1.asset_id == asset_id
@@ -87,3 +93,55 @@ def test_terminal_amount_calculation(equity_share):
     gordon_manual = market_value
     gordon_calc = equity_share.terminal_amount(market_value, growth_rate, terminal_rate)
     assert gordon_calc == gordon_manual
+
+
+def _make_equity_share(frequency) -> EquityShare:
+    return EquityShare(
+        asset_id=1,
+        nace="A.1.2",
+        issuer="Open Source Modelling",
+        issue_date=datetime.date(2015, 12, 1),
+        dividend_yield=0.03,
+        frequency=frequency,
+        units=1,
+        market_price=12.6,
+        growth_rate=0.01,
+        spread_country=0.0,
+        spread_sector=0.0,
+        spread_stress=0.0,
+    )
+
+
+@pytest.mark.parametrize(
+    "frequency",
+    [
+        FrequencyClass.Frequency.ANNUAL,
+        FrequencyClass.Frequency.BIANNUAL,
+        FrequencyClass.Frequency.TRIANNUAL,
+        FrequencyClass.Frequency.QUARTERLY,
+        FrequencyClass.Frequency.MONTHLY,
+        1,
+        2,
+        3,
+        4,
+        12,
+    ],
+)
+def test_valid_frequency_accepted(frequency):
+    equity_share = _make_equity_share(frequency)
+    assert equity_share.frequency == frequency
+
+
+@pytest.mark.parametrize("frequency", [0, -1, 5, 13, 24, 365])
+def test_invalid_frequency_rejected_at_construction(frequency):
+    """
+    Regression test: generate_dividend_dates() computes
+    relativedelta(months=(12 // self.frequency)). Any frequency > 12 makes
+    12 // frequency evaluate to 0, producing a zero-length step that never
+    advances the date and hangs generate_dividend_dates() (and everything
+    downstream of it, such as create_single_cash_flows) in an infinite loop.
+    A bad Frequency value from a data-entry error must be rejected immediately
+    at construction time instead of causing a hang later on.
+    """
+    with pytest.raises(ValueError):
+        _make_equity_share(frequency)
