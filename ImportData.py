@@ -9,7 +9,8 @@ from EquityClasses import EquityShare
 from SettingsClasses import Settings
 from datetime import datetime
 from CashClass import Cash
-from LiabilityClasses import Liability, UnitLinkedPolicy, UnitLinkedFund
+from LiabilityClasses import Liability
+from UnitLinkedClasses import UnitLinkedPolicy, UnitLinkedFund
 from SocietyClass import Society
 
 

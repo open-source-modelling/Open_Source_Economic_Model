@@ -5,7 +5,8 @@ import datetime as dt
 import random
 from typing import Dict, List, Optional
 
-from LiabilityClasses import Liability, UnitLinkedFund, UnitLinkedPolicy
+from LiabilityClasses import Liability
+from UnitLinkedClasses import UnitLinkedFund, UnitLinkedPolicy
 from SocietyClass import Society
 
 def create_cashflow_dataframe(cf_dict: dict[int, dict[datetime.date, float]], unique_dates: list[datetime.date]) -> pd.DataFrame:

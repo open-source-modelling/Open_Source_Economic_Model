@@ -4,7 +4,7 @@ import random
 import pandas as pd
 import pytest
 
-from LiabilityClasses import UnitLinkedPolicy, UnitLinkedFund, UnitLinkedPortfolio
+from UnitLinkedClasses import UnitLinkedPolicy, UnitLinkedFund, UnitLinkedPortfolio
 from SocietyClass import Society
 from MainLoop import (
     capitalize_policies,

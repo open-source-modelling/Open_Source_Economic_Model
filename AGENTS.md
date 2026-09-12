@@ -81,7 +81,8 @@ flowchart TB
 | `CurvesClass.py` | EIOPA Smith-Wilson term structure (calibration, projection, discounting) |
 | `EquityClasses.py` | Equity pricing, cash flows, portfolio wrapper |
 | `BondClasses.py` | Bond pricing, z-spread calibration, portfolio wrapper |
-| `LiabilityClasses.py` | Aggregated liability cash-flow profile |
+| `LiabilityClasses.py` | Aggregated liability cash-flow profile (`cashflow` mode) |
+| `UnitLinkedClasses.py` | Unit-linked policy/fund/portfolio classes (`unit_linked` mode) |
 | `ImportData.py` | Load `ALM.ini`, CSV inputs, EIOPA curve files |
 | `ConfigurationClass.py` / `SettingsClasses.py` | Config and run parameters (`liability_mode`, `random_seed`) |
 | `CashClass.py` | Initial cash balance |

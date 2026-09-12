@@ -1,6 +1,6 @@
 import pytest
 
-from LiabilityClasses import UnitLinkedFund
+from UnitLinkedClasses import UnitLinkedFund
 
 
 @pytest.fixture

@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from LiabilityClasses import UnitLinkedPolicy
+from UnitLinkedClasses import UnitLinkedPolicy
 
 
 @pytest.fixture

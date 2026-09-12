@@ -8,7 +8,7 @@ from ConfigurationClass import Configuration
 from CurvesClass import Curves
 from EquityClasses import EquitySharePortfolio
 from BondClasses import CorpBondPortfolio
-from LiabilityClasses import UnitLinkedPortfolio
+from UnitLinkedClasses import UnitLinkedPortfolio
 from ImportData import (
     get_configuration,
     get_settings,
