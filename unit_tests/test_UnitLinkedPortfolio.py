@@ -49,19 +49,19 @@ def test_add_and_not_empty(portfolio: UnitLinkedPortfolio) -> None:
 
 def test_init_policy_state_to_dataframe(portfolio: UnitLinkedPortfolio) -> None:
     modelling_date = date(2023, 4, 29)
-    mv_df, gv_df, premium_df, active_df = portfolio.init_policy_state_to_dataframe(modelling_date)
+    mv_df, gv_df, premium_df = portfolio.init_policy_state_to_dataframe(modelling_date)
 
     assert list(mv_df.index) == [1001, 1002]
     assert mv_df.loc[1001, modelling_date] == 120000.0
     assert gv_df.loc[1002, modelling_date] == 200000.0
     assert premium_df.loc[1001, modelling_date] == 5000.0
-    assert active_df.loc[1001, modelling_date] == 1.0
 
 
 def test_total_reserve(portfolio: UnitLinkedPortfolio) -> None:
     modelling_date = date(2023, 4, 29)
-    mv_df, _, _, active_df = portfolio.init_policy_state_to_dataframe(modelling_date)
-    assert portfolio.total_reserve(mv_df, active_df, modelling_date) == 370000.0
+    mv_df, _, _ = portfolio.init_policy_state_to_dataframe(modelling_date)
+    assert portfolio.total_reserve(mv_df, modelling_date) == 370000.0
 
-    active_df.loc[1001, modelling_date] = 0.0
-    assert portfolio.total_reserve(mv_df, active_df, modelling_date) == 250000.0
+    # A liquidated policy's row is dropped entirely, not zeroed in place
+    mv_df = mv_df.drop(index=1001)
+    assert portfolio.total_reserve(mv_df, modelling_date) == 250000.0

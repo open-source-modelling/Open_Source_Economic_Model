@@ -3,7 +3,7 @@ import pandas as pd
 import datetime
 import datetime as dt
 import random
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from LiabilityClasses import Liability, UnitLinkedFund, UnitLinkedPolicy
 from SocietyClass import Society
@@ -362,19 +362,27 @@ def apply_admin_fees(
 
 def apply_mortality(
     mv_df: pd.DataFrame,
+    gv_df: pd.DataFrame,
+    premium_df: pd.DataFrame,
     policies: Dict[int, UnitLinkedPolicy],
     society: Society,
     current_date: dt.date,
     time: float,
     rng: random.Random,
-) -> tuple[pd.DataFrame, float, int]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, float, int]:
     """
-    Stochastic mortality sampling: liquidate full MV if drawn against period-scaled q.
+    Stochastic mortality sampling: pay out full MV and remove the policy's row from every
+    state matrix if drawn against period-scaled q, so it cannot be re-funded by a later
+    premium/fee step or sampled again in a future period.
 
     Parameters
     ----------
     :type mv_df: pd.DataFrame
         Market-value state matrix.
+    :type gv_df: pd.DataFrame
+        Guaranteed-value state matrix.
+    :type premium_df: pd.DataFrame
+        Premium state matrix.
     :type policies: dict[int, UnitLinkedPolicy]
         Static policy metadata for age and sex.
     :type society: Society
@@ -388,37 +396,46 @@ def apply_mortality(
 
     Returns
     -------
-    :rtype: tuple[pd.DataFrame, float, int]
-        Updated mv_df, death benefit total, and death count.
+    :rtype: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, float, int]
+        Updated mv_df, gv_df, premium_df (dead policies removed), death benefit total, and death count.
     """
     death_total = 0.0
-    death_count = 0
+    death_ids: List[int] = []
     for policy_id in sorted(mv_df.index):
         policy = policies[policy_id]
         q_annual = society.mortality_rate(policy.age_at(current_date), policy.is_female)
         q_period = 1.0 - ((1.0 - q_annual) ** time)
         if rng.random() < q_period:
-            mv = float(mv_df.loc[policy_id, current_date])
-            death_total += mv
-            death_count += 1
-            mv_df.loc[policy_id, current_date] = 0.0
-    return mv_df, death_total, death_count
+            death_total += float(mv_df.loc[policy_id, current_date])
+            death_ids.append(policy_id)
+    mv_df = mv_df.drop(index=death_ids)
+    gv_df = gv_df.drop(index=death_ids)
+    premium_df = premium_df.drop(index=death_ids)
+    return mv_df, gv_df, premium_df, death_total, len(death_ids)
 
 
 def apply_lapse(
     mv_df: pd.DataFrame,
+    gv_df: pd.DataFrame,
+    premium_df: pd.DataFrame,
     fund: UnitLinkedFund,
     current_date: dt.date,
     time: float,
     rng: random.Random,
-) -> tuple[pd.DataFrame, float, int]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, float, int]:
     """
-    Stochastic lapse sampling on survivors: liquidate full MV if drawn against period-scaled lapse.
+    Stochastic lapse sampling on survivors: pay out full MV and remove the policy's row from
+    every state matrix if drawn against period-scaled lapse, so it cannot be re-funded by a
+    later premium/fee step or sampled again in a future period.
 
     Parameters
     ----------
     :type mv_df: pd.DataFrame
         Market-value state matrix.
+    :type gv_df: pd.DataFrame
+        Guaranteed-value state matrix.
+    :type premium_df: pd.DataFrame
+        Premium state matrix.
     :type fund: UnitLinkedFund
         Fund parameters (lapse_rate).
     :type current_date: date
@@ -430,19 +447,20 @@ def apply_lapse(
 
     Returns
     -------
-    :rtype: tuple[pd.DataFrame, float, int]
-        Updated mv_df, surrender total, and lapse count.
+    :rtype: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, float, int]
+        Updated mv_df, gv_df, premium_df (lapsed policies removed), surrender total, and lapse count.
     """
     lapse_period = 1.0 - ((1.0 - fund.lapse_rate) ** time)
     surrender_total = 0.0
-    lapse_count = 0
+    lapse_ids: List[int] = []
     for policy_id in sorted(mv_df.index):
         if rng.random() < lapse_period:
-            mv = float(mv_df.loc[policy_id, current_date])
-            surrender_total += mv
-            lapse_count += 1
-            mv_df.loc[policy_id, current_date] = 0.0
-    return mv_df, surrender_total, lapse_count
+            surrender_total += float(mv_df.loc[policy_id, current_date])
+            lapse_ids.append(policy_id)
+    mv_df = mv_df.drop(index=lapse_ids)
+    gv_df = gv_df.drop(index=lapse_ids)
+    premium_df = premium_df.drop(index=lapse_ids)
+    return mv_df, gv_df, premium_df, surrender_total, len(lapse_ids)
 
 
 def process_unit_linked_period(
@@ -512,14 +530,14 @@ def process_unit_linked_period(
     )
     mv_df, admin_fee = apply_admin_fees(mv_df, fund, current_date, time)
 
-    mv_df, death, deaths = apply_mortality(
-        mv_df, policies, society, current_date, time, rng
+    mv_df, gv_df, premium_df, death, deaths = apply_mortality(
+        mv_df, gv_df, premium_df, policies, society, current_date, time, rng
     )
-    mv_df, surrender, lapses = apply_lapse(
-        mv_df, fund, current_date, time, rng
+    mv_df, gv_df, premium_df, surrender, lapses = apply_lapse(
+        mv_df, gv_df, premium_df, fund, current_date, time, rng
     )
 
-    in_force = int(mv_df[current_date].shape[0])
+    in_force = int(mv_df.shape[0])
     cashflows: Dict[str, float] = {
         "gross_premium": float(gross_premium),
         "entry_fee": float(entry_fee),
