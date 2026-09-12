@@ -251,7 +251,6 @@ def trade(current_date: dt.date, bank_account: pd.DataFrame, eq_units: pd.DataFr
 def capitalize_policies(
     mv_df: pd.DataFrame,
     gv_df: pd.DataFrame,
-    active_df: pd.DataFrame,
     policies: Dict[int, UnitLinkedPolicy],
     current_date: dt.date,
     portfolio_return: float) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -264,8 +263,6 @@ def capitalize_policies(
         Market-value state matrix.
     :type gv_df: pd.DataFrame
         Guaranteed-value state matrix.
-    :type active_df: pd.DataFrame
-        Active flags (1 = in force).
     :type policies: dict[int, UnitLinkedPolicy]
         Static policy metadata including is_guaranteed.
     :type current_date: date
@@ -280,10 +277,8 @@ def capitalize_policies(
     """
     factor = 1.0 + portfolio_return
     for policy_id in sorted(mv_df.index):
-        if active_df.loc[policy_id, current_date] <= 0:
-            continue
         mv_df.loc[policy_id, current_date] = mv_df.loc[policy_id, current_date] * factor
-        if policies[policy_id].is_guaranteed:
+        if policies[policy_id].is_guaranteed: # Only capitalize GV if the policy is guaranteed
             gv_df.loc[policy_id, current_date] = gv_df.loc[policy_id, current_date] * factor
     return mv_df, gv_df
 
@@ -291,7 +286,6 @@ def capitalize_policies(
 def apply_premiums(
     mv_df: pd.DataFrame,
     premium_df: pd.DataFrame,
-    active_df: pd.DataFrame,
     fund: UnitLinkedFund,
     current_date: dt.date,
     time: float,
@@ -305,8 +299,6 @@ def apply_premiums(
         Market-value state matrix.
     :type premium_df: pd.DataFrame
         Premium state matrix.
-    :type active_df: pd.DataFrame
-        Active flags (1 = in force).
     :type fund: UnitLinkedFund
         Fund parameters (premium_growth, entry_fee).
     :type current_date: date
@@ -322,8 +314,6 @@ def apply_premiums(
     gross_total = 0.0
     entry_total = 0.0
     for policy_id in sorted(mv_df.index):
-        if active_df.loc[policy_id, current_date] <= 0:
-            continue
         prev_premium = float(premium_df.loc[policy_id, current_date])
         gross = prev_premium * ((1.0 + fund.premium_growth) ** time)
         entry = gross * fund.entry_fee
@@ -337,7 +327,6 @@ def apply_premiums(
 
 def apply_admin_fees(
     mv_df: pd.DataFrame,
-    active_df: pd.DataFrame,
     fund: UnitLinkedFund,
     current_date: dt.date,
     time: float,
@@ -349,8 +338,6 @@ def apply_admin_fees(
     ----------
     :type mv_df: pd.DataFrame
         Market-value state matrix.
-    :type active_df: pd.DataFrame
-        Active flags (1 = in force).
     :type fund: UnitLinkedFund
         Fund parameters (admin_fee).
     :type current_date: date
@@ -366,8 +353,6 @@ def apply_admin_fees(
     fee_factor = 1.0 - ((1.0 - fund.admin_fee) ** time)
     admin_total = 0.0
     for policy_id in sorted(mv_df.index):
-        if active_df.loc[policy_id, current_date] <= 0:
-            continue
         mv = float(mv_df.loc[policy_id, current_date])
         fee = mv * fee_factor
         mv_df.loc[policy_id, current_date] = mv - fee
@@ -377,13 +362,12 @@ def apply_admin_fees(
 
 def apply_mortality(
     mv_df: pd.DataFrame,
-    active_df: pd.DataFrame,
     policies: Dict[int, UnitLinkedPolicy],
     society: Society,
     current_date: dt.date,
     time: float,
     rng: random.Random,
-) -> tuple[pd.DataFrame, pd.DataFrame, float, int]:
+) -> tuple[pd.DataFrame, float, int]:
     """
     Stochastic mortality sampling: liquidate full MV if drawn against period-scaled q.
 
@@ -391,8 +375,6 @@ def apply_mortality(
     ----------
     :type mv_df: pd.DataFrame
         Market-value state matrix.
-    :type active_df: pd.DataFrame
-        Active flags (1 = in force).
     :type policies: dict[int, UnitLinkedPolicy]
         Static policy metadata for age and sex.
     :type society: Society
@@ -406,14 +388,12 @@ def apply_mortality(
 
     Returns
     -------
-    :rtype: tuple[pd.DataFrame, pd.DataFrame, float, int]
-        Updated mv_df, active_df, death benefit total, and death count.
+    :rtype: tuple[pd.DataFrame, float, int]
+        Updated mv_df, death benefit total, and death count.
     """
     death_total = 0.0
     death_count = 0
     for policy_id in sorted(mv_df.index):
-        if active_df.loc[policy_id, current_date] <= 0:
-            continue
         policy = policies[policy_id]
         q_annual = society.mortality_rate(policy.age_at(current_date), policy.is_female)
         q_period = 1.0 - ((1.0 - q_annual) ** time)
@@ -421,19 +401,17 @@ def apply_mortality(
             mv = float(mv_df.loc[policy_id, current_date])
             death_total += mv
             death_count += 1
-            active_df.loc[policy_id, current_date] = 0.0
             mv_df.loc[policy_id, current_date] = 0.0
-    return mv_df, active_df, death_total, death_count
+    return mv_df, death_total, death_count
 
 
 def apply_lapse(
     mv_df: pd.DataFrame,
-    active_df: pd.DataFrame,
     fund: UnitLinkedFund,
     current_date: dt.date,
     time: float,
     rng: random.Random,
-) -> tuple[pd.DataFrame, pd.DataFrame, float, int]:
+) -> tuple[pd.DataFrame, float, int]:
     """
     Stochastic lapse sampling on survivors: liquidate full MV if drawn against period-scaled lapse.
 
@@ -441,8 +419,6 @@ def apply_lapse(
     ----------
     :type mv_df: pd.DataFrame
         Market-value state matrix.
-    :type active_df: pd.DataFrame
-        Active flags (1 = in force).
     :type fund: UnitLinkedFund
         Fund parameters (lapse_rate).
     :type current_date: date
@@ -454,22 +430,19 @@ def apply_lapse(
 
     Returns
     -------
-    :rtype: tuple[pd.DataFrame, pd.DataFrame, float, int]
-        Updated mv_df, active_df, surrender total, and lapse count.
+    :rtype: tuple[pd.DataFrame, float, int]
+        Updated mv_df, surrender total, and lapse count.
     """
     lapse_period = 1.0 - ((1.0 - fund.lapse_rate) ** time)
     surrender_total = 0.0
     lapse_count = 0
     for policy_id in sorted(mv_df.index):
-        if active_df.loc[policy_id, current_date] <= 0:
-            continue
         if rng.random() < lapse_period:
             mv = float(mv_df.loc[policy_id, current_date])
             surrender_total += mv
             lapse_count += 1
-            active_df.loc[policy_id, current_date] = 0.0
             mv_df.loc[policy_id, current_date] = 0.0
-    return mv_df, active_df, surrender_total, lapse_count
+    return mv_df, surrender_total, lapse_count
 
 
 def process_unit_linked_period(
@@ -480,14 +453,13 @@ def process_unit_linked_period(
     mv_df: pd.DataFrame,
     gv_df: pd.DataFrame,
     premium_df: pd.DataFrame,
-    active_df: pd.DataFrame,
     policies: Dict[int, UnitLinkedPolicy],
     fund: UnitLinkedFund,
     society: Society,
     random_seed: int,
     proj_period: int,
     rng: Optional[random.Random] = None
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, float]]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, float]]:
     """
     Run one unit-linked period: carry forward, capitalize, premiums, fees, mortality, lapse.
 
@@ -507,8 +479,6 @@ def process_unit_linked_period(
         Guaranteed-value state matrix.
     :type premium_df: pd.DataFrame
         Premium state matrix.
-    :type active_df: pd.DataFrame
-        Active flags.
     :type policies: dict[int, UnitLinkedPolicy]
         Static policy metadata.
     :type fund: UnitLinkedFund
@@ -525,31 +495,31 @@ def process_unit_linked_period(
     Returns
     -------
     :rtype: tuple
-        Updated mv_df, gv_df, premium_df, active_df, and a cashflow dict with absolute amounts.
+        Updated mv_df, gv_df, premium_df, and a cashflow dict with absolute amounts.
     """
     mv_df[current_date] = mv_df[previous_date]
     gv_df[current_date] = gv_df[previous_date]
     premium_df[current_date] = premium_df[previous_date]
-    active_df[current_date] = active_df[previous_date]
 
     if rng is None:
         rng = random.Random(random_seed + proj_period)
 
     mv_df, gv_df = capitalize_policies(
-        mv_df, gv_df, active_df, policies, current_date, portfolio_return
+        mv_df, gv_df, policies, current_date, portfolio_return
     )
     mv_df, premium_df, gross_premium, entry_fee = apply_premiums(
-        mv_df, premium_df, active_df, fund, current_date, time
+        mv_df, premium_df, fund, current_date, time
     )
-    mv_df, admin_fee = apply_admin_fees(mv_df, active_df, fund, current_date, time)
-    mv_df, active_df, death, deaths = apply_mortality(
-        mv_df, active_df, policies, society, current_date, time, rng
+    mv_df, admin_fee = apply_admin_fees(mv_df, fund, current_date, time)
+
+    mv_df, death, deaths = apply_mortality(
+        mv_df, policies, society, current_date, time, rng
     )
-    mv_df, active_df, surrender, lapses = apply_lapse(
-        mv_df, active_df, fund, current_date, time, rng
+    mv_df, surrender, lapses = apply_lapse(
+        mv_df, fund, current_date, time, rng
     )
 
-    in_force = int(active_df[current_date].sum())
+    in_force = int(mv_df[current_date].shape[0])
     cashflows: Dict[str, float] = {
         "gross_premium": float(gross_premium),
         "entry_fee": float(entry_fee),
@@ -560,4 +530,4 @@ def process_unit_linked_period(
         "lapses": float(lapses),
         "in_force": float(in_force),
     }
-    return mv_df, gv_df, premium_df, active_df, cashflows
+    return mv_df, gv_df, premium_df, cashflows

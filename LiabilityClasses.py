@@ -158,7 +158,7 @@ class UnitLinkedPortfolio:
 
     def init_policy_state_to_dataframe(
         self, modelling_date: date
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """
         Build initial MV, GV, premium, and active-flag DataFrames for modelling_date.
 
@@ -169,41 +169,36 @@ class UnitLinkedPortfolio:
 
         Returns
         -------
-        :rtype: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]
-            ul_mv_df, ul_gv_df, ul_premium_df, ul_active_df
+        :rtype: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
+            ul_mv_df, ul_gv_df, ul_premium_df
             (rows = policy_id, columns = dates).
         """
         policy_ids: List[int] = []
         mv_tmp: List[float] = []
         gv_tmp: List[float] = []
         premium_tmp: List[float] = []
-        active_tmp: List[float] = []
-
+    
         for policy_id in sorted(self.policies.keys()):
             policy = self.policies[policy_id]
             policy_ids.append(policy_id)
             mv_tmp.append(policy.mv)
             gv_tmp.append(policy.gv)
             premium_tmp.append(policy.premium)
-            active_tmp.append(1.0)
-
+    
         ul_mv_df = pd.DataFrame(data=mv_tmp, index=policy_ids, columns=[modelling_date])
         ul_gv_df = pd.DataFrame(data=gv_tmp, index=policy_ids, columns=[modelling_date])
         ul_premium_df = pd.DataFrame(data=premium_tmp, index=policy_ids, columns=[modelling_date])
-        ul_active_df = pd.DataFrame(data=active_tmp, index=policy_ids, columns=[modelling_date])
+    
+        return ul_mv_df, ul_gv_df, ul_premium_df
 
-        return ul_mv_df, ul_gv_df, ul_premium_df, ul_active_df
-
-    def total_reserve(self, mv_df: pd.DataFrame, active_df: pd.DataFrame, as_of: date) -> float:
+    def total_reserve(self, mv_df: pd.DataFrame, as_of: date) -> float:
         """
-        Sum MV over active policies at as_of.
+        Sum MV over all policies at as_of.
 
         Parameters
         ----------
         :type mv_df: pd.DataFrame
             Market-value state matrix.
-        :type active_df: pd.DataFrame
-            Active flags (1 = in force).
         :type as_of: date
             Column date.
 
@@ -212,4 +207,4 @@ class UnitLinkedPortfolio:
         :rtype: float
             Total UL reserve.
         """
-        return float((mv_df[as_of] * active_df[as_of]).sum())
+        return float(mv_df[as_of].sum())

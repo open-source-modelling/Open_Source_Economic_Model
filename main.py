@@ -152,10 +152,7 @@ def main() -> None:
 
     ul_ptf: Optional[UnitLinkedPortfolio] = None
     ul_policies = {}
-    ul_fund = None
-    society = None
-    ul_mv_df = ul_gv_df = ul_premium_df = ul_active_df = None
-    company_account = None
+    ul_mv_df = ul_gv_df = ul_premium_df = pd.DataFrame([])
     unique_liabilities_dates: List[date] = []
     liab_df = pd.DataFrame()
 
@@ -167,7 +164,7 @@ def main() -> None:
         ul_ptf = UnitLinkedPortfolio(ul_policies)
         ul_fund = get_unit_linked_fund(conf.input_unit_linked_fund)
         society = get_society(conf.input_mortality)
-        ul_mv_df, ul_gv_df, ul_premium_df, ul_active_df = ul_ptf.init_policy_state_to_dataframe(
+        ul_mv_df, ul_gv_df, ul_premium_df = ul_ptf.init_policy_state_to_dataframe(
             modelling_date=settings.modelling_date
         )
         company_account = pd.DataFrame(data=[0.0], columns=[settings.modelling_date])
@@ -211,7 +208,7 @@ def main() -> None:
 
     ul_reserve_t0 = None
     if use_unit_linked and ul_ptf is not None:
-        ul_reserve_t0 = ul_ptf.total_reserve(ul_mv_df, ul_active_df, settings.modelling_date)
+        ul_reserve_t0 = ul_ptf.total_reserve(ul_mv_df, settings.modelling_date)
 
     ini_out: Dict[str, List[Optional[float]]] = {
         "Start cash": [None], 
@@ -233,7 +230,7 @@ def main() -> None:
         "UL reserve": [ul_reserve_t0],
         "Company account": [0.0 if use_unit_linked else None],
         "UL policies in force": [
-            float(ul_active_df[settings.modelling_date].sum()) if use_unit_linked else None
+            ul_mv_df[settings.modelling_date].shape[0] if use_unit_linked else 0
         ],
         "UL deaths": [None],
         "UL lapses": [None],
@@ -266,7 +263,7 @@ def main() -> None:
         bd_units_df[current_date] = bd_units_df[previous_date]
     
         bank_account[current_date] = bank_account[previous_date]
-        if use_unit_linked and company_account is not None:
+        if use_unit_linked:
             company_account[current_date] = company_account[previous_date]
         
         summary_df.loc[current_date, "Start cash"] = float(bank_account.loc[0, previous_date])
@@ -330,7 +327,7 @@ def main() -> None:
 
         if use_unit_linked:
             logger.info("Process unit-linked period (capitalize, premiums, fees, mortality, lapse)")
-            ul_mv_df, ul_gv_df, ul_premium_df, ul_active_df, ul_cfs = process_unit_linked_period(
+            ul_mv_df, ul_gv_df, ul_premium_df, ul_cfs = process_unit_linked_period(
                 current_date=current_date,
                 previous_date=previous_date,
                 portfolio_return=portfolio_return,
@@ -338,7 +335,6 @@ def main() -> None:
                 mv_df=ul_mv_df,
                 gv_df=ul_gv_df,
                 premium_df=ul_premium_df,
-                active_df=ul_active_df,
                 policies=ul_policies,
                 fund=ul_fund,
                 society=society,
@@ -347,7 +343,8 @@ def main() -> None:
             )
             bank_account[current_date] += ul_cfs["gross_premium"]
             bank_account[current_date] -= ul_cfs["death"] + ul_cfs["surrender"]
-            company_account[current_date] += ul_cfs["entry_fee"] + ul_cfs["admin_fee"]
+            if use_unit_linked: 
+                company_account[current_date] += ul_cfs["entry_fee"] + ul_cfs["admin_fee"]
 
             summary_df.loc[current_date, "UL gross premium cash flow"] = ul_cfs["gross_premium"]
             summary_df.loc[current_date, "UL entry fee cash flow"] = ul_cfs["entry_fee"]
@@ -355,11 +352,12 @@ def main() -> None:
             summary_df.loc[current_date, "UL mortality cash flow"] = -ul_cfs["death"]
             summary_df.loc[current_date, "UL lapse cash flow"] = -ul_cfs["surrender"]
             summary_df.loc[current_date, "UL reserve"] = ul_ptf.total_reserve(
-                ul_mv_df, ul_active_df, current_date
+                ul_mv_df, current_date
             )
-            summary_df.loc[current_date, "Company account"] = float(
-                company_account.loc[0, current_date]
-            )
+            if use_unit_linked:
+                summary_df.loc[current_date, "Company account"] = float(
+                    company_account.loc[0, current_date]
+                )
             summary_df.loc[current_date, "UL policies in force"] = ul_cfs["in_force"]
             summary_df.loc[current_date, "UL deaths"] = ul_cfs["deaths"]
             summary_df.loc[current_date, "UL lapses"] = ul_cfs["lapses"]
