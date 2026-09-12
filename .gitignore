@@ -1,3 +1,5 @@
 /ALM.log
 /EquityClasses.log
 .ipynb_checkpoints/
+__pycache__/
+*.pyc
