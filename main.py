@@ -275,6 +275,7 @@ def main() -> None:
         logger.info("Calculate the fraction of time to move forward")
         time_frac = (current_date - previous_date).days / 365.25
 
+        # -------- WHICH ASSET/LIABILITY FLOWS EXIRED IN THIS PERIOD AND ADD TO BANK ACCOUNT --------
         logger.info("Calculate expired dividends, remove them from cash flows and add to bank account")
         cash, div_df, unique_div_dates = process_expired_cf(unique_dates = unique_div_dates, expiration_date = current_date, cash_flows = div_df, units = eq_units_df)
         summary_df.loc[current_date, "Dividend cash flow"] = float(cash)
@@ -302,6 +303,7 @@ def main() -> None:
             summary_df.loc[current_date, "Liability cash flow"] = -float(cash)
             bank_account[current_date] -= cash
 
+        # ------- CALCULATE GROWTH OF ASSET VALUE IN THIS PERIOD --------
         logger.info("Calculate market value of portfolio after stock growth")
         eq_price_df[current_date] = eq_price_df[previous_date] * (
                 1 + eq_growth_df[settings.modelling_date]) ** time_frac
@@ -317,11 +319,12 @@ def main() -> None:
                                                   bond_zspread_df = bd_zspread_df, 
                                                   bond_price_df = bd_price_df, 
                                                   date_of_interest = current_date)
-        total_market_value = portfolio_market_value(
+
+        total_market_value: float = portfolio_market_value(
             eq_price_df, eq_units_df, bd_price_df, bd_units_df, current_date
         )
         
-        portfolio_return = float(total_market_value/prev_mkt_value-1)
+        portfolio_return: float = float(total_market_value/prev_mkt_value-1)
         summary_df.loc[current_date, "After growth market value"] = float(total_market_value)
         summary_df.loc[current_date, "Portfolio return"] = portfolio_return
 

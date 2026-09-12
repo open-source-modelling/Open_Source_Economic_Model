@@ -808,9 +808,9 @@
           <tr><th>Flow</th><th>Destination</th><th>Summary column</th><th>Sign in output</th></tr>
         </thead>
         <tbody>
-          <tr><td>Gross premium</td><td><code>bank_account</code> (then split)</td><td>UL gross premium cash flow</td><td>Positive</td></tr>
+          <tr><td>Gross premium</td><td><code>bank_account</code></td><td>UL gross premium cash flow</td><td>Positive</td></tr>
           <tr><td>Entry fee (gross − net)</td><td><code>company_account</code></td><td>UL entry fee cash flow</td><td>Positive</td></tr>
-          <tr><td>Net premium (fund retained)</td><td><code>bank_account</code></td><td>UL net premium cash flow</td><td>Positive</td></tr>
+          <tr><td>Net premium (gross − entry fee)</td><td><code>MV</code> only — not <code>bank_account</code></td><td>— (not reported as a separate summary column)</td><td>—</td></tr>
           <tr><td>Admin fee</td><td><code>company_account</code></td><td>UL admin fee cash flow</td><td>Positive</td></tr>
           <tr><td>Death benefit (liquidation)</td><td><code>bank_account</code> debit</td><td>UL mortality cash flow</td><td>Negative</td></tr>
           <tr><td>Surrender (liquidation)</td><td><code>bank_account</code> debit</td><td>UL lapse cash flow</td><td>Negative</td></tr>

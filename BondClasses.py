@@ -39,7 +39,7 @@ class CorpBond:
     units: float
     market_price: float
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         if self.asset_id<=0:
             raise ValueError("Asset ID must be greater than 0")
         if self.coupon_rate < 0:
@@ -292,7 +292,8 @@ class CorpBond:
                     x_start = x_mid
                 else:  # If the start point and the middle point have a different sign than by mean value theorem the interval must contain at least one root
                     x_end = x_mid
-        return "Did not converge"
+
+        raise TypeError("Spread calibration did not converge")
 
 
 class CorpBondPortfolio():
@@ -414,7 +415,6 @@ class CorpBondPortfolio():
         all_maturity: Dict[int, Dict[date, float]] = {}
         principals: Dict[date, float] = {}
         corp_bond: CorpBond
-        terminal_date: date
 
         for asset_id in self.corporate_bonds:
             corp_bond = self.corporate_bonds[asset_id]
@@ -538,7 +538,7 @@ class CorpBondPortfolio():
         To Do
         """
         for asset_id in coupon_df.index:
-            price = self.corporate_bonds[asset_id].price_bond(coupon_df.loc[asset_id],
+            price: float = self.corporate_bonds[asset_id].price_bond(coupon_df.loc[asset_id],
             notional_df.loc[asset_id],settings.modelling_date, proj_period,curves,bond_zspread_df.loc[asset_id].iloc[0])
             bond_price_df.loc[asset_id, date_of_interest] = price
         return bond_price_df
@@ -561,7 +561,7 @@ class CorpBondPortfolio():
             Updated z-spread DataFrame with calibrated spreads
         """
         for asset_id in zspread_df.index:
-            calibrated_spread = self.corporate_bonds[asset_id].bisection_spread(
+            calibrated_spread: float = self.corporate_bonds[asset_id].bisection_spread(
                 x_start=-0.2,
                 x_end=0.2,
                 modelling_date=settings.modelling_date,
