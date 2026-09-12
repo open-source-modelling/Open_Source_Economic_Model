@@ -71,11 +71,10 @@ def main() -> None:
     tracer.enabled = conf.trace_enabled
     # set the logging level
     logging_level: int = get_logging_level(conf.logging_level)
-    logging.basicConfig(format="blahh  %(levelname)s, (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])",
-                        level=logging_level) # datefmt = "%d/%m/%Y %I:%M:%S %p"
-
-    logging.basicConfig(filename = conf.logging_file_name, level=logging_level, format="%(asctime)s")
-
+    logging.basicConfig(
+            format="%(levelname)s:%(name)s:(%(asctime)s):%(message)s (Line: %(lineno)d [%(filename)s])",
+            level=logging_level,
+        )
     logger.setLevel(logging_level)
     logger.info("Configuration loaded")
 

@@ -437,7 +437,7 @@ class EquitySharePortfolio():
         all_date_frac: List[np.ndarray] = []  # this will save the date fractions of dividends for the portfolio
         all_dates_considered: List[np.ndarray] = []  # this will save if a cash flow is already expired before the modelling date in the portfolio
 
-        for one_dividend_array in dividend_array:
+        for one_dividend_array in dividend_array.values():
             # equity_share = self.equity_share[asset_id]
             #            one_dividend_array = dividend_array[asset_id]
 
@@ -498,7 +498,7 @@ class EquitySharePortfolio():
         all_terminal_date_frac: List[np.ndarray] = []  # this will save the date fractions of dividends for the portfolio
         all_terminal_dates_considered: List[np.ndarray] = []  # this will save if a cash flow is already expired before the modelling date in the portfolio
 
-        for one_terminal_array in terminal_array:
+        for one_terminal_array in terminal_array.values():
 
             # Reset objects for the next asset
             equity_terminal_date_frac: np.ndarray = np.array([])  # this will save date fractions of dividends of a single asset
@@ -586,75 +586,3 @@ class EquitySharePortfolio():
         units = pd.DataFrame(data=units_tmp, index=asset_id_tmp, columns=[modelling_date])
 
         return [market_price, growth_rate, units]
-
-    # Calculate terminal value given growth rate, ultimate forward rate and vector of cash flows
-    def equity_gordon(self, dividendyield, yieldrates, dividenddatefrac, ufr, g):
-
-        num = np.power((1 + g), dividenddatefrac)
-        den = np.power((1 + yieldrates), dividenddatefrac)
-        termvalue = 1 / ((1 + yieldrates[-1]) ** dividenddatefrac[-1]) * 1 / (ufr - g)
-
-        lhs = 1 / dividendyield
-        return np.sum(num / den) + termvalue - lhs
-
-    ## Bisection (To Update)
-    def bisection_spread(x_start, x_end, dividendyield, r_obs_est, dividenddatefrac, ufr, Precision, maxIter,
-                         growth_func):
-        """
-        Bisection root finding algorithm for finding the root of a function. The function here is the allowed difference between the ultimate forward rate and the extrapolated curve using Smith & Wilson.
-
-        Args:
-            cbPriced =  CorporateBondPriced object containing the list of priced bonds, spreads and cash flows
-            x_start =    1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
-            x_end =      1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
-            M_Obs =     n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u = [[1], [3]]
-            r_Obs =     n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
-            ufr  =      1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
-            Tau =       1 x 1 floating number representing the allowed difference between ufr and actual curve. Ex. Tau = 0.00001
-            Precision = 1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
-            maxIter =   1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution         
-            approx_function
-        Returns:
-            1 x 1 floating number representing the optimal value of the parameter alpha 
-
-        Example of use:
-            >>> import numpy as np
-            >>> from SWCalibrate import SWCalibrate as SWCalibrate
-            >>> M_Obs = np.transpose(np.array([1, 2, 4, 5, 6, 7]))
-            >>> r_Obs =  np.transpose(np.array([0.01, 0.02, 0.03, 0.032, 0.035, 0.04]))
-            >>> xStart = 0.05
-            >>> xEnd = 0.5
-            >>> maxIter = 1000
-            >>> alfa = 0.15
-            >>> ufr = 0.042
-            >>> Precision = 0.0000000001
-            >>> Tau = 0.0001
-            >>> BisectionAlpha(xStart, xEnd, M_Obs, r_Obs, ufr, Tau, Precision, maxIter)
-            [Out] 0.11549789285636511
-
-        For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf and https://en.wikipedia.org/wiki/Bisection_method
-        
-        Implemented by Gregor Fabjan from Qnity Consultants on 17/12/2021.
-        """
-
-        yStart = growth_func(dividendyield, r_obs_est, dividenddatefrac, ufr, x_start)
-        yEnd = growth_func(dividendyield, r_obs_est, dividenddatefrac, ufr, x_end)
-        if np.abs(yStart) < Precision:
-            return x_start
-        if np.abs(yEnd) < Precision:
-            return x_end  # If final point already satisfies the conditions return end point
-        iIter = 0
-        while iIter <= maxIter:
-            xMid = (x_end + x_start) / 2  # calculate mid-point
-            yMid = growth_func(dividendyield, r_obs_est, dividenddatefrac, ufr,
-                               xMid)  # What is the solution at midpoint
-            if ((yStart) == 0 or (x_end - x_start) / 2 < Precision):  # Solution found
-                return xMid
-            else:  # Solution not found
-                iIter += 1
-                if np.sign(yMid) == np.sign(
-                        yStart):  # If the start point and the middle point have the same sign, then the root must be in the second half of the interval
-                    x_start = xMid
-                else:  # If the start point and the middle point have a different sign than by mean value theorem the interval must contain at least one root
-                    x_end = xMid
-        return "Did not converge"

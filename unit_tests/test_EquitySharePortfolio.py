@@ -17,6 +17,10 @@ def equity_share_1() -> EquityShare:
     units = 1
     market_price = 12.6
     growth_rate = 0.01
+    spread_country = 0.0
+    spread_sector = 0.0
+    spread_stress = 0.0
+
 
     equity_share_1 = EquityShare(asset_id=asset_id
                                  , nace=nace
@@ -27,6 +31,9 @@ def equity_share_1() -> EquityShare:
                                  , units = units
                                  , market_price=market_price
                                  , growth_rate=growth_rate
+                                 , spread_country=spread_country
+                                 , spread_sector=spread_sector
+                                 , spread_stress=spread_stress
                                  )
 
     return equity_share_1
@@ -43,6 +50,9 @@ def equity_share_2() -> EquityShare:
                                  , units = 2
                                  , market_price=102.1
                                  , growth_rate=0.02
+                                 , spread_country=0.0
+                                 , spread_sector=0.0
+                                 , spread_stress=0.0
                                  )
     return equity_share_2
 
@@ -86,6 +96,9 @@ def test_add_to_non_empty_portfolio(equity_share_1, equity_share_2):
     units = 3
     market_price = 90
     growth_rate = 0.05
+    spread_country=0.0
+    spread_sector=0.0
+    spread_stress=0.0
 
     equity_share_3 = EquityShare(
         asset_id
@@ -96,7 +109,10 @@ def test_add_to_non_empty_portfolio(equity_share_1, equity_share_2):
         , frequency
         , units
         , market_price
-        , growth_rate)
+        , growth_rate
+        , spread_country
+        , spread_sector
+        , spread_stress)
 
     equity_share_portfolio.add(equity_share_3)
     assert len(equity_share_portfolio.equity_share) == 3
@@ -110,9 +126,9 @@ def test_create_dividend_dates_single_equity(equity_share_1):
     end_date = datetime.date(2023 + 50, 6, 1)
     dividend_dates = equity_share_portfolio.create_dividend_flows(modelling_date, end_date)
 
-    assert datetime.date(2023, 6, 1) in dividend_dates[0]
-    assert datetime.date(2023, 9, 1) in dividend_dates[0]
-    assert datetime.date(2023, 12, 1) in dividend_dates[0]
+    assert datetime.date(2023, 6, 1) in dividend_dates[1]
+    assert datetime.date(2023, 9, 1) in dividend_dates[1]
+    assert datetime.date(2023, 12, 1) in dividend_dates[1]
 
 
 def test_create_dividend_dates_two_equities(equity_share_1, equity_share_2):
@@ -122,8 +138,8 @@ def test_create_dividend_dates_two_equities(equity_share_1, equity_share_2):
     modelling_date = datetime.date(2023, 6, 1)
     end_date = datetime.date(2023 + 50, 6, 1)
     dividend_dates = equity_share_portfolio.create_dividend_flows(modelling_date, end_date)
-    assert datetime.date(2023, 6, 1) in dividend_dates[0]
-    assert datetime.date(2023, 7, 1) in dividend_dates[1]
+    assert datetime.date(2023, 6, 1) in dividend_dates[1]
+    assert datetime.date(2023, 7, 1) in dividend_dates[2]
 
 
 def test_generate_market_value_one_equity(equity_share_1):
@@ -145,20 +161,20 @@ def test_generate_market_value_two_equities(equity_share_1, equity_share_2):
     equity_share_portfolio.add(equity_share_2)
     dividend_dates = equity_share_portfolio.create_dividend_flows(datetime.date(2023, 6, 12),
                                                                   datetime.date(2023 + 50, 6, 1))
-    dividend_date_1 = list(dividend_dates[0])[0]
-    dividend_date_2 = list(dividend_dates[1])[0]
+    dividend_date_1 = list(dividend_dates[1])[0]
+    dividend_date_2 = list(dividend_dates[2])[0]
 
     market_value_1 = equity_share_1.generate_market_value(modelling_date, dividend_date_1, equity_share_1.market_price,
                                                           equity_share_1.growth_rate)
     market_value_2 = equity_share_2.generate_market_value(modelling_date, dividend_date_2,
-                                                          equity_share_portfolio.equity_share[1].market_price,
-                                                          equity_share_portfolio.equity_share[1].growth_rate)
+                                                          equity_share_portfolio.equity_share[2].market_price,
+                                                          equity_share_portfolio.equity_share[2].growth_rate)
 
     t_manual_1 = (dividend_date_1 - modelling_date).days / 365.25
     t_manual_2 = (dividend_date_2 - modelling_date).days / 365.25
     market_value_manual_1 = equity_share_1.market_price * (1 + equity_share_1.growth_rate) ** t_manual_1
-    market_value_manual_2 = equity_share_portfolio.equity_share[1].market_price * (
-                1 + equity_share_portfolio.equity_share[1].growth_rate) ** t_manual_2
+    market_value_manual_2 = equity_share_portfolio.equity_share[2].market_price * (
+                1 + equity_share_portfolio.equity_share[2].growth_rate) ** t_manual_2
     assert market_value_1 == market_value_manual_1
     assert market_value_2 == market_value_manual_2
     assert len(dividend_dates) == 2
@@ -176,7 +192,7 @@ def test_generate_terminal_value_one_equity(equity_share_1):
     #terminal_manual_1 = equity_share_1.market_price * (1 + equity_share_1.growth_rate) ** t_manual_1 / (
     #            ufr - equity_share_1.growth_rate)
     terminal_manual_1 = equity_share_1.market_price* (1 + equity_share_1.growth_rate)** t_manual_1
-    assert terminal_value_1[0][end_date] == terminal_manual_1
+    assert terminal_value_1[1][end_date] == terminal_manual_1
 
 
 def test_create_dividend_fractions(equity_share_1, equity_share_2):
@@ -217,7 +233,7 @@ def test_unique_dates_profile_one_equity(equity_share_1):
     dividend_array = equity_share_portfolio.create_dividend_flows(datetime.date(2023, 6, 12),
                                                                   datetime.date(2023 + 50, 6, 1))
     unique_list = equity_share_portfolio.unique_dates_profile(dividend_array)
-    assert len(unique_list) == len(list(dividend_array[0].keys()))
+    assert len(unique_list) == len(list(dividend_array[1].keys()))
 
 
 def test_unique_dates_profile_two_equities(equity_share_1, equity_share_2):
@@ -227,7 +243,7 @@ def test_unique_dates_profile_two_equities(equity_share_1, equity_share_2):
     dividend_array = equity_share_portfolio.create_dividend_flows(datetime.date(2023, 6, 12),
                                                                   datetime.date(2023 + 50, 6, 1))
     unique_list = equity_share_portfolio.unique_dates_profile(dividend_array)
-    assert len(unique_list) <= (len(list(dividend_array[0].keys())) + len(list(dividend_array[1].keys())))
+    assert len(unique_list) <= (len(list(dividend_array[1].keys())) + len(list(dividend_array[2].keys())))
 
 
 def test_unique_dates_profile_one_equity_terminal(equity_share_1):
@@ -237,7 +253,7 @@ def test_unique_dates_profile_one_equity_terminal(equity_share_1):
     terminal_array = equity_share_portfolio.create_terminal_flows(datetime.date(2023, 6, 12),
                                                                   datetime.date(2023 + 50, 6, 1), ufr)
     unique_terminal_list = equity_share_portfolio.unique_dates_profile(terminal_array)
-    assert len(unique_terminal_list) == len(list(terminal_array[0].keys()))
+    assert len(unique_terminal_list) == len(list(terminal_array[1].keys()))
 
 
 def test_unique_dates_profile_two_equities_terminal(equity_share_1, equity_share_2):
@@ -248,7 +264,7 @@ def test_unique_dates_profile_two_equities_terminal(equity_share_1, equity_share
     terminal_array = equity_share_portfolio.create_terminal_flows(datetime.date(2023, 6, 12),
                                                                   datetime.date(2023 + 50, 6, 1), ufr)
     unique_terminal_list = equity_share_portfolio.unique_dates_profile(terminal_array)
-    assert len(unique_terminal_list) == len(list(terminal_array[0].keys()))
+    assert len(unique_terminal_list) == len(list(terminal_array[1].keys()))
 
 # save_equity_matrices_to_csv() was discontinued
 #def test_save_equity_matrices_to_csv(equity_share_1, equity_share_2, paths):
