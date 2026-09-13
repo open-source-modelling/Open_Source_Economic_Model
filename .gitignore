@@ -1,5 +1,7 @@
 /ALM.log
 /EquityClasses.log
+/BondClass.log
 .ipynb_checkpoints/
 __pycache__/
 *.pyc
+*.egg-info/

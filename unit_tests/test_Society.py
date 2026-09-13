@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from SocietyClass import Society
+from osem.SocietyClass import Society
 
 
 @pytest.fixture

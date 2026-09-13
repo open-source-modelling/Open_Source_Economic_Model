@@ -46,21 +46,22 @@ Specific deep dives into topics related to the methodology are available as Jupy
 See the [`notebooks/README.md`](notebooks/README.md) index for the notebook categories and guidance on adding new exploratory work.
 
 ## Getting started
-So far, we have produced a simple example that can be ran using the script `main.py`. A hypothetical portfolio of 3 equities and 3 corporate bonds and a single fixed liability cash flow profile. This example will grow as more development is committed to the main branch.
+So far, we have produced a simple example that can be ran using the `osem` package's entry point. A hypothetical portfolio of 3 equities and 3 corporate bonds and a single fixed liability cash flow profile. This example will grow as more development is committed to the main branch.
+
+The production code lives under [`src/osem/`](src/osem/) as an installable package; `main.py` there (`src/osem/main.py`) is the orchestration entry point.
 
 ### Install and run
 
 From the repository root (Python 3.10+):
 
 ```bash
-pip install -r requirements.txt && python main.py
+pip install -e . && python -m osem.main
 ```
 
-Alternatively, install from `pyproject.toml`:
+This installs `osem` in editable mode (from `pyproject.toml`, `src`-layout) alongside its dependencies, and runs the model as a module. Equivalently, once installed, the `osem` console script does the same thing:
 
 ```bash
-pip install -e .
-python main.py
+osem
 ```
 
 Results are written to `Output/Results.csv`.

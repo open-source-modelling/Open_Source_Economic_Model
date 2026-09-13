@@ -1,5 +1,5 @@
-from BondClasses import CorpBond, CorpBondPortfolio
-from FrequencyClass import Frequency
+from osem.BondClasses import CorpBond, CorpBondPortfolio
+from osem.FrequencyClass import Frequency
 import pytest
 import datetime
 

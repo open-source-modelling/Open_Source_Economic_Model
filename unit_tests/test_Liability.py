@@ -1,4 +1,4 @@
-from LiabilityClasses import Liability
+from osem.LiabilityClasses import Liability
 import datetime
 import pytest
 

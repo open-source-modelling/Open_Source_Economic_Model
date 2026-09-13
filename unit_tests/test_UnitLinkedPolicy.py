@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from UnitLinkedClasses import UnitLinkedPolicy
+from osem.UnitLinkedClasses import UnitLinkedPolicy
 
 
 @pytest.fixture

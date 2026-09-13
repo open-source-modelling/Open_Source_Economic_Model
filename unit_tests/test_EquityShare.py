@@ -1,6 +1,6 @@
 import datetime
-from EquityClasses import EquityShare
-import FrequencyClass
+from osem.EquityClasses import EquityShare
+import osem.FrequencyClass as FrequencyClass
 import pytest
 
 

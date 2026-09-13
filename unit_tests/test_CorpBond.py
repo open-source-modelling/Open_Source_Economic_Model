@@ -1,6 +1,6 @@
 import datetime
-from BondClasses import CorpBond
-from FrequencyClass import Frequency
+from osem.BondClasses import CorpBond
+from osem.FrequencyClass import Frequency
 import pytest
 
 

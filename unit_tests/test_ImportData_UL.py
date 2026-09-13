@@ -1,6 +1,6 @@
 import os
 
-from ImportData import (
+from osem.ImportData import (
     get_configuration,
     get_settings,
     get_unit_linked_policies,

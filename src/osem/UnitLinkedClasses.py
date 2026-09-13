@@ -141,7 +141,7 @@ class UnitLinkedPortfolio:
         self, modelling_date: date
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """
-        Build initial MV, GV, premium, and active-flag DataFrames for modelling_date.
+        Build initial MV, GV, and premium DataFrames for modelling_date.
 
         Parameters
         ----------

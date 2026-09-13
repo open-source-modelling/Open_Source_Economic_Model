@@ -4,9 +4,9 @@ import random
 import pandas as pd
 import pytest
 
-from UnitLinkedClasses import UnitLinkedPolicy, UnitLinkedFund, UnitLinkedPortfolio
-from SocietyClass import Society
-from MainLoop import (
+from osem.UnitLinkedClasses import UnitLinkedPolicy, UnitLinkedFund, UnitLinkedPortfolio
+from osem.SocietyClass import Society
+from osem.MainLoop import (
     capitalize_policies,
     apply_premiums,
     apply_admin_fees,

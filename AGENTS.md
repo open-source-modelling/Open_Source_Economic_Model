@@ -10,9 +10,20 @@ OSEM simulates, on an annual discrete timeline:
 2. Liability cash outflows
 3. Proportional rebalancing to absorb liquidity surpluses and deficits
 
-The entry point is `main.py`. Configuration comes from `ALM.ini` and CSV files under `Input/`. Results are written to `Output/Results.csv`.
+The entry point is `src/osem/main.py`. Configuration comes from `ALM.ini` and CSV files under `Input/`. Results are written to `Output/Results.csv`.
 
 ## Architecture
+
+### Project layout
+
+All production code is an installable package under `src/osem/` (`import osem`, `pyproject.toml` uses a `src`-layout with `[tool.setuptools.packages.find] where = ["src"]`). `unit_tests/`, `notebooks/`, `Documentation/`, `Input/`, `Output/`, `Intermediate/`, and `ALM.ini` stay at the repository root — only the `.py` modules moved.
+
+- **Elsewhere in this file**, a bare filename like `MainLoop.py` or `CurvesClass.py` means `src/osem/MainLoop.py` / `src/osem/CurvesClass.py` unless stated otherwise.
+- **Setup:** `pip install -e .` (registers the `osem` package in editable mode; also installs `numpy`/`pandas`/`python-dateutil`).
+- **Run:** `python -m osem.main`, or the `osem` console-script installed by the editable install, from the repository root (so `ALM.ini`/`Input/`/`Output/` resolve via `os.getcwd()` as before — this did not change).
+- **Import inside the package:** modules import siblings as `from osem.CurvesClass import Curves`, never flat (`from CurvesClass import Curves`).
+- **Tests:** `unit_tests/*.py` import the same way (`from osem.CurvesClass import Curves`). `pyproject.toml` sets `pythonpath = ["src"]` under `[tool.pytest.ini_options]`, so `pytest` resolves `osem` without requiring the editable install.
+- **Notebooks:** each notebook locates the repo root by walking up for `ALM.ini`, then does `sys.path.insert(0, str(base_folder / "src"))` before importing `osem.*` — keep this bootstrap cell first if you add a new notebook that imports production code.
 
 ### Two-layer design
 
@@ -76,22 +87,23 @@ flowchart TB
 
 | File | Role |
 |------|------|
-| `main.py` | Orchestration: setup, pre-loop, annual loop, output |
-| `MainLoop.py` | Cash-flow matrices, date schedules, expiry processing, portfolio valuation, trading |
-| `CurvesClass.py` | EIOPA Smith-Wilson term structure (calibration, projection, discounting) |
-| `EquityClasses.py` | Equity pricing, cash flows, portfolio wrapper |
-| `BondClasses.py` | Bond pricing, z-spread calibration, portfolio wrapper |
-| `LiabilityClasses.py` | Aggregated liability cash-flow profile (`cashflow` mode) |
-| `UnitLinkedClasses.py` | Unit-linked policy/fund/portfolio classes (`unit_linked` mode) |
-| `ImportData.py` | Load `ALM.ini`, CSV inputs, EIOPA curve files |
-| `ConfigurationClass.py` / `SettingsClasses.py` | Config and run parameters (`liability_mode`, `random_seed`) |
-| `CashClass.py` | Initial cash balance |
-| `SocietyClass.py` | Mortality tables for unit-linked decrements |
-| `TraceClass.py` | Optional call tracing (`tracer`); enabled via `ALM.ini` `[TRACE]` |
-| `FrequencyClass.py` | Dividend/coupon frequency enums used by equity and bond classes |
+| `src/osem/main.py` | Orchestration: setup, pre-loop, annual loop, output |
+| `src/osem/MainLoop.py` | Cash-flow matrices, date schedules, expiry processing, portfolio valuation, trading |
+| `src/osem/CurvesClass.py` | EIOPA Smith-Wilson term structure (calibration, projection, discounting) |
+| `src/osem/EquityClasses.py` | Equity pricing, cash flows, portfolio wrapper |
+| `src/osem/BondClasses.py` | Bond pricing, z-spread calibration, portfolio wrapper |
+| `src/osem/LiabilityClasses.py` | Aggregated liability cash-flow profile (`cashflow` mode) |
+| `src/osem/UnitLinkedClasses.py` | Unit-linked policy/fund/portfolio classes (`unit_linked` mode) |
+| `src/osem/ImportData.py` | Load `ALM.ini`, CSV inputs, EIOPA curve files |
+| `src/osem/ConfigurationClass.py` / `src/osem/SettingsClasses.py` | Config and run parameters (`liability_mode`, `random_seed`) |
+| `src/osem/CashClass.py` | Initial cash balance |
+| `src/osem/SocietyClass.py` | Mortality tables for unit-linked decrements |
+| `src/osem/TraceClass.py` | Optional call tracing (`tracer`); enabled via `ALM.ini` `[TRACE]` |
+| `src/osem/FrequencyClass.py` | Dividend/coupon frequency enums used by equity and bond classes |
+| `pyproject.toml` | Package metadata, `src`-layout config, pytest `pythonpath` |
 | `ALM.ini` | Paths, logging, trace flags, intermediate output, input file names |
 | `Input/` | Portfolio CSVs, parameters, curves, liabilities, UL inputs |
-| `unit_tests/` | pytest suite — update when changing public behaviour |
+| `unit_tests/` | pytest suite (imports `osem.*`) — update when changing public behaviour |
 | `Documentation/Unit_Linked_Methodology.md` | Unit-linked methodology (MVP) |
 | `Liability_Dev/Unit_Linked_Methodology.html` | Visual UL methodology guide |
 
@@ -99,9 +111,9 @@ flowchart TB
 
 | File | Role |
 |------|------|
-| `PropertyClasses.py` | Real-estate asset prototype; not used in the POC run |
-| `ExportData.py` | CSV export helper; not used in the POC run |
-| `PathsClasses.py` | Path helper for tests only |
+| `src/osem/PropertyClasses.py` | Real-estate asset prototype; not used in the POC run |
+| `src/osem/ExportData.py` | CSV export helper; not used in the POC run |
+| `src/osem/PathsClasses.py` | Path helper for tests only |
 
 ### `ALM.ini` sections
 
@@ -133,7 +145,7 @@ Note: `Configuration` also stores paths for `input_curves`, `input_param_no_VA`,
 Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cashflow`):
 
 - **`cashflow`:** precomputed absolute cash flows from `Input/Liability_Cashflow.csv` (single aggregated row); expired via `process_expired_liab`
-- **`unit_linked`:** policy-level simulation from `Input/Unit_Linked_Policies.csv`, `Input/Unit_Linked_Fund.csv`, and `Input/mortality.csv` via `Society`; state in `ul_mv_df` / `ul_gv_df` / `ul_premium_df` / `ul_active_df`; `process_unit_linked_period` after growth and before `trade()`; insurer fees go to `company_account` (not traded). See `Documentation/Unit_Linked_Methodology.md`
+- **`unit_linked`:** policy-level simulation from `Input/Unit_Linked_Policies.csv`, `Input/Unit_Linked_Fund.csv`, and `Input/mortality.csv` via `Society`; state in `ul_mv_df` / `ul_gv_df` / `ul_premium_df` (there is no separate active-flag matrix — a policy that dies or lapses simply has its row dropped from all three, see `apply_mortality` / `apply_lapse` in `MainLoop.py`); `process_unit_linked_period` after growth and before `trade()`; insurer fees go to `company_account` (not traded). See `Documentation/Unit_Linked_Methodology.md`
 
 ### Trading
 
@@ -210,7 +222,7 @@ instrument.create_single_cash_flows()
 | `div_df`, `cpn_df`, `ter_df`, `not_df` | `asset_id` | cash-flow dates |
 | `bank_account` / `company_account` | single row (`loc[0, date]`) | modelling dates |
 | `liab_df` | `liability_id` | liability payment dates |
-| `ul_mv_df`, `ul_gv_df`, `ul_premium_df`, `ul_active_df` | `policy_id` | modelling dates |
+| `ul_mv_df`, `ul_gv_df`, `ul_premium_df` | `policy_id` | modelling dates |
 
 When adding a new date column in the loop, carry forward from `previous_date`, then update in place for `current_date`.
 

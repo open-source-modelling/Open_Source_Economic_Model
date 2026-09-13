@@ -1,4 +1,4 @@
-from CurvesClass import Curves
+from osem.CurvesClass import Curves
 import pytest
 import datetime
 import numpy as np

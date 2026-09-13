@@ -1,9 +1,9 @@
-from EquityClasses import EquityShare, EquitySharePortfolio
-from FrequencyClass import Frequency
+from osem.EquityClasses import EquityShare, EquitySharePortfolio
+from osem.FrequencyClass import Frequency
 import pytest
 import datetime
 import pandas as pd
-from PathsClasses import Paths
+from osem.PathsClasses import Paths
 
 
 @pytest.fixture

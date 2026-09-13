@@ -1,5 +1,5 @@
 import datetime
-from CashClass import Cash
+from osem.CashClass import Cash
 import pytest
 
 

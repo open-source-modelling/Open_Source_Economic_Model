@@ -1,4 +1,4 @@
-from PathsClasses import Paths
+from osem.PathsClasses import Paths
 import pytest
 
 @pytest.fixture

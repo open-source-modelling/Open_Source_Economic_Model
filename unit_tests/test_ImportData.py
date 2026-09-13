@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from ImportData import get_configuration
+from osem.ImportData import get_configuration
 
 
 def test_get_configuration_falls_back_to_op_sys_getcwd(tmp_path):

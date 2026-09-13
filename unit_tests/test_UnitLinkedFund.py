@@ -1,6 +1,6 @@
 import pytest
 
-from UnitLinkedClasses import UnitLinkedFund
+from osem.UnitLinkedClasses import UnitLinkedFund
 
 
 @pytest.fixture
