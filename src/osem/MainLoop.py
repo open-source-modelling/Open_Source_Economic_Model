@@ -38,6 +38,7 @@ def create_cashflow_dataframe(cf_dict: dict[int, dict[datetime.date, float]], un
 def calculate_expired_dates(list_of_dates: list[datetime.date], deadline: dt.date) -> list[datetime.date]:
     """
     Returns all dates before the deadline date.
+
     Parameters
     ----------
     :type list_of_dates: list

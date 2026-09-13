@@ -254,7 +254,8 @@ class EquityShare:
         """
         Bisection root finding algorithm for finding growth rate that when discounting with the risk free curve returns the market price.
 
-        Args:
+        Parameters
+        ----------
             self =           EquityShare object containing a single equity share positions
             x_start =        1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
             x_end =          1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
