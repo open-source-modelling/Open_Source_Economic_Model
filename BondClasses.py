@@ -237,7 +237,7 @@ class CorpBond:
         date_frac_df = pd.DataFrame(data=date_frac, columns=["Date Fraction"])  # No need for DataFrames. Kept for compatibility
         cash_flow_df = pd.DataFrame(data=cash_flow, columns=["Cash flow"])
 
-        discount = curves.RetrieveRates(proj_period, date_frac_df.iloc[:, 0].to_numpy(), "Discount", spread)
+        discount = curves.retrieve_rates(proj_period, date_frac_df.iloc[:, 0].to_numpy(), "Discount", spread)
 
         nodisc_value = cash_flow_df.values * discount
         disc_value: float = float(np.sum(nodisc_value))
@@ -308,7 +308,7 @@ class CorpBondPortfolio():
           
         self.corporate_bonds = corporate_bonds
 
-    def IsEmpty(self)-> bool:
+    def is_empty(self)-> bool:
         if self.corporate_bonds is None:
             return True
         if len(self.corporate_bonds) == 0:

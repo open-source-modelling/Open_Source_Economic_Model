@@ -13,10 +13,10 @@ from ImportData import (
     get_configuration,
     get_settings,
     import_SWEiopa,
-    get_Cash,
-    get_EquityShare,
+    get_cash,
+    get_equity_share,
     get_corporate_bonds,
-    get_Liability,
+    get_liability,
     get_unit_linked_policies,
     get_unit_linked_fund,
     get_society,
@@ -101,22 +101,22 @@ def main() -> None:
     curves = Curves(extra_param["UFR"]/100, settings.precision, settings.tau, settings.modelling_date,
                     settings.country)
     logger.info("Process risk free rate curve")
-    curves.SetObservedTermStructure(
+    curves.set_observed_term_structure(
         maturity_vec=curve_country.index.to_numpy(dtype=float),
         yield_vec=curve_country.values,
     )
     logger.info("Calculate 1-year forward rate")
-    curves.CalcFwdRates()
+    curves.calc_fwd_rates()
     logger.info("Calculate projected spot rates")
-    curves.ProjectForwardRate(settings.n_proj_years+1)
+    curves.project_forward_rate(settings.n_proj_years+1)
     logger.info("Calculate calibration parameter alpha")
-    curves.CalibrateProjected(settings.n_proj_years+1, 0.05, 0.5, 1000)
+    curves.calibrate_projected(settings.n_proj_years+1, 0.05, 0.5, 1000)
  
     logger.info("Import cash portfolio")
-    cash = get_Cash(cash_portfolio_file)
+    cash = get_cash(cash_portfolio_file)
     
     logger.info("Import equities")
-    equity_input_generator = get_EquityShare(equity_portfolio_file) # Create generator that contains all equity positions
+    equity_input_generator = get_equity_share(equity_portfolio_file) # Create generator that contains all equity positions
     eq_input = {equity_share.asset_id: equity_share for equity_share in equity_input_generator}
 
     logger.info("Import corporate bonds")
@@ -169,7 +169,7 @@ def main() -> None:
         company_account = pd.DataFrame(data=[0.0], columns=[settings.modelling_date])
     else:
         logger.info("Load all liability cash flows")
-        liabilities = get_Liability(liability_cashflow_file)
+        liabilities = get_liability(liability_cashflow_file)
         logger.info("Load all liability cash flow dates")
         unique_liabilities_dates = liabilities.unique_dates_profile()
         liab_df = create_liabilities_df(liabilities)

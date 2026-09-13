@@ -120,8 +120,8 @@ Note: `Configuration` also stores paths for `input_curves`, `input_param_no_VA`,
 ### Interest rates
 
 - Risk-free curve loaded from EIOPA files via `import_SWEiopa` (paths from `Input/Parameters.csv`: `EIOPA_param_file`, `EIOPA_curves_file`)
-- `Curves` calibrates Smith-Wilson (`SetObservedTermStructure` → `CalcFwdRates` → `ProjectForwardRate` → `CalibrateProjected`)
-- After setup, `curves` is read-only in the main loop; asset pricing calls `RetrieveRates(proj_period, maturities, "Discount", spread)`
+- `Curves` calibrates Smith-Wilson (`set_observed_term_structure` → `calc_fwd_rates` → `project_forward_rate` → `calibrate_projected`)
+- After setup, `curves` is read-only in the main loop; asset pricing calls `retrieve_rates(proj_period, maturities, "Discount", spread)`
 
 ### Assets
 
@@ -173,7 +173,7 @@ Follow these patterns when adding or changing code. Prefer the style in `MainLoo
 - Build portfolios as `dict[int, Asset]` keyed by `asset_id`, then pass to a portfolio wrapper:
 
   ```python
-  eq_input = {equity_share.asset_id: equity_share for equity_share in get_EquityShare(filename)}
+  eq_input = {equity_share.asset_id: equity_share for equity_share in get_equity_share(filename)}
   eq_ptf = EquitySharePortfolio(eq_input)
   ```
 
@@ -181,7 +181,7 @@ Follow these patterns when adding or changing code. Prefer the style in `MainLoo
 
   | Method | Purpose |
   |--------|---------|
-  | `IsEmpty()` / `add()` | Portfolio management |
+  | `is_empty()` / `add()` | Portfolio management |
   | `create_*_flows()` | Per-asset cash-flow dicts |
   | `unique_dates_profile()` | Unique payment dates |
   | `init_*_portfolio_to_dataframe()` | Initial price / units / (growth or z-spread) matrices |
@@ -216,8 +216,8 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 
 ### CSV import (`ImportData.py`)
 
-- Single-object loaders: `get_configuration()`, `get_settings()`, `get_Cash()`, `get_Liability()`, `get_unit_linked_fund()`, `get_society()`.
-- Row iterators: `get_EquityShare()`, `get_corporate_bonds()`, `get_unit_linked_policies()` → `Iterator` (one instance per CSV row).
+- Single-object loaders: `get_configuration()`, `get_settings()`, `get_cash()`, `get_liability()`, `get_unit_linked_fund()`, `get_society()`.
+- Row iterators: `get_equity_share()`, `get_corporate_bonds()`, `get_unit_linked_policies()` → `Iterator` (one instance per CSV row).
 - Use `encoding="utf-8-sig"`, `csv.DictReader`, dates as `'%d/%m/%Y'`.
 - CSV column names are `Pascal_Case` (`Asset_ID`, `Market_Price`, etc.).
 - Do not read CSVs inline in `main.py` — add a `get_*` function in `ImportData.py`.
@@ -239,7 +239,7 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 ### Pricing and curves
 
 - Curve setup once in `main.py`; `curves` is read-only in the loop.
-- Pricing calls `RetrieveRates(proj_period, maturities_numpy, "Discount", spread)`.
+- Pricing calls `retrieve_rates(proj_period, maturities_numpy, "Discount", spread)`.
 - **Equity spreads:** `spread_country + spread_sector + spread_stress`.
 - **Bond spreads:** z-spread calibrated once at t0 via bisection into `bd_zspread_df`, then read from the DataFrame during repricing (not from `CorpBond.zspread` in the loop).
 
@@ -262,16 +262,28 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 | Asset dataclass | `EquityShare`, `CorpBond` |
 | Portfolio wrapper | `EquitySharePortfolio`, `CorpBondPortfolio` |
 | Loop / orchestration | `MainLoop.py`, `main.py` |
-| Import loaders | `get_EquityShare`, `import_SWEiopa` |
+| Import loaders | `get_equity_share`, `import_SWEiopa` |
 
-Method naming is mixed (`IsEmpty` is PascalCase; most others are `snake_case`). Match the surrounding class.
+### Function and method naming
+
+**All functions and methods are `snake_case`, no exceptions.** This includes free functions, module-level helpers, and every method on every class (`Curves`, `CorpBondPortfolio`, `EquitySharePortfolio`, `UnitLinkedPortfolio`, etc.). Classes and dataclasses stay `PascalCase` — this rule governs callables only, not type names.
+
+| Rule | Example |
+|------|---------|
+| Functions/methods: `snake_case` | `calc_fwd_rates`, `is_empty`, `price_bond_portfolio` |
+| Classes/dataclasses: `PascalCase` | `Curves`, `CorpBondPortfolio`, `EquityShare` |
+| `ImportData.py` loaders: `get_<noun>()`, noun fully lowercase/underscored — never the returned class's own casing | `get_cash()` (returns `Cash`), `get_equity_share()` (returns `EquityShare`), `get_liability()` (returns `Liability`) |
+| Private/internal helpers: leading underscore optional but casing rule still applies | `calculate_expired_dates` |
+| Test functions: `test_<function_or_behaviour>`, mirroring the snake_case name of what they test | `test_calc_fwd_rates`, `test_is_empty` |
+
+Do not introduce PascalCase or camelCase for a new function or method, even to visually match an embedded class name (e.g. do not write `get_CorpBond` because the class is `CorpBond` — it is `get_corporate_bonds`/`get_corp_bond`). This was previously inconsistent (`Curves` methods were PascalCase, `IsEmpty()` was PascalCase, and `get_Cash`/`get_EquityShare`/`get_Liability` embedded the class name) and has been normalized across the codebase, call sites, and tests — keep new code consistent with this rule rather than with any lingering PascalCase example you might find in old notebooks or the `Archive/` folder.
 
 ### Type hints and arrays
 
 - Pass **NumPy arrays** to curve/term-structure APIs. Convert pandas at the call site:
 
   ```python
-  curves.SetObservedTermStructure(
+  curves.set_observed_term_structure(
       maturity_vec=curve_country.index.to_numpy(dtype=float),
       yield_vec=curve_country.to_numpy(dtype=float),
   )

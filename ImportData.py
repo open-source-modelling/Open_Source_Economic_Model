@@ -176,7 +176,7 @@ def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
             yield corp_bond
 
 
-def get_EquityShare(filename: str) -> Iterator[EquityShare]:
+def get_equity_share(filename: str) -> Iterator[EquityShare]:
     """
     Load an equity input file into an EquityShare class generator.
 
@@ -209,7 +209,7 @@ def get_EquityShare(filename: str) -> Iterator[EquityShare]:
             yield equity_share
 
 
-def get_Cash(filename: str) -> Cash:
+def get_cash(filename: str) -> Cash:
     """
     Load the initial cash input file into a Cash class object.
 
@@ -232,7 +232,7 @@ def get_Cash(filename: str) -> Cash:
     return cash
 
 
-def get_Liability(filename: str) -> Liability:
+def get_liability(filename: str) -> Liability:
     """
     Load the liability cash-flow input file into a Liability object.
 

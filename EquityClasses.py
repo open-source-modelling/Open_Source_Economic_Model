@@ -251,7 +251,7 @@ class EquityShare:
 
         spread = self.spread_country + self.spread_sector+ self.spread_stress
 
-        discount = curves.RetrieveRates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
+        discount = curves.retrieve_rates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
 
         nodisc_value = cash_flow.values*discount
         disc_value = sum(nodisc_value.values)
@@ -323,7 +323,7 @@ class EquitySharePortfolio():
         logger.info("EquitySharePortfolio initializer called")
         self.equity_share = equity_share
 
-    def IsEmpty(self) -> bool:
+    def is_empty(self) -> bool:
         if self.equity_share is None:
             return True
         if len(self.equity_share) == 0:

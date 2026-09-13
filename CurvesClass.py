@@ -21,7 +21,7 @@ class Curves:
         self.alpha = pd.DataFrame(data=None, columns=["Alpha_year_0"], dtype="float64")
         self.b = pd.DataFrame(data=None, columns=["Calibration_year_0"])
 
-    def SetObservedTermStructure(self, maturity_vec: np.ndarray, yield_vec: np.ndarray) -> None:
+    def set_observed_term_structure(self, maturity_vec: np.ndarray, yield_vec: np.ndarray) -> None:
         """
         Set the initial vector of liquid maturities and the coresponding yield rates into the curves class. Both vectors are saved as dataframes into
         The vector of maturities is saved into the m_obs_ini property.
@@ -44,7 +44,7 @@ class Curves:
         self.r_obs_ini = pd.DataFrame(data= yield_vec, index=None, columns=["Yield"])
 
 
-    def CalcFwdRates(self) -> None:
+    def calc_fwd_rates(self) -> None:
         """
         Calculate 1-year forward rates using the initial yield curve and maturities provided.
         
@@ -61,7 +61,7 @@ class Curves:
         self.fwd_rates = pd.DataFrame(data=out, index=None, columns=["Forward"])
 
 
-    def ProjectForwardRate(self, n_years: int) -> str | None:
+    def project_forward_rate(self, n_years: int) -> str | None:
         """
         Calculate the projected spot curve from the 1-year forward curve. Each column represents
         the spot curve starting 1 year later than the previous column. Calling this function populates
@@ -91,7 +91,7 @@ class Curves:
                 self.m_obs = self.m_obs.join(pd.Series(data=maturities.values[year:], index=None, name="Maturities_year_"+str(year)))
                 self.r_obs = self.r_obs.join(pd.Series(data=spot.values, index=None, name="Yield_year_"+str(year)))
 
-    def CalibrateProjected(self, n_years: int, ini_guess: float, end: float, max_iter: int) -> None:
+    def calibrate_projected(self, n_years: int, ini_guess: float, end: float, max_iter: int) -> None:
         """
         Takes the projected yield curve from the m_obs and r_obs properties and uses the bisection algorithm
         to calibrate the alpha parameter if the Smith &Wilson algorithm. The calibration is done on the first
@@ -136,12 +136,12 @@ class Curves:
         m_obs = np.transpose(np.array(self.m_obs[mat_head])) # Obtain the maturities curve
 
         # Calculate the calibration parameter alpha 
-        alpha_optimized = [self.BisectionAlpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, max_iter)]
+        alpha_optimized = [self.bisection_alpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, max_iter)]
 
         # Save the calibration parameter alpha
         self.alpha[alpha_head] = alpha_optimized
 
-        b_calibrated = self.SWCalibrate(r_obs, m_obs, ufr, self.alpha[alpha_head][0])
+        b_calibrated = self.sw_calibrate(r_obs, m_obs, ufr, self.alpha[alpha_head][0])
         self.b[calib_head] = b_calibrated
         
         # All other projection periods except time 0
@@ -154,15 +154,15 @@ class Curves:
             r_obs = np.transpose(np.array(self.r_obs[yield_head]))[:-i_year] # Obtain the yield curve
             m_obs = np.transpose(np.array(self.m_obs[mat_head]))[:-i_year]
 
-            alpha_optimized = [self.BisectionAlpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, max_iter)]
+            alpha_optimized = [self.bisection_alpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, max_iter)]
             self.alpha[alpha_head] = alpha_optimized
 
-            b_calibrated = self.SWCalibrate(r_obs, m_obs, ufr, self.alpha[alpha_head][0])
+            b_calibrated = self.sw_calibrate(r_obs, m_obs, ufr, self.alpha[alpha_head][0])
             b_calibrated = np.append(b_calibrated, np.repeat(np.nan, i_year))
             
             self.b[calib_head] = b_calibrated
 
-    def RetrieveRates(self, proj_step: int, target_mat: np.ndarray, type: str, spread: float) -> pd.DataFrame | None:
+    def retrieve_rates(self, proj_step: int, target_mat: np.ndarray, type: str, spread: float) -> pd.DataFrame | None:
     
         maturity_name = "Maturities_year_" + str(proj_step)
         calibration_name = "Calibration_year_" + str(proj_step)
@@ -170,7 +170,7 @@ class Curves:
         calib_b = self.b[calibration_name].iloc[: len(self.b[calibration_name]) - proj_step].values
         calib_maturities = self.m_obs[maturity_name].iloc[: len(self.m_obs[maturity_name]) - proj_step].values
         calib_alpha = self.alpha[alpha_name][0]
-        yield_result = self.SWExtrapolate(target_mat, calib_maturities, calib_b, self.ufr, calib_alpha) + spread
+        yield_result = self.sw_extrapolate(target_mat, calib_maturities, calib_b, self.ufr, calib_alpha) + spread
 
         if type == "Yield":
             return pd.DataFrame(data=yield_result,index=None, columns=["Yield"])
@@ -181,10 +181,10 @@ class Curves:
         else:
             pass
 
-    def SWHeart(self, u: np.ndarray, v: np.ndarray, alpha: float) -> np.ndarray:
+    def sw_heart(self, u: np.ndarray, v: np.ndarray, alpha: float) -> np.ndarray:
         """
         SWHEART Calculate the heart of the Wilson function.
-        SWHeart(u, v, alpha) calculates the matrix H (Heart of the Wilson
+        sw_heart(u, v, alpha) calculates the matrix H (Heart of the Wilson
         function) for maturities specified by vectors u and v. The formula is
         taken from the EIOPA technical specifications paragraph 132.
     
@@ -207,10 +207,10 @@ class Curves:
         v_mat = np.tile(v, [u.size, 1])
         return 0.5 * (alpha * (u_mat + v_mat) + np.exp(-alpha * (u_mat + v_mat)) - alpha * np.absolute(u_mat-v_mat) - np.exp(-alpha * np.absolute(u_mat-v_mat))); # Heart of the Wilson function from paragraph 132
 
-    def SWCalibrate(self, r: np.ndarray, M: np.ndarray, ufr: float, alpha: float) -> np.ndarray:
+    def sw_calibrate(self, r: np.ndarray, M: np.ndarray, ufr: float, alpha: float) -> np.ndarray:
         """
         SWCALIBRATE Calculate the calibration vector using a Smith-Wilson algorithm
-        b = SWCalibrate(r, T, ufr, alpha) calculates the vector b used for
+        b = sw_calibrate(r, T, ufr, alpha) calculates the vector b used for
         interpolation and extrapolation of rates.
         
         Parameters
@@ -232,14 +232,14 @@ class Curves:
         d = np.exp(-np.log(1+ufr) * M)    # Calculate vector d described in paragraph 138
         Q = np.diag(d) @ C                  # Matrix Q described in paragraph 139
         q = C.transpose() @ d                         # Vector q described in paragraph 139
-        H = self.SWHeart(M, M, alpha) # Heart of the Wilson function from paragraph 132
+        H = self.sw_heart(M, M, alpha) # Heart of the Wilson function from paragraph 132
 
         return np.linalg.inv(Q.transpose() @ H @ Q) @ (p-q)          # Calibration vector b from paragraph 149
     
-    def SWExtrapolate(self, m_target: np.ndarray, m_obs: np.ndarray, b: np.ndarray, ufr: float, alpha: float) -> np.ndarray:
+    def sw_extrapolate(self, m_target: np.ndarray, m_obs: np.ndarray, b: np.ndarray, ufr: float, alpha: float) -> np.ndarray:
         """"
         SWEXTRAPOLATE Interpolate or/and extrapolate rates for targeted maturities using a Smith-Wilson algorithm.
-        r = SWExtrapolate(m_target,m_obs, b, ufr, alpha) calculates the rates for maturities specified in M_Target using the calibration vector b.
+        r = sw_extrapolate(m_target,m_obs, b, ufr, alpha) calculates the rates for maturities specified in M_Target using the calibration vector b.
         
         Parameters
         ----------
@@ -260,11 +260,11 @@ class Curves:
         C = np.identity(m_obs.size)
         d = np.exp(-np.log(1+ufr) * m_obs)                                                # Calculate vector d described in paragraph 138
         Q = np.diag(d) @ C                                                             # Matrix Q described in paragraph 139
-        H = self.SWHeart(m_target, m_obs, alpha)                                          # Heart of the Wilson function from paragraph 132
+        H = self.sw_heart(m_target, m_obs, alpha)                                          # Heart of the Wilson function from paragraph 132
         p = np.exp(-np.log(1+ufr)* m_target) + np.diag(np.exp(-np.log(1+ufr) * m_target)) @ H @ Q @ b # Discount pricing function for targeted maturities from paragraph 147
         return p ** (-1/ m_target) -1 # Convert obtained prices to rates and return prices
 
-    def Galfa(self, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, alpha: float, tau: float) -> float:
+    def g_alfa(self, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, alpha: float, tau: float) -> float:
         """
         Calculates the gap at the convergence point between the allowable tolerance tau and the curve extrapolated using the Smith-Wilson algorithm.
         interpolation and extrapolation of rates.
@@ -283,15 +283,15 @@ class Curves:
 
         Example of use:
             >>> import numpy as np
-            >>> from SWCalibrate import SWCalibrate as SWCalibrate
-            >>> from SWExtrapolate import SWExtrapolate as SWExtrapolate
+            >>> from sw_calibrate import sw_calibrate as sw_calibrate
+            >>> from sw_extrapolate import sw_extrapolate as sw_extrapolate
             >>> m_obs = np.transpose(np.array([1, 2, 4, 5, 6, 7]))
             >>> r_obs =  np.transpose(np.array([0.01, 0.02, 0.03, 0.032, 0.035, 0.04]))
             >>> alfa = 0.15
             >>> ufr = 0.04
             >>> precision = 0.0000000001
             >>> tau = 0.0001
-            >>> Galfa(m_obs, r_obs, ufr, alfa, tau)
+            >>> g_alfa(m_obs, r_obs, ufr, alfa, tau)
             [Out] -8.544212205612438e-05
 
         For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf
@@ -304,12 +304,12 @@ class Curves:
         C = np.identity(m_obs.size)                   # Construct cash flow matrix described in paragraph 137 assuming the input is ZCB bonds with notional value of 1
         d = np.exp(-np.log(1 + ufr) * m_obs)            # Calculate vector d described in paragraph 138
         Q = np.diag(d) @ C                            # Matrix Q described in paragraph 139
-        b = self.SWCalibrate(r_obs, m_obs, ufr, alpha)     # Calculate the calibration vector b using the equation from paragraph 149
+        b = self.sw_calibrate(r_obs, m_obs, ufr, alpha)     # Calculate the calibration vector b using the equation from paragraph 149
 
         K = (1+alpha * m_obs @ Q@ b) / (np.sinh(alpha * m_obs.transpose())@ Q@ b) # Calculate kappa as defined in the paragraph 155
         return( alpha/np.abs(1 - K*np.exp(alpha*T))-tau) # Size of the gap at the convergence point between the allowable tolerance Tau and the actual curve. Defined in paragraph 158
 
-    def BisectionAlpha(self, x_start: float, x_end: float, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, tau: float, precision: float, max_iter: int) -> float | None:
+    def bisection_alpha(self, x_start: float, x_end: float, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, tau: float, precision: float, max_iter: int) -> float | None:
         """
         Bisection root finding algorithm for finding the root of a function. The function here is the allowed difference between the ultimate forward rate and the extrapolated curve using Smith & Wilson.
 
@@ -330,7 +330,7 @@ class Curves:
 
         Example of use:
             >>> import numpy as np
-            >>> from SWCalibrate import SWCalibrate as SWCalibrate
+            >>> from sw_calibrate import sw_calibrate as sw_calibrate
             >>> m_obs = np.transpose(np.array([1, 2, 4, 5, 6, 7]))
             >>> r_obs =  np.transpose(np.array([0.01, 0.02, 0.03, 0.032, 0.035, 0.04]))
             >>> x_start = 0.05
@@ -340,7 +340,7 @@ class Curves:
             >>> ufr = 0.042
             >>> precision = 0.0000000001
             >>> tau = 0.0001
-            >>> BisectionAlpha(x_start, x_end, m_obs, r_obs, ufr, tau, precision, max_iter)
+            >>> bisection_alpha(x_start, x_end, m_obs, r_obs, ufr, tau, precision, max_iter)
             [Out] 0.11549789285636511
 
         For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf and https://en.wikipedia.org/wiki/Bisection_method
@@ -348,8 +348,8 @@ class Curves:
         Implemented by Gregor Fabjan from Qnity Consultants on 17/12/2021.
         """   
 
-        y_start = self.Galfa(m_obs, r_obs, ufr, x_start, tau) # Check if the initial point is a solution
-        y_end = self.Galfa(m_obs, r_obs, ufr, x_end, tau) # Check if the final point is a solution
+        y_start = self.g_alfa(m_obs, r_obs, ufr, x_start, tau) # Check if the initial point is a solution
+        y_end = self.g_alfa(m_obs, r_obs, ufr, x_end, tau) # Check if the final point is a solution
         if np.abs(y_start) < precision:
             #self.alpha = xStart # If initial point already satisfies the conditions return start point
             return x_start
@@ -359,7 +359,7 @@ class Curves:
         i_iter = 0
         while i_iter <= max_iter:
             x_mid = (x_end+x_start)/2 # calculate mid-point 
-            y_mid = self.Galfa(m_obs, r_obs, ufr, x_mid, tau) # What is the solution at midpoint
+            y_mid = self.g_alfa(m_obs, r_obs, ufr, x_mid, tau) # What is the solution at midpoint
 
             if (y_mid == 0 or (x_end-x_start)/2 < precision): # Solution found
                 #self.alpha = xMid

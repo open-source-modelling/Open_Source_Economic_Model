@@ -84,20 +84,20 @@ def corp_bond_2() -> CorpBond:
     return corp_bond2
 
 
-def test_IsEmpty():
+def test_is_empty():
     corp_bond_portfolio = CorpBondPortfolio()
-    assert corp_bond_portfolio.IsEmpty() is True
+    assert corp_bond_portfolio.is_empty() is True
 
 
-def test_Not_IsEmpty(corp_bond_1: CorpBond):
+def test_not_is_empty(corp_bond_1: CorpBond):
     corp_bond_portfolio = CorpBondPortfolio({corp_bond_1.asset_id: corp_bond_1})
-    assert corp_bond_portfolio.IsEmpty() is False
+    assert corp_bond_portfolio.is_empty() is False
 
 
 def test_add_to_empty_portfolio(corp_bond_1:CorpBond):
     corporate_bond_portfolio = CorpBondPortfolio()
     corporate_bond_portfolio.add(corp_bond_1)
-    assert corporate_bond_portfolio.IsEmpty() is False
+    assert corporate_bond_portfolio.is_empty() is False
     assert len(corporate_bond_portfolio.corporate_bonds) == 1
     assert corporate_bond_portfolio.corporate_bonds[corp_bond_1.asset_id] == corp_bond_1
     assert (corp_bond_1.asset_id in corporate_bond_portfolio.corporate_bonds)

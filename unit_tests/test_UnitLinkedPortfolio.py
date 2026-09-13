@@ -29,11 +29,11 @@ def portfolio() -> UnitLinkedPortfolio:
 
 
 def test_is_empty() -> None:
-    assert UnitLinkedPortfolio().IsEmpty() is True
+    assert UnitLinkedPortfolio().is_empty() is True
 
 
 def test_add_and_not_empty(portfolio: UnitLinkedPortfolio) -> None:
-    assert portfolio.IsEmpty() is False
+    assert portfolio.is_empty() is False
     extra = UnitLinkedPolicy(
         policy_id=1003,
         birth_date=date(1980, 1, 10),

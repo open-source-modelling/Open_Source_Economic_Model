@@ -63,20 +63,20 @@ def paths() -> Paths:
     return paths
 
 
-def test_IsEmpty():
+def test_is_empty():
     equity_share_portfolio = EquitySharePortfolio()
-    assert equity_share_portfolio.IsEmpty() == True
+    assert equity_share_portfolio.is_empty() == True
 
 
-def test_Not_IsEmpty(equity_share_1):
+def test_not_is_empty(equity_share_1):
     equity_share_portfolio = EquitySharePortfolio({equity_share_1.asset_id: equity_share_1})
-    assert equity_share_portfolio.IsEmpty() == False
+    assert equity_share_portfolio.is_empty() == False
 
 
 def test_add_to_empty_portfolio(equity_share_1):
     equity_share_portfolio = EquitySharePortfolio()
     equity_share_portfolio.add(equity_share_1)
-    assert equity_share_portfolio.IsEmpty() is False
+    assert equity_share_portfolio.is_empty() is False
     assert len(equity_share_portfolio.equity_share) == 1
     assert equity_share_portfolio.equity_share[equity_share_1.asset_id] == equity_share_1
     assert (equity_share_1.asset_id in equity_share_portfolio.equity_share)

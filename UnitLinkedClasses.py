@@ -117,7 +117,7 @@ class UnitLinkedPortfolio:
         """
         self.policies = policies if policies is not None else {}
 
-    def IsEmpty(self) -> bool:
+    def is_empty(self) -> bool:
         """
         Returns
         -------
