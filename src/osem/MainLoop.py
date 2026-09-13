@@ -16,14 +16,14 @@ def create_cashflow_dataframe(cf_dict: dict[int, dict[datetime.date, float]], un
 
     Parameters
     ----------
-    :type cf_dates: pd.DataFrame
+    cf_dict: dict[int, dict[datetime.date, float]]
         Dictionary of date/cash-flow pairs for each security
-    :type unique_dates: list
+    unique_dates: list[datetime.date]
         List of all relevant dates for the modelling run
 
     Returns
     -------
-    :type: pd.DataFrame
+    pd.DataFrame
         Dataframe matrix with cash flows in a matrix form    
     """
 
@@ -41,15 +41,15 @@ def calculate_expired_dates(list_of_dates: list[datetime.date], deadline: dt.dat
 
     Parameters
     ----------
-    :type list_of_dates: list
+    list_of_dates: list[datetime.date]
         List of all the dates considered
         
-    :type deadline: date
+    deadline: dt.date
         Last date considered
 
     Returns
     -------
-    :type: list
+    list[datetime.date]
         List of dates that occur before the deadline date
     """
 
@@ -61,18 +61,18 @@ def set_dates_of_interest(modelling_date: dt.date, end_date: dt.date, days_inter
 
     Parameters
     ----------
-    :type modelling_date: date
+    modelling_date: dt.date
         The starting modelling date
 
-    :type end_date: date
+    end_date: dt.date
         The end of the modelling window
 
-    :type days_interval: int
+    days_interval: int
         Time difference between two modelling dates of interest
 
     Returns
     -------
-    :type: pd.Series
+    pd.Series
         Series of dates at which the modell will run   
     """
     next_date_of_interest: dt.date = modelling_date
@@ -90,12 +90,12 @@ def create_liabilities_df(liabilities: Liability) -> pd.DataFrame:
         
     Parameters
     ----------
-    :type modelling_date: date
+    modelling_date: dt.date
         The starting modelling date
 
     Returns
     -------
-    :type: pd.DataFrame
+    pd.DataFrame
         The DataFrame with liability cash flows       
     """
     cash_flows = pd.DataFrame(columns=liabilities.cash_flow_dates)
@@ -123,7 +123,7 @@ def portfolio_market_value(
         Per-asset bond prices indexed by asset_id with date columns.
     bd_units : pd.DataFrame
         Per-asset bond units indexed by asset_id with date columns.
-    as_of : date
+    as_of : dt.date
         Valuation date (column name in the price and units DataFrames).
 
     Returns
@@ -143,18 +143,18 @@ def process_expired_cf(unique_dates: list[datetime.date], expiration_date: dt.da
 
     Parameters
     ----------
-    unique_dates : list
+    unique_dates : list[datetime.date]
         Dates at which cash flows may occur (not yet expired).
-    expiration_date : date
+    expiration_date : dt.date
         Period-end date; flows on or before this date are treated as expired.
-    cash_flows : DataFrame
+    cash_flows : pd.DataFrame
         Per-unit cash flows (rows = asset_id, columns = dates).
-    units : DataFrame
+    units : pd.DataFrame
         Holdings per asset_id; the expiration_date column is used for unit counts.
 
     Returns
     -------
-    tuple[float, pd.DataFrame, list]
+    tuple[float, pd.DataFrame, list[datetime.date]]
         Expired cash total, remaining cash-flow DataFrame, and remaining dates.
     """
 
@@ -176,17 +176,17 @@ def process_expired_liab(unique_dates: list[datetime.date], date_of_interest: dt
         
     Parameters
     ----------
-    :type unique_dates: list
+    unique_dates: list[datetime.date]
         The list of unique dates at which cash flows occur
-    :type date_of_interest: date
+    date_of_interest: dt.date
         The period-end date; cash flows on or before this date are treated as expired
-    :type cash_flows: DataFrame
+    cash_flows: pd.DataFrame
         The dataframe of aggregated liability cash flows (absolute amounts, not per unit)
         
     Returns
     -------
-    :type: list
-        List with the DataFrame with remaining (non-expired) cash flow columns and the expired cashflows summed into cash  
+    tuple[float, pd.DataFrame, list[datetime.date]]
+        Expired cash total, remaining cash-flow DataFrame, and remaining dates.
     """
 
     expired_dates = calculate_expired_dates(unique_dates, date_of_interest)
@@ -261,20 +261,20 @@ def capitalize_policies(
 
     Parameters
     ----------
-    :type mv_df: pd.DataFrame
+    mv_df: pd.DataFrame
         Market-value state matrix.
-    :type gv_df: pd.DataFrame
+    gv_df: pd.DataFrame
         Guaranteed-value state matrix.
-    :type policies: dict[int, UnitLinkedPolicy]
+    policies: dict[int, UnitLinkedPolicy]
         Static policy metadata including is_guaranteed.
-    :type current_date: date
+    current_date: date
         Current modelling date column.
-    :type portfolio_return: float
+    portfolio_return: float
         Period portfolio return from the asset MTM step.
 
     Returns
     -------
-    :rtype: tuple[pd.DataFrame, pd.DataFrame]
+    tuple[pd.DataFrame, pd.DataFrame]
         Updated mv_df and gv_df.
     """
     factor = 1.0 + portfolio_return
@@ -297,20 +297,20 @@ def apply_premiums(
 
     Parameters
     ----------
-    :type mv_df: pd.DataFrame
+    mv_df: pd.DataFrame
         Market-value state matrix.
-    :type premium_df: pd.DataFrame
+    premium_df: pd.DataFrame
         Premium state matrix.
-    :type fund: UnitLinkedFund
+    fund: UnitLinkedFund
         Fund parameters (premium_growth, entry_fee).
-    :type current_date: date
+    current_date: date
         Current modelling date column.
-    :type time: float
+    time: float
         Elapsed year fraction for the period.
 
     Returns
     -------
-    :rtype: tuple[pd.DataFrame, pd.DataFrame, float, float]
+    tuple[pd.DataFrame, pd.DataFrame, float, float]
         Updated mv_df, premium_df, total gross premium, and total entry fee.
     """
     gross_total = 0.0
@@ -338,18 +338,18 @@ def apply_admin_fees(
 
     Parameters
     ----------
-    :type mv_df: pd.DataFrame
+    mv_df: pd.DataFrame
         Market-value state matrix.
-    :type fund: UnitLinkedFund
+    fund: UnitLinkedFund
         Fund parameters (admin_fee).
-    :type current_date: date
+    current_date: date
         Current modelling date column.
-    :type time: float
+    time: float
         Elapsed year fraction for the period.
 
     Returns
     -------
-    :rtype: tuple[pd.DataFrame, float]
+    tuple[pd.DataFrame, float]
         Updated mv_df and total admin fee cash.
     """
     fee_factor = 1.0 - ((1.0 - fund.admin_fee) ** time)
@@ -379,26 +379,26 @@ def apply_mortality(
 
     Parameters
     ----------
-    :type mv_df: pd.DataFrame
+    mv_df: pd.DataFrame
         Market-value state matrix.
-    :type gv_df: pd.DataFrame
+    gv_df: pd.DataFrame
         Guaranteed-value state matrix.
-    :type premium_df: pd.DataFrame
+    premium_df: pd.DataFrame
         Premium state matrix.
-    :type policies: dict[int, UnitLinkedPolicy]
+    policies: dict[int, UnitLinkedPolicy]
         Static policy metadata for age and sex.
-    :type society: Society
+    society: Society
         Mortality tables.
-    :type current_date: date
+    current_date: date
         Current modelling date column.
-    :type time: float
+    time: float
         Elapsed year fraction.
-    :type rng: random.Random
+    rng: random.Random
         Seeded random number generator.
 
     Returns
     -------
-    :rtype: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, float, int]
+    tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, float, int]
         Updated mv_df, gv_df, premium_df (dead policies removed), death benefit total, and death count.
     """
     death_total = 0.0
@@ -432,24 +432,24 @@ def apply_lapse(
 
     Parameters
     ----------
-    :type mv_df: pd.DataFrame
+    mv_df: pd.DataFrame
         Market-value state matrix.
-    :type gv_df: pd.DataFrame
+    gv_df: pd.DataFrame
         Guaranteed-value state matrix.
-    :type premium_df: pd.DataFrame
+    premium_df: pd.DataFrame
         Premium state matrix.
-    :type fund: UnitLinkedFund
+    fund: UnitLinkedFund
         Fund parameters (lapse_rate).
-    :type current_date: date
+    current_date: date
         Current modelling date column.
-    :type time: float
+    time: float
         Elapsed year fraction.
-    :type rng: random.Random
+    rng: random.Random
         Seeded random number generator.
 
     Returns
     -------
-    :rtype: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, float, int]
+    tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, float, int]
         Updated mv_df, gv_df, premium_df (lapsed policies removed), surrender total, and lapse count.
     """
     lapse_period = 1.0 - ((1.0 - fund.lapse_rate) ** time)

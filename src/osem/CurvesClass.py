@@ -31,9 +31,9 @@ class Curves:
         ----------
         self: Curves class instance
             The Curves class instance
-        :type maturity_vec: np.ndarray
+        maturity_vec: np.ndarray
             List of maturities for which yields are provided
-        :type yield_vec: np.ndarray
+        yield_vec: np.ndarray
             List of yield rates for the maturities in maturity_vec
 
         Note that the current assumption is that the yields are provided for every year from time 0 to the end of the modelling window
@@ -72,7 +72,7 @@ class Curves:
         ----------
         self: Curves class instance
             The Curves class instance with populated fwd_rates
-        :type n_years: integer
+        n_years: int
             The number of required yearly projections. (Ex. n_year = 2 will generate a 3 column dataframe (Year 0, 1, and 2))
         """
 
@@ -107,16 +107,16 @@ class Curves:
         self: Curves class instance
             The Curves class instance with populated ufr, tau, precision, r_obs and m_obs,
         
-        :type n_years: integer
+        n_years: int
             The number of required yearly projections
 
-        :type ini_guess: float
+        ini_guess: float
             Initial guess of the parameter alpha in the calibration
 
-        :type end: float
+        end: float
             Upper limit of the parameter alpha in the calibration
 
-        :type max_iter: integer
+        max_iter: int
             Maximum number of iteration of the calibration (bisection) algorithm 
 
         """
@@ -190,15 +190,19 @@ class Curves:
     
         Parameters
         ----------
-            :type u : n_1 x 1 numpy array of maturities. Ex. u = [1; 3]
-            :type v : n_2 x 1 numpy array of maturities. Ex. v = [1; 2; 3; 5]
-            :type alpha : float the convergence speed parameter alpha. Ex. alpha = 0.05
+            u: np.ndarray
+                n_1 x 1 numpy array of maturities. Ex. u = [1; 3]
+            v: np.ndarray
+                n_2 x 1 numpy array of maturities. Ex. v = [1; 2; 3; 5]
+            alpha: float
+                the convergence speed parameter alpha. Ex. alpha = 0.05
     
         Returns
         -------
-            :rtype n_1 x n_2 numpy array matrix representing the Heart of the Wilson function for 
-            selected maturities and parameter alpha. 
-            H is calculated as in the paragraph 132 of the EIOPA documentation. 
+            np.ndarray 
+                n_1 x n_2 numpy array matrix representing the Heart of the Wilson function for 
+                selected maturities and parameter alpha. 
+                H is calculated as in the paragraph 132 of the EIOPA documentation. 
     
         For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf
         """
@@ -215,15 +219,20 @@ class Curves:
         
         Parameters
         ----------
-        :type r :     n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable zero coupon bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
-        :type M :     n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u=[[1], [3]]
-        :type ufr :   float representing the ultimate forward rate. Ex. ufr = 0.042
-        :type alpha : float representing the convergence speed parameter alpha. Ex. alpha = 0.05
-        
+        r: np.ndarray
+            n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable zero coupon bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
+        M: np.ndarray
+            n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u=[[1], [3]]
+        ufr: float
+            float representing the ultimate forward rate. Ex. ufr = 0.042
+        alpha: float
+            float representing the convergence speed parameter alpha. Ex. alpha = 0.05
+
         Returns
         -------
-        :rtype n x 1 ndarray array for the calibration vector needed to interpolate and extrapolate b =[[14], [-21]]
-        rates
+        np.ndarray
+            n x 1 ndarray array for the calibration vector needed to interpolate and extrapolate b =[[14], [-21]]
+            rates
 
         For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf
         """
@@ -243,17 +252,23 @@ class Curves:
         
         Parameters
         ----------
-            :type m_target : k x 1 ndarray. Each element represents a bond maturity of interest. Ex. M_Target = [[1], [2], [3], [5]]
-            :type m_obs :    n x 1 ndarray. Observed bond maturities used for calibrating the calibration vector b. Ex. M_Obs = [[1], [3]]
-            :type b :        n x 1 ndarray calibration vector calculated on observed bonds.
-            :type ufr :      float representing the ultimate forward rate.
-            Ex. ufr = 0.042
-            :type alpha :    float representing the convergence speed parameter alpha. Ex. alpha = 0.05
+            m_target: np.ndarray
+                k x 1 ndarray. Each element represents a bond maturity of interest. Ex. M_Target = [[1], [2], [3], [5]]
+            m_obs: np.ndarray
+                n x 1 ndarray. Observed bond maturities used for calibrating the calibration vector b. Ex. M_Obs = [[1], [3]]
+            b: np.ndarray
+                n x 1 ndarray calibration vector calculated on observed bonds.
+            ufr: float
+                float representing the ultimate forward rate.
+                Ex. ufr = 0.042
+            alpha: float
+                float representing the convergence speed parameter alpha. Ex. alpha = 0.05
             rates.
         
         Returns
         -------
-        :rtype k x 1 ndarray. Represents the targeted rates for a zero-coupon bond. Each rate belongs to a targeted zero-coupon bond with a maturity from T_Target. Ex. r = [0.0024; 0.0029; 0.0034; 0.0039]
+        np.ndarray
+            k x 1 ndarray. Represents the targeted rates for a zero-coupon bond. Each rate belongs to a targeted zero-coupon bond with a maturity from T_Target. Ex. r = [0.0024; 0.0029; 0.0034; 0.0039]
         
         For more information see https://www.eiopa.europa.eu/sites/default/files/risk_free_interest_rate/12092019-technical_documentation.pdf
         """
@@ -271,15 +286,21 @@ class Curves:
         
         Parameters
         ----------
-            :type m_obs : n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u=[[1], [3]]
-            :type r_obs : n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
-            :type ufr :   1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
-            :type alpha : 1 x 1 floating number representing the convergence speed parameter alpha. Ex. alpha = 0.05
-            :type tau :   1 x 1 floating number representing the allowed difference between ufr and actual curve. Ex. tau = 0.00001
+        m_obs: np.ndarray
+            n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u=[[1], [3]]
+        r_obs: np.ndarray
+            n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
+        ufr: float
+            1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
+        alpha: float
+            1 x 1 floating number representing the convergence speed parameter alpha. Ex. alpha = 0.05
+        tau: float
+            1 x 1 floating number representing the allowed difference between ufr and actual curve. Ex. tau = 0.00001
         
         Returns
         -------
-            :rtype float representing the distance between ufr input and the maximum allowed discrepancy tau 
+        float
+            Representing the distance between ufr input and the maximum allowed discrepancy tau 
 
         Example of use:
             >>> import numpy as np
@@ -315,18 +336,27 @@ class Curves:
 
         Parameters
         ----------
-            :type x_start :   1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
-            :type x_end :     1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
-            :type m_obs :     n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u = [[1], [3]]
-            :type r_obs :     n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
-            :type ufr  :      1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
-            :type tau :       1 x 1 floating number representing the allowed difference between ufr and actual curve. Ex. Tau = 0.00001
-            :type precision : 1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
-            :type max_iter :  1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution         
+        x_start: float
+            1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
+        x_end: float
+            1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
+        m_obs: np.ndarray
+            n x 1 ndarray of maturities of bonds, that have rates provided in input (r). Ex. u = [[1], [3]]
+        r_obs: np.ndarray
+            n x 1 ndarray of rates, for which you wish to calibrate the algorithm. Each rate belongs to an observable Zero-Coupon Bond with a known maturity. Ex. r = [[0.0024], [0.0034]]
+        ufr: float
+            1 x 1 floating number, representing the ultimate forward rate. Ex. ufr = 0.042
+        tau: float
+            1 x 1 floating number representing the allowed difference between ufr and actual curve. Ex. Tau = 0.00001
+        precision: float
+            1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
+        max_iter: int
+            1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution         
         
         Returns
         -------
-            :rtype float representing the optimal value of the parameter alpha 
+        float
+            representing the optimal value of the parameter alpha 
 
         Example of use:
             >>> import numpy as np

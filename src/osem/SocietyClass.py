@@ -10,9 +10,9 @@ class Society:
 
     Parameters
     ----------
-    :type mortality_male: pd.Series
+    mortality_male: pd.Series
         Annual mortality rates indexed by integer age.
-    :type mortality_female: pd.Series
+    mortality_female: pd.Series
         Annual mortality rates indexed by integer age.
     """
 
@@ -25,14 +25,14 @@ class Society:
 
         Parameters
         ----------
-        :type age: int
+        age: int
             Age in completed years.
-        :type is_female: bool
+        is_female: bool
             If True, use the female table; otherwise the male table.
 
         Returns
         -------
-        :rtype: float
+        float
             Annual mortality probability in [0, 1].
         """
         table = self.mortality_female if is_female else self.mortality_male

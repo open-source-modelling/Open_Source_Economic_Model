@@ -1,13 +1,11 @@
 from typing import List, Optional, Dict, Tuple, Iterator
 import numpy as np
 import pandas as pd
-from pathlib import Path
 from datetime import date
 from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
 from osem.CurvesClass import Curves
 from osem.FrequencyClass import Frequency
-from osem.TraceClass import Trace, tracer
 import logging
 from osem.logging_utils import get_file_logger
 

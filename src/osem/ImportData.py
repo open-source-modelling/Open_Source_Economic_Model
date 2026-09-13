@@ -20,22 +20,24 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
 
     Parameters
     ----------
-    :type ini_file: string
-    :type op_sys: string
-    :type config_parser: string
+    ini_file: string
+    
+    op_sys: string
+    
+    config_parser: Optional[configparser.ConfigParser]
 
-    :parameter: ini_file
+    ini_file
         Relative path to the setting file
 
-    :parameter: op_sys
+    op_sys
         Instance of a os class
 
-    :parameter: config_parser
+    config_parser
         Instance of a configuration parser class
 
     Returns
     -------
-    :rtype: Configuration
+    Configuration
         Populated Configuration class instance
     """
     configuration = Configuration()
@@ -112,19 +114,19 @@ def import_SWEiopa(param_file: str, curves_file: str, country: str) -> tuple[pd.
 
     Parameters
     ----------
-    :type param_file: string
+    param_file: string
         Relative path to the risk-free-curve parameter file input file
 
-    :type curves_file: string
+    curves_file: string
         Relative path to the risk-free-curve shape input file
 
-    :type country: string
+    country: string
         Country name used to filter the correct curve and parameters from other files
         
     Returns
     -------
-    :type list
-        List with 4 Pandas dataframes. The list of liquid maturities, the yields at those maturities, the parameters and the calibration vector
+    tuple
+        Tuple with 4 Pandas dataframes. The list of liquid maturities, the yields at those maturities, the parameters and the calibration vector
     """
     
     param_raw = pd.read_csv(param_file, sep=",", index_col=0)
@@ -145,12 +147,12 @@ def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
 
     Parameters
     ----------
-    :type filename: string
+    filename: string
         Relative path to the corporate bond input file
 
     Returns
     -------
-    :type generator
+    generator
         Generator yielding one CorpBond instance per CSV row
     """
 
@@ -182,12 +184,12 @@ def get_equity_share(filename: str) -> Iterator[EquityShare]:
 
     Parameters
     ----------
-    :type filename: string
+    filename: string
         Relative path to the equity input file
 
     Returns
     -------
-    :type generator
+    generator
         Generator returning a filled EquityShare class of a single position
     """
 
@@ -215,12 +217,12 @@ def get_cash(filename: str) -> Cash:
 
     Parameters
     ----------
-    :type filename: string
+    filename: string
         Relative path to the cash input file
 
     Returns
     -------
-    :type Cash class
+    Cash
         Returning a filled Cash class with the initial cash position
     """
 
@@ -238,12 +240,12 @@ def get_liability(filename: str) -> Liability:
 
     Parameters
     ----------
-    :type filename: string
+    filename: string
         Relative path to the liability cash flows input file
 
     Returns
     -------
-    :type Liability
+    Liability
         A Liability instance with cash flow dates and amounts from the CSV
 
     """
@@ -266,13 +268,13 @@ def get_settings(filename: str) -> Settings:
 
     Parameters
     ----------
-    :type filename: string
+    filename: string
         Relative path to the settings input file
 
     Returns
     -------
-    :type Settings class
-        Returning a populated Settings class
+    Settings
+        A populated Settings class
 
     """
     with open(filename, mode="r", encoding="utf-8-sig") as csvfile:
@@ -302,12 +304,12 @@ def get_unit_linked_policies(filename: str) -> Iterator[UnitLinkedPolicy]:
 
     Parameters
     ----------
-    :type filename: string
+    filename: string
         Relative path to the unit-linked policies input file
 
     Returns
     -------
-    :type generator
+    generator
         Generator yielding one UnitLinkedPolicy instance per CSV row
     """
 
@@ -332,12 +334,12 @@ def get_unit_linked_fund(filename: str) -> UnitLinkedFund:
 
     Parameters
     ----------
-    :type filename: string
+    filename: string
         Relative path to the unit-linked fund input file
 
     Returns
     -------
-    :type UnitLinkedFund
+    UnitLinkedFund
         Fund parameters from the first CSV data row
     """
 
@@ -360,12 +362,12 @@ def get_society(filename: str) -> Society:
 
     Parameters
     ----------
-    :type filename: string
+    filename: string
         Relative path to mortality.csv (AGE, MALE, FEMALE columns)
 
     Returns
     -------
-    :type Society
+    Society
         Populated Society with male and female mortality series
     """
 

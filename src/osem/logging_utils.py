@@ -18,17 +18,17 @@ def get_file_logger(name: str, log_filename: str, level: int = logging.INFO) -> 
 
     Parameters
     ----------
-    :type name: str
+    name: str
         Logger name, conventionally the importing module's `__name__`.
-    :type log_filename: str
+    log_filename: str
         Log file path (relative paths resolve against the current working
         directory, matching the existing per-module log files).
-    :type level: int
+    level: int
         Logging level for this logger (e.g. `logging.DEBUG`).
 
     Returns
     -------
-    :rtype: logging.Logger
+    logging.Logger
         The configured logger. Safe to call on every import: if a
         FileHandler for `log_filename` is already attached, it is not
         duplicated.

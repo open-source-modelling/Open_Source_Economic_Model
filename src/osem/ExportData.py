@@ -1,15 +1,18 @@
 import pandas as pd
 from pathlib import Path
 
-def save_matrices_to_csv(path: str, name: str, frame):
+def save_matrices_to_csv(path: str, name: str, frame: pd.DataFrame):
     """
     Save DataFrame as a csv file on a specified path
 
     Parameters
     ----------
-    :type path: string; absolute location where the csv will be saved
-    :type name: string; name of the csv (Note that the name should be without ".csv" ending)
-    :type frame: Pandas.DataFrame; DataFrame that needs to be saved 
+    path: string
+        absolute location where the csv will be saved
+    name: string
+        name of the csv (Note that the name should be without ".csv" ending)
+    frame: pd.DataFrame
+        DataFrame that needs to be saved 
 
     Returns
     -------

@@ -13,19 +13,19 @@ class UnitLinkedPolicy:
 
     Parameters
     ----------
-    :type policy_id: int
+    policy_id: int
         Unique policy identifier.
-    :type birth_date: date
+    birth_date: date
         Policyholder date of birth.
-    :type is_female: bool
+    is_female: bool
         Sex for mortality table lookup.
-    :type is_guaranteed: bool
+    is_guaranteed: bool
         Whether guaranteed value (GV) is tracked and capitalized.
-    :type premium: float
+    premium: float
         Opening annual premium amount.
-    :type mv: float
+    mv: float
         Opening account / market value.
-    :type gv: float
+    gv: float
         Opening guaranteed value (0 if not guaranteed).
     """
 
@@ -53,12 +53,12 @@ class UnitLinkedPolicy:
 
         Parameters
         ----------
-        :type as_of: date
+        as_of: date
             Valuation date.
 
         Returns
         -------
-        :rtype: int
+        int
             Floor age in years (non-negative).
         """
         age = math.floor((as_of - self.birth_date).days / 365.25)
@@ -72,15 +72,15 @@ class UnitLinkedFund:
 
     Parameters
     ----------
-    :type fund_id: int
+    fund_id: int
         Fund identifier (single pool MVP uses one row).
-    :type lapse_rate: float
+    lapse_rate: float
         Annual lapse probability in [0, 1].
-    :type admin_fee: float
+    admin_fee: float
         Annual admin fee as a proportion of MV in [0, 1].
-    :type entry_fee: float
+    entry_fee: float
         Entry fee as a proportion of gross premium in [0, 1].
-    :type premium_growth: float
+    premium_growth: float
         Annual premium growth rate (non-negative).
     """
 
@@ -112,7 +112,7 @@ class UnitLinkedPortfolio:
         """
         Parameters
         ----------
-        :type policies: dict[int, UnitLinkedPolicy]
+        policies: dict[int, UnitLinkedPolicy]
             Mapping of policy_id to UnitLinkedPolicy.
         """
         self.policies = policies if policies is not None else {}
@@ -121,7 +121,7 @@ class UnitLinkedPortfolio:
         """
         Returns
         -------
-        :rtype: bool
+        bool
             True if the portfolio has no policies.
         """
         return len(self.policies) == 0
@@ -132,7 +132,7 @@ class UnitLinkedPortfolio:
 
         Parameters
         ----------
-        :type policy: UnitLinkedPolicy
+        policy: UnitLinkedPolicy
             Policy instance to insert.
         """
         self.policies[policy.policy_id] = policy
@@ -145,12 +145,12 @@ class UnitLinkedPortfolio:
 
         Parameters
         ----------
-        :type modelling_date: date
+        modelling_date: date
             Opening modelling date column.
 
         Returns
         -------
-        :rtype: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
+        tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
             ul_mv_df, ul_gv_df, ul_premium_df
             (rows = policy_id, columns = dates).
         """
@@ -178,14 +178,14 @@ class UnitLinkedPortfolio:
 
         Parameters
         ----------
-        :type mv_df: pd.DataFrame
+        mv_df: pd.DataFrame
             Market-value state matrix.
-        :type as_of: date
+        as_of: date
             Column date.
 
         Returns
         -------
-        :rtype: float
+        float
             Total UL reserve.
         """
         return float(mv_df[as_of].sum())

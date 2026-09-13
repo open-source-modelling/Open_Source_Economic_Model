@@ -509,26 +509,26 @@ class CorpBondPortfolio():
 
         Parameters
         ----------
-        :type coupon_df (DataFrame):
+        coupon_df: pd.DataFrame
             DataFrame containing coupon rates for each bond.
-        :type notional_df (DataFrame):
+        notional_df: pd.DataFrame
             DataFrame containing notional amounts for each bond.
-        :type settings:
+        settings: Settings
             Settings object containing modeling date.
-        :type proj_period (int):
+        proj_period: int
             Projection period for pricing.
-        :type curves:
+        curves: Curves
             Curves data required for pricing.
-        :type bond_zspread_df (DataFrame):
+        bond_zspread_df: pd.DataFrame
             DataFrame containing bond z-spreads for each bond.
-        :type bond_price_df (DataFrame):
+        bond_price_df: pd.DataFrame
             DataFrame to store bond prices.
-        :type date_of_interest:
+        date_of_interest: date
             Date of interest for pricing.
 
         Returns
         -------
-        :rtype DataFrame:
+        pd.DataFrame
             DataFrame containing bond prices updated for the given date_of_interest.
 
         Note: Assumes self.corporate_bonds is a dictionary with keys as asset IDs and values as CorpBond objects.
@@ -547,10 +547,14 @@ class CorpBondPortfolio():
         Parameters
         ----------
         self: CorpBondPortfolio instance
-        zspread_df: DataFrame containing initial z-spreads for each bond
-        settings: Settings object with modelling dates and end date
-        proj_period: projection period index for curve retrieval
-        curves: Curves object with calibrated term structure
+        zspread_df: pd.DataFrame 
+            Initial z-spreads for each bond
+        settings: Settings 
+            Object with modelling dates and end date
+        proj_period: int
+            Projection period index for curve retrieval
+        curves: Curves 
+            Object with calibrated term structure
 
         Returns
         -------
