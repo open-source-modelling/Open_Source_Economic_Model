@@ -63,14 +63,14 @@ class CorpBond:
         """
         Calculate the size of the coupon for a bond inside the CorpBond class.
         The coupon amount is equal to the percentage of the notional value.
-        
+
         Parameters
         ----------
         self: CorpBond class
-        
+
         Returns
         -------
-        :rtype float 
+        :rtype float
             The monetary amount of the coupon
         """
         coupon_size = self.coupon_rate * self.notional_amount
@@ -79,19 +79,19 @@ class CorpBond:
     def generate_coupon_dates(self, modelling_date: date, end_date: date) -> Iterator[date]:
         """
         Generator yielding the coupon payment date starting from the first coupon
-        paid after the modelling date. 
+        paid after the modelling date.
 
         Parameters
         ----------
         self: CorpBond class
-        :type modelling_date: date
+        modelling_date: datetime.date
             The earliest date considered.
-        :type end_date: date
+        end_date: datetime.date
             The latest date considered
 
         Returns
         -------
-        :type yield float
+        this_date: datetime.date
             The date at which the coupon payment occurs
         """
 
@@ -109,22 +109,22 @@ class CorpBond:
 
     def create_single_cash_flows(self, modelling_date: date, end_date: date) -> Dict[date, float]:
         """
-        Create a dictionary of coupon cash flows using information about a corporate bond. The 
-        return dictionary has dates of the cash flows as keys and monetary amounts as values. 
-        
+        Create a dictionary of coupon cash flows using information about a corporate bond. The
+        return dictionary has dates of the cash flows as keys and monetary amounts as values.
+
         Parameters
         ----------
         self: CorpBond instance
             The CorpBond instance with the bond position of interest.
-        :type modelling_date: datetime.date
+        modelling_date: datetime.date
             The date from which the dividend dates and values start.
-        :type end_date: datetime.date
+        end_date: datetime.date
             The last date that the model considers (end of the modelling window).
-            
+
         Returns
         -------
-        :type dividends: list of dict
-            Dictionary of dictionaries containing the cash flow date and the size.        
+        coupons: list of dict
+            Dictionary of dictionaries containing the cash flow date and the size.
         """
 
         coupon_size = 0
@@ -141,22 +141,20 @@ class CorpBond:
 
     def create_single_maturity(self, end_date: date) -> Dict[date, float]:
         """
-        Create a dictionary of terminal cash flows using information about a bond portfolio. The 
-        return dictionary has dates of the cash flows as keys and monetary amounts as values. 
-        
+        Create a dictionary of terminal cash flows using information about a bond portfolio. The
+        return dictionary has dates of the cash flows as keys and monetary amounts as values.
+
         Parameters
         ----------
         self: CorpBond instance
             The CorpBond instance with the bond position of interest.
-        :type modelling_date: datetime.date
-            The date from which the dividend dates and values start.
-        :type end_date: datetime.date
+        end_date: datetime.date
             The last date that the model considers (end of the modelling window).
-            
+
         Returns
         -------
-        :type dividends: list of dict
-            List of dictionaries containing the cash flow date and the size.        
+        principals: list of dict
+            List of dictionaries containing the cash flow date and the size.
         """
         
         principals: Dict[date, float] = {}
@@ -171,12 +169,12 @@ class CorpBond:
 
         Parameters
         ----------
-        :parameter modelling_date
-        :type date
-        The modelling start date
+        modelling_date: datetime.date
+            The modelling start date
 
-
-        :returns int
+        Returns
+        -------
+        delta_days:int
         The number of days between the modelling date and the redemption date of the bond
         """
         delta: timedelta = self.maturity_date - modelling_date
@@ -187,31 +185,31 @@ class CorpBond:
 
     def price_bond(self, coupons: Dict[date, float], notional: Dict[date, float], modelling_date: date, proj_period: int, curves: Curves, spread: float) -> float:
         """
-        Calculate the price of a bond with defined coupon and notional payments using the 
-        yield curve obtained from the curves object with a fixed extra spread passed in spread.  
+        Calculate the price of a bond with defined coupon and notional payments using the
+        yield curve obtained from the curves object with a fixed extra spread passed in spread.
 
         Parameters
         ----------
         self: CorpBond instance
             The CorpBond instance with the bond position of interest.
-        :type coupons: dict
+        coupons: dict
             A dictionary with dates of coupon cashflows as keys and monetary amounts as values.
-        :type notional: dict
-            A dictionary with dates of repayments of the notional as keys and monetary amounts as values.              
-        :type modelling_date: datetime.date
+        notional: dict
+            A dictionary with dates of repayments of the notional as keys and monetary amounts as values.
+        modelling_date: datetime.date
             The date from which the dividend dates and values start.
-        :type proj_period: int
+        proj_period: int
             Which modelling date in dates of interest is the pricing function using.
-        :type curves: Curves
+        curves: Curves
             Instance of the Curves class with calibrated term structure.
-        :type spread: float
+        spread: float
             Extra spread over the risk free rate applied to the bond.
-        
+
 
         Returns
         -------
-        :type disc_value: float
-            The price of the bond.         
+        disc_value: float
+            The price of the bond.
         """
 
         date_frac: List[float] = []
@@ -240,19 +238,32 @@ class CorpBond:
         """
         Bisection root finding algorithm for finding the spread that when discounting with the risk free curve returns the market price.
 
-        Args:
-            self =           EquityShare object containing a single equity share positions
-            x_start =        1 x 1 floating number representing the minimum allowed value of the spread. Ex. spread = 0.05
-            x_end =          1 x 1 floating number representing the maximum allowed value of the spread. Ex. spread = 0.8
-            modelling_date = 1 x 1 date, representing the date at which the entire run starts
-            end_date =       1 x 1 date, representing the date at which the modelling window closes
-            proj_period  =   1 x 1 integer, representing the projection step at which the equity is calibrated. Ex. 1, 2
-            curves =         Curves object containing data about the term structure
-            precision =      1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
-            max_iter =       1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution         
-            approx_function
+        Parameters
+        ----------
+
+        self: 
+            Bond object containing the bond details
+        x_start: float
+            1 x 1 floating number representing the minimum allowed value of the spread. Ex. spread = 0.05
+        x_end: float
+            1 x 1 floating number representing the maximum allowed value of the spread. Ex. spread = 0.8
+        modelling_date: date
+            1 x 1 date, representing the date at which the entire run starts
+        end_date: date
+            1 x 1 date, representing the date at which the modelling window closes
+        proj_period: int
+            1 x 1 integer, representing the projection step at which the equity is calibrated. Ex. 1, 2
+        curves: Curves
+            Curves object containing data about the term structure
+        precision: float
+            1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
+        max_iter: int
+            1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution
+        approx_function
+
         Returns:
-            1 x 1 floating number representing the spread of the corporate bond implied by the market price and the yield curve dynamics 
+        ----------
+        1 x 1 floating number representing the spread of the corporate bond implied by the market price and the yield curve dynamics
 
         Implemented by Gregor Fabjan from Qnity Consultants on 09/02/2024.
         """
@@ -295,10 +306,11 @@ class CorpBondPortfolio():
         Initialize the CorpBondPortfolio instance with the first CorpBond instance
 
         Parameters
-        ----------        
-        :type corporate_bonds: dict[int,CorpBond]
+        ----------
+        corporate_bonds: dict[int,CorpBond]
+            A dictionary of CorpBond instances, keyed by asset_id. If None, the portfolio is initialized as empty.
         """
-          
+
         self.corporate_bonds = corporate_bonds
 
     def is_empty(self)-> bool:
@@ -366,14 +378,14 @@ class CorpBondPortfolio():
         ----------
         self: CorpBondPortfolio class instance
             The CorpBondPortfolio instance with populated initial portfolio.
-        :type modelling_date: datetime.date
+        modelling_date: datetime.date
             The date from which the dividend dates and values start.
-        :type end_date: datetime.date
+        end_date: datetime.date
             The last date that the model considers (end of the modelling window).
 
         Returns
         -------
-        :rtype all_coupons
+        all_coupons
             A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the coupons are paid out.
         """
         all_coupons: Dict[int, Dict[date, float]] = {}
@@ -386,25 +398,22 @@ class CorpBondPortfolio():
 
     def create_maturity_flows(self, terminal_date: date) -> Dict[int, Dict[date, float]]:
         """
-        Create the list of dictionaries containing dates at which each bond matures and its notional is paid out. If the maturity is after the 
+        Create the list of dictionaries containing dates at which each bond matures and its notional is paid out. If the maturity is after the
         end of the modelling window, the bond returns the notional at the end of the modelling window.
 
         Parameters
         ----------
         self: CorpBondPortfolio class instance
-            The EquitySharePortfolio instance with populated portfolio.
-        :type modelling_date: datetime.date
-            The date from which the terminal dates and market values start.
-        :type end_date: datetime.date
-            The last date that the model considers (end of the modelling window).
-        :type terminal_rate: float
-            The assumed ultimate forward rate. The long term interest rate used in the Gordon growth model to calculate the terminal cash-flow
+            The CorpBondPortfolio instance with populated portfolio.
+        terminal_date: datetime.date
+            The date at which the terminal cash-flows are considered.
 
         Returns
         -------
-        :rtype all_terminals
-            A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the terminal cash-flows are paid out.
+        all_maturity
+            A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the maturity cash-flows are paid out.
         """
+
         all_maturity: Dict[int, Dict[date, float]] = {}
         principals: Dict[date, float] = {}
         corp_bond: CorpBond
@@ -426,12 +435,14 @@ class CorpBondPortfolio():
         ----------
         self: CorpBondPortfolio class instance
             The CorpBondPortfolio instance with populated portfolio.
-        :type cashflow_profile: list of dictionaries containing the size and date of each 
+        cash_flow_profile: Dict[int, Dict[date, float]]
+            A dictionary of dictionaries containing the size and date of each
             cash-flow for the corporate bond portfolio
 
         Returns
         -------
-        :rtype list: list of sorted unique dates containing at least one cash flow
+        List[date]
+            A list of sorted unique dates containing at least one cash flow
         """
 
         unique_dates: List[date] = []
@@ -466,25 +477,18 @@ class CorpBondPortfolio():
         return [market_price, zspread, units]
 
 
-    """
-    def create_coupon_dates(self, modelling_date: date):
-        for corp_bond in self.corporate_bonds.values() :
-            corp_bond.generate_coupon_dates(modelling_date)
-    """
-
-
     def create_maturity_cashflow(self, modelling_date: date) -> Dict[date, float]:
         """
         Generate a dictionary of cash flows from a collection of corporate bonds.
 
         Parameters
         ----------
-        :type modelling_date: date: 
+        modelling_date: date
             The current date for modeling purposes.
-        
+
         Returns
         -------
-        :rtype Dict[date, float]: 
+        Dict[date, float]:
             A dictionary where keys are maturity dates and values are total notional amounts.
         """
         maturities: Dict[date, float] = {}
@@ -505,26 +509,26 @@ class CorpBondPortfolio():
 
         Parameters
         ----------
-        :type coupon_df (DataFrame): 
+        :type coupon_df (DataFrame):
             DataFrame containing coupon rates for each bond.
-        :type notional_df (DataFrame): 
+        :type notional_df (DataFrame):
             DataFrame containing notional amounts for each bond.
-        :type settings: 
+        :type settings:
             Settings object containing modeling date.
-        :type proj_period (int): 
+        :type proj_period (int):
             Projection period for pricing.
-        :type curves: 
+        :type curves:
             Curves data required for pricing.
-        :type bond_zspread_df (DataFrame): 
+        :type bond_zspread_df (DataFrame):
             DataFrame containing bond z-spreads for each bond.
-        :type bond_price_df (DataFrame): 
+        :type bond_price_df (DataFrame):
             DataFrame to store bond prices.
-        :type date_of_interest: 
+        :type date_of_interest:
             Date of interest for pricing.
 
         Returns
         -------
-        :rtype DataFrame: 
+        :rtype DataFrame:
             DataFrame containing bond prices updated for the given date_of_interest.
 
         Note: Assumes self.corporate_bonds is a dictionary with keys as asset IDs and values as CorpBond objects.
