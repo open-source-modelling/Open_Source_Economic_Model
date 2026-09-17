@@ -161,6 +161,7 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
 | `set_dates_of_interest(modelling_date, end_date)` | Annual projection date schedule |
 | `portfolio_market_value(eq_price, eq_units, bd_price, bd_units, as_of)` | Total invested assets MV at a date column |
 | `process_expired_cf` / `process_expired_liab` | Expire cash flows, return cash amount and shrunk DataFrames |
+| `find_terminated_positions` / `liquidate_positions` | Identify equities whose terminal flow expired (call before `process_expired_cf`) and zero their units so the paid-out value is not also kept in MV |
 | `calculate_expired_dates` | Internal helper: dates on or before the deadline |
 | `trade` | Proportional buy/sell to balance `bank_account` toward zero |
 | `process_unit_linked_period` / `capitalize_policies` / `apply_premiums` / `apply_admin_fees` / `apply_mortality` / `apply_lapse` | Unit-linked period mechanics |
@@ -173,7 +174,7 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
    - Liabilities (`liab_df`) via `process_expired_liab` when `liability_mode=cashflow`
 3. Mark-to-market: apply equity growth using `eq_growth_df[modelling_date]` and `time_frac`; carry bond prices forward then reprice via `price_bond_portfolio`; record after-growth MV and portfolio return
 4. If `liability_mode=unit_linked`: `process_unit_linked_period` (capitalize, premiums, fees, mortality, lapse); update `bank_account` and `company_account`
-5. Proportional `trade()`
+5. Liquidate equities whose terminal flow was paid in step 2 (`liquidate_positions`), then proportional `trade()`
 6. Log period-end cash and end market value to `summary_df`; set `previous_date = current_date`; advance `proj_period`
 
 ## Coding conventions
