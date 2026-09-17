@@ -28,6 +28,8 @@ from osem.MainLoop import (
     set_dates_of_interest,
     process_expired_cf,
     process_expired_liab,
+    find_terminated_positions,
+    liquidate_positions,
     trade,
     portfolio_market_value,
     process_unit_linked_period,
@@ -276,6 +278,7 @@ def main() -> None:
         bank_account[current_date] += cash
 
         logger.info("Calculate expired terminal flows, remove them from cash flows and add to bank account")
+        terminated_eq_ids = find_terminated_positions(unique_dates = unique_ter_dates, expiration_date = current_date, cash_flows = ter_df)
         cash, ter_df, unique_ter_dates = process_expired_cf(unique_dates = unique_ter_dates, expiration_date = current_date, cash_flows = ter_df, units = eq_units_df)
         summary_df.loc[current_date, "Terminal cash flow"] = float(cash)
         bank_account[current_date] += cash
@@ -353,6 +356,12 @@ def main() -> None:
             summary_df.loc[current_date, "UL policies in force"] = ul_cfs["in_force"]
             summary_df.loc[current_date, "UL deaths"] = ul_cfs["deaths"]
             summary_df.loc[current_date, "UL lapses"] = ul_cfs["lapses"]
+
+        # Terminal value was credited to the bank account above; sell the positions so they are
+        # not also counted in market value. Done after the return calculation so the period
+        # return is not distorted by the sale.
+        logger.info("Liquidate equity positions whose terminal value was paid out")
+        eq_units_df = liquidate_positions(units = eq_units_df, asset_ids = terminated_eq_ids, current_date = current_date)
 
         logger.info("Trading of excess/deficit liquidity, rebalancing")
         # Proportional trading without factors

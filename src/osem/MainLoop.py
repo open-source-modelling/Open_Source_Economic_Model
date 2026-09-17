@@ -169,6 +169,58 @@ def process_expired_cf(unique_dates: list[datetime.date], expiration_date: dt.da
         unique_dates = [d for d in unique_dates if d not in expired_dates]
     return cash, cash_flows, unique_dates
 
+def find_terminated_positions(unique_dates: list[datetime.date], expiration_date: dt.date, cash_flows: pd.DataFrame) -> list[int]:
+    """
+    Find the assets whose terminal cash flow expires on or before the expiration date.
+    Must be called before process_expired_cf, which drops the expired columns.
+
+    Parameters
+    ----------
+    unique_dates : list[datetime.date]
+        Dates at which terminal cash flows may occur (not yet expired).
+    expiration_date : dt.date
+        Period-end date; flows on or before this date are treated as expired.
+    cash_flows : pd.DataFrame
+        Per-unit terminal cash flows (rows = asset_id, columns = dates).
+
+    Returns
+    -------
+    list[int]
+        Asset ids with a non-zero terminal cash flow in the expired window.
+    """
+
+    expired_dates = calculate_expired_dates(list_of_dates = unique_dates,
+                                            deadline = expiration_date)
+    if not expired_dates:
+        return []
+    has_terminal = (cash_flows[expired_dates] != 0).any(axis=1)
+    return list(cash_flows.index[has_terminal])
+
+def liquidate_positions(units: pd.DataFrame, asset_ids: list[int], current_date: dt.date) -> pd.DataFrame:
+    """
+    Set the units of the given assets to zero at the current date. Used after a terminal
+    cash flow has been credited to the bank account, so the position is not also kept in
+    the market value (which would double count it).
+
+    Parameters
+    ----------
+    units : pd.DataFrame
+        Holdings per asset_id with date columns.
+    asset_ids : list[int]
+        Assets whose positions are sold.
+    current_date : dt.date
+        Modelling date column to update.
+
+    Returns
+    -------
+    pd.DataFrame
+        Updated units DataFrame.
+    """
+
+    if asset_ids:
+        units.loc[asset_ids, current_date] = 0.0
+    return units
+
 def process_expired_liab(unique_dates: list[datetime.date], date_of_interest: dt.date, cash_flows: pd.DataFrame) -> tuple[float, pd.DataFrame, list[datetime.date]]:
     """
     Remove columns with expired dates from dataframe and sum cashflows within those columns into cash.
