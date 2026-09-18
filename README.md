@@ -46,7 +46,7 @@ Specific deep dives into topics related to the methodology are available as Jupy
 See the [`notebooks/README.md`](notebooks/README.md) index for the notebook categories and guidance on adding new exploratory work.
 
 ## Getting started
-So far, we have produced a simple example that can be ran using the `osem` package's entry point. A hypothetical portfolio of 3 equities and 3 corporate bonds and a single fixed liability cash flow profile. This example will grow as more development is committed to the main branch.
+So far, we have produced a simple example that can be run using the `osem` package's entry point. It models a small fictional life insurer: 12 government and corporate bonds, 10 equities and cash, about 3.6m in total, backing either a book of 40 unit-linked policies or a pension-annuity run-off, both worth about 3.0m. The company starts with assets at 120% of liabilities. See [`Input/README.md`](Input/README.md) for the full description of the sample data. This example will grow as more development is committed to the main branch.
 
 The production code lives under [`src/osem/`](src/osem/) as an installable package; `main.py` there (`src/osem/main.py`) is the orchestration entry point.
 
