@@ -97,7 +97,7 @@ def test_bond_maturity_is_not_reported_as_loss(maturing_bond: CorpBond):
         coupon_df=cpn_df,
         notional_df=not_df,
         settings=SimpleNamespace(modelling_date=t0),
-        proj_period=0,
+        proj_period=1,
         curves=FlatCurve(0.03),
         bond_zspread_df=bd_zspread_df,
         bond_price_df=bd_price_df,
