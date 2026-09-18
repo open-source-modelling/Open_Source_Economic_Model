@@ -17,7 +17,7 @@ class EquityShare:
     nace: str
     issuer: Optional[str]
     issue_date: date
-    dividend_yield: float
+    dividend_yield: float  # Yield paid on each dividend date (per payment, not annualised); see dividend_amount
     frequency: Frequency
     units: float
     market_price: float
@@ -37,7 +37,12 @@ class EquityShare:
         """
         Calculate the size of the dividend for a share inside the EquityShare class.
         The dividend amount is equal to the percentage of the market value.
-        
+
+        dividend_yield is the yield paid on each dividend date, whatever the frequency. It is not
+        an annualised yield: a share with dividend_yield 0.01 and quarterly frequency pays 1% of
+        its market price four times a year (about 4% a year). To model a share with an annual
+        dividend yield y paid f times a year, set dividend_yield = y / f.
+
         Parameters
         ----------
         self: EquityShare class
