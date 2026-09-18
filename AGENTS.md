@@ -160,8 +160,9 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
 | `create_liabilities_df(liabilities)` | Build liability cash-flow DataFrame from `Liability` |
 | `set_dates_of_interest(modelling_date, end_date)` | Annual projection date schedule |
 | `portfolio_market_value(eq_price, eq_units, bd_price, bd_units, as_of)` | Total invested assets MV at a date column |
+| `portfolio_total_return(start_market_value, end_market_value, asset_income)` | Period total return including asset cash flows received; feeds UL capitalisation |
 | `process_expired_cf` / `process_expired_liab` | Expire cash flows, return cash amount and shrunk DataFrames |
-| `find_terminated_positions` / `liquidate_positions` | Identify equities whose terminal flow expired (call before `process_expired_cf`) and zero their units so the paid-out value is not also kept in MV |
+| `find_terminated_positions` / `liquidate_positions` | Identify equities whose terminal flow expired and bonds whose notional was repaid (call before `process_expired_cf`) and zero their units so the paid-out value is not also kept in MV |
 | `calculate_expired_dates` | Internal helper: dates on or before the deadline |
 | `trade` | Proportional buy/sell to balance `bank_account` toward zero |
 | `process_unit_linked_period` / `capitalize_policies` / `apply_premiums` / `apply_admin_fees` / `apply_mortality` / `apply_lapse` | Unit-linked period mechanics |
@@ -172,9 +173,9 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
 2. Expire cash flows in sequence, crediting/debiting `bank_account` and logging each to `summary_df`:
    - Dividends (`div_df`), coupons (`cpn_df`), equity terminal (`ter_df`), bond notional (`not_df`) via `process_expired_cf`
    - Liabilities (`liab_df`) via `process_expired_liab` when `liability_mode=cashflow`
-3. Mark-to-market: apply equity growth using `eq_growth_df[modelling_date]` and `time_frac`; carry bond prices forward then reprice via `price_bond_portfolio`; record after-growth MV and portfolio return
+3. Mark-to-market: apply equity growth using `eq_growth_df[modelling_date]` and `time_frac`; carry bond prices forward then reprice via `price_bond_portfolio`; record after-growth MV and the period total return (`portfolio_total_return`, which adds back the dividends, coupons and bond notionals credited in step 2; equity terminal flows are excluded because those equities are still in MV until liquidated in step 5 — matured bonds reprice to zero, so a price-only return would book their redemption as a loss)
 4. If `liability_mode=unit_linked`: `process_unit_linked_period` (capitalize, premiums, fees, mortality, lapse); update `bank_account` and `company_account`
-5. Liquidate equities whose terminal flow was paid in step 2 (`liquidate_positions`), then proportional `trade()`
+5. Liquidate equities whose terminal flow was paid and bonds that matured in step 2 (`liquidate_positions`), then proportional `trade()`
 6. Log period-end cash and end market value to `summary_df`; set `previous_date = current_date`; advance `proj_period`
 
 ## Coding conventions
@@ -361,7 +362,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 |--------|---------|
 | `Start cash` / `End cash` | Bank account at period start/end |
 | `Start market value` / `After growth market value` / `End market value` | Portfolio MV before flows, after growth, after trading |
-| `Portfolio return` | After-growth MV / previous end MV − 1 |
+| `Portfolio return` | Total return: (after-growth MV + dividends + coupons + bond notionals received in the period) / previous end MV − 1, via `portfolio_total_return` |
 | `Dividend cash flow` / `Coupon cash flow` / `Terminal cash flow` / `Notional cash flow` | Expired asset cash flows credited to bank account |
 | `Liability cash flow` | Expired liability outflow (cashflow mode; stored as negative of cash debited) |
 | `UL gross premium cash flow` / `UL entry fee cash flow` / `UL admin fee cash flow` | Unit-linked premium and fee flows (UL mode) |
