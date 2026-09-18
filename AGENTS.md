@@ -158,7 +158,7 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
 |----------|------|
 | `create_cashflow_dataframe(cf_dict, unique_dates)` | Build per-asset cash-flow matrix (rows = asset_id, columns = dates) |
 | `create_liabilities_df(liabilities)` | Build liability cash-flow DataFrame from `Liability` |
-| `set_dates_of_interest(modelling_date, end_date)` | Annual projection date schedule |
+| `set_dates_of_interest(modelling_date, end_date)` | Annual projection date schedule (anniversaries of the modelling date, last one = `end_date`) |
 | `portfolio_market_value(eq_price, eq_units, bd_price, bd_units, as_of)` | Total invested assets MV at a date column |
 | `portfolio_total_return(start_market_value, end_market_value, asset_income)` | Period total return including asset cash flows received; feeds UL capitalisation |
 | `process_expired_cf` / `process_expired_liab` | Expire cash flows, return cash amount and shrunk DataFrames |
@@ -245,7 +245,7 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 
 ### Dates and time
 
-- Modelling timeline: `set_dates_of_interest()` steps in 365-day increments.
+- Modelling timeline: `set_dates_of_interest()` returns annual anniversaries of the modelling date (`modelling_date + relativedelta(years=k)`), so projection date `k` lines up with the projected curve for year `k` and the last date equals `Settings.end_date` — exactly `n_proj_years` dates. `main.py` raises if there are more dates than projected curve years. Do not step with fixed day counts: 365-day steps drift a day every leap year and overshoot the horizon.
 - Year fractions: use `days / 365.25` in the main loop and DCF discounting (some older equity helpers use `365.5` — prefer `365.25` for new code).
 - Payment schedules: `relativedelta(months=(12 // frequency))` from `issue_date`, skipping dates before `modelling_date`.
 - `Frequency` is an `IntEnum` (`MONTHLY=12`, `QUARTERLY=4`, etc.) stored as int in CSV.
