@@ -236,6 +236,12 @@ def main() -> None:
     # -------- GENERATE VECTOR OF NEXT PERIODS -------
     logger.info("Generate vector of future modelling periods")
     dates_of_interest: pd.Series = set_dates_of_interest(modelling_date = settings.modelling_date, end_date = settings.end_date)
+    # Projection date k is priced on the projected curve for year k; curves exist for years 0..n_proj_years
+    if len(dates_of_interest) > settings.n_proj_years:
+        raise ValueError(
+            f"{len(dates_of_interest)} projection dates but curves are only projected for "
+            f"{settings.n_proj_years} years"
+        )
 
     previous_date: date = settings.modelling_date
 
