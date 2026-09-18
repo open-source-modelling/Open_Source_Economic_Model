@@ -32,6 +32,7 @@ from osem.MainLoop import (
     liquidate_positions,
     trade,
     portfolio_market_value,
+    portfolio_total_return,
     process_unit_linked_period,
 )
 from osem.logging_utils import get_file_logger
@@ -267,26 +268,35 @@ def main() -> None:
         time_frac = (current_date - previous_date).days / 365.25
 
         # -------- WHICH ASSET/LIABILITY FLOWS EXIRED IN THIS PERIOD AND ADD TO BANK ACCOUNT --------
+        # Asset cash flows paid out this period; added back to market value for the total return
+        asset_income = 0.0
+
         logger.info("Calculate expired dividends, remove them from cash flows and add to bank account")
         cash, div_df, unique_div_dates = process_expired_cf(unique_dates = unique_div_dates, expiration_date = current_date, cash_flows = div_df, units = eq_units_df)
         summary_df.loc[current_date, "Dividend cash flow"] = float(cash)
         bank_account[current_date] += cash
+        asset_income += cash
 
         logger.info("Calculate expired coupons, remove them from cash flows and add to bank account")
         cash, cpn_df, unique_cpn_dates = process_expired_cf(unique_dates = unique_cpn_dates, expiration_date = current_date, cash_flows = cpn_df, units = bd_units_df)
         summary_df.loc[current_date, "Coupon cash flow"] = float(cash)
         bank_account[current_date] += cash
+        asset_income += cash
 
         logger.info("Calculate expired terminal flows, remove them from cash flows and add to bank account")
         terminated_eq_ids = find_terminated_positions(unique_dates = unique_ter_dates, expiration_date = current_date, cash_flows = ter_df)
         cash, ter_df, unique_ter_dates = process_expired_cf(unique_dates = unique_ter_dates, expiration_date = current_date, cash_flows = ter_df, units = eq_units_df)
         summary_df.loc[current_date, "Terminal cash flow"] = float(cash)
         bank_account[current_date] += cash
+        # Not added to asset_income: these equities stay in market value until they are
+        # liquidated after the return calculation, so adding the cash would count them twice.
 
         logger.info("Calculate expired notional flows, remove them from cash flows and add to bank account")
+        matured_bd_ids = find_terminated_positions(unique_dates = unique_not_dates, expiration_date = current_date, cash_flows = not_df)
         cash, not_df, unique_not_dates = process_expired_cf(unique_dates = unique_not_dates, expiration_date = current_date, cash_flows = not_df, units = bd_units_df)
         summary_df.loc[current_date, "Notional cash flow"] = float(cash)
         bank_account[current_date] += cash
+        asset_income += cash
 
         if not use_unit_linked:
             logger.info("Calculate expired liability flows, remove them from cash flows and add to bank account")
@@ -316,7 +326,11 @@ def main() -> None:
             eq_price_df, eq_units_df, bd_price_df, bd_units_df, current_date
         )
         
-        portfolio_return: float = float(total_market_value/prev_mkt_value-1)
+        portfolio_return: float = portfolio_total_return(
+            start_market_value=prev_mkt_value,
+            end_market_value=total_market_value,
+            asset_income=asset_income,
+        )
         summary_df.loc[current_date, "After growth market value"] = float(total_market_value)
         summary_df.loc[current_date, "Portfolio return"] = portfolio_return
 
@@ -362,6 +376,11 @@ def main() -> None:
         # return is not distorted by the sale.
         logger.info("Liquidate equity positions whose terminal value was paid out")
         eq_units_df = liquidate_positions(units = eq_units_df, asset_ids = terminated_eq_ids, current_date = current_date)
+
+        # Matured bonds have no remaining flows and reprice to zero; close them so trade()
+        # does not keep scaling units of positions that no longer exist.
+        logger.info("Close bond positions whose notional was repaid")
+        bd_units_df = liquidate_positions(units = bd_units_df, asset_ids = matured_bd_ids, current_date = current_date)
 
         logger.info("Trading of excess/deficit liquidity, rebalancing")
         # Proportional trading without factors

@@ -136,6 +136,31 @@ def portfolio_market_value(
         + sum(bd_units[as_of] * bd_price[as_of])
     )
 
+def portfolio_total_return(start_market_value: float, end_market_value: float, asset_income: float) -> float:
+    """
+    Calculate the period total return of the invested portfolio. Cash paid out by the assets
+    during the period (dividends, coupons, bond notionals) is added back to the end market value,
+    because those flows are removed from the asset cash-flow matrices before repricing. Without
+    them, a maturing bond would show up as a loss of its full value. Only include flows whose
+    asset is no longer in end_market_value, otherwise the same value is counted twice.
+
+    Parameters
+    ----------
+    start_market_value : float
+        Portfolio market value at the end of the previous period.
+    end_market_value : float
+        Portfolio market value after growth and repricing in this period, before trading.
+    asset_income : float
+        Sum of asset cash flows credited to the bank account in this period. Liability and
+        unit-linked policyholder flows are excluded, as they are funding flows, not performance.
+
+    Returns
+    -------
+    float
+        Total return of the portfolio over the period.
+    """
+    return float((end_market_value + asset_income) / start_market_value - 1)
+
 def process_expired_cf(unique_dates: list[datetime.date], expiration_date: dt.date, cash_flows: pd.DataFrame, units: pd.DataFrame) -> tuple[float, pd.DataFrame, list[datetime.date]]:
     """
     Remove columns with expired dates from the cash-flow DataFrame and sum
