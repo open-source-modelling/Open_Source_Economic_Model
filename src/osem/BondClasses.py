@@ -20,7 +20,7 @@ class CorpBond:
     issuer: Optional[str]
     issue_date: date
     maturity_date: date
-    coupon_rate: float
+    coupon_rate: float  # Rate paid on each coupon date (per payment, not annualised); see coupon_amount
     notional_amount: float
     spread_country: float
     spread_sector: float
@@ -63,6 +63,11 @@ class CorpBond:
         """
         Calculate the size of the coupon for a bond inside the CorpBond class.
         The coupon amount is equal to the percentage of the notional value.
+
+        coupon_rate is the rate paid on each coupon date, whatever the frequency. It is not an
+        annualised rate: a bond with coupon_rate 0.02 and quarterly frequency pays 2% of the
+        notional four times a year (8% a year). To model a bond quoted with an annual coupon c
+        paid f times a year, set coupon_rate = c / f.
 
         Parameters
         ----------
