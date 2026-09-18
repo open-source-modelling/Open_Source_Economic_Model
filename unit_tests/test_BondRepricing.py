@@ -29,7 +29,7 @@ class RecordingFlatCurve:
 
 
 T0 = date(2023, 4, 29)
-T1 = date(2024, 4, 28)  # first projection date, 365 days after T0
+T1 = date(2024, 4, 29)  # first projection date, one year after T0
 END_DATE = date(2033, 4, 29)
 
 
@@ -91,7 +91,8 @@ def test_par_bond_stays_at_par_after_one_year(par_bond: CorpBond):
     """
     bd_price_df = _reprice_at_first_projection_date(par_bond, RecordingFlatCurve(0.03))
 
-    # 365-day step vs 365.25-day year fractions leaves a tiny residual, hence the tolerance
+    # Coupon dates (28 April) fall a day before the valuation anniversaries and year fractions
+    # use 365.25 days, which leaves a tiny residual, hence the tolerance
     assert bd_price_df.loc[11, T1] == pytest.approx(100.0, abs=0.05)
 
 
@@ -101,8 +102,8 @@ def test_repricing_discounts_from_valuation_date(par_bond: CorpBond):
 
     assert curve.requested_steps == [1]
     times = curve.requested_times[0]
-    # Next coupon is 28/4/2025: one year after T1, not two years after T0
-    assert times.min() == pytest.approx(365 / 365.25)
+    # Next coupon is 28/4/2025: about one year after T1, not two years after T0
+    assert times.min() == pytest.approx((date(2025, 4, 28) - T1).days / 365.25)
     # Maturity 28/4/2030 is about 6 years after T1
     assert times.max() == pytest.approx((date(2030, 4, 28) - T1).days / 365.25)
 

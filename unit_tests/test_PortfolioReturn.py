@@ -31,7 +31,7 @@ class FlatCurve:
 @pytest.fixture
 def maturing_bond() -> CorpBond:
     # Annual 3% bond at par that pays its last coupon and notional on 1/3/2024,
-    # inside the first projection year (29/4/2023 -> 28/4/2024).
+    # inside the first projection year (29/4/2023 -> 29/4/2024).
     return CorpBond(
         asset_id=7,
         nace="A1.4.5",
@@ -67,7 +67,7 @@ def test_bond_maturity_is_not_reported_as_loss(maturing_bond: CorpBond):
     The period return must count that cash; the old price-only return reported -100%.
     """
     t0 = date(2023, 4, 29)
-    t1 = date(2024, 4, 28)
+    t1 = date(2024, 4, 29)
     end_date = date(2033, 4, 29)
 
     bd_ptf = CorpBondPortfolio({maturing_bond.asset_id: maturing_bond})
