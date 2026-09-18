@@ -77,6 +77,7 @@ def test_construct(corp_bond: CorpBond):
     assert market_price == corp_bond.market_price
 
 def test_coupon_amount(corp_bond: CorpBond):
+    # coupon_rate is the rate per payment, not annualised, so no division by the frequency
     coupon_amount = corp_bond.coupon_amount()
     coupon_amount_manual = corp_bond.notional_amount * corp_bond.coupon_rate
     assert coupon_amount == coupon_amount_manual
