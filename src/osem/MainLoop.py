@@ -5,6 +5,8 @@ import datetime as dt
 import random
 from typing import Dict, List, Optional
 
+from dateutil.relativedelta import relativedelta
+
 from osem.LiabilityClasses import Liability
 from osem.UnitLinkedClasses import UnitLinkedFund, UnitLinkedPolicy
 from osem.SocietyClass import Society
@@ -55,9 +57,12 @@ def calculate_expired_dates(list_of_dates: list[datetime.date], deadline: dt.dat
 
     return list(a_date for a_date in list_of_dates if a_date <= deadline)
 
-def set_dates_of_interest(modelling_date: dt.date, end_date: dt.date, days_interval: int = 365) -> pd.Series:
+def set_dates_of_interest(modelling_date: dt.date, end_date: dt.date, years_interval: int = 1) -> pd.Series:
     """
-    Calculates all dates at which the modelling run will run.
+    Calculates all dates at which the modelling run will run. The dates are anniversaries of the
+    modelling date (MD + k years), so projection date k lines up with the projected curve for year k,
+    and none falls after the end of the modelling window. When end_date is MD + n years (as
+    Settings.end_date is), the last date equals end_date and there are exactly n dates.
 
     Parameters
     ----------
@@ -67,20 +72,22 @@ def set_dates_of_interest(modelling_date: dt.date, end_date: dt.date, days_inter
     end_date: dt.date
         The end of the modelling window
 
-    days_interval: int
-        Time difference between two modelling dates of interest
+    years_interval: int
+        Number of years between two modelling dates of interest
 
     Returns
     -------
     pd.Series
-        Series of dates at which the modell will run   
+        Series of dates at which the modell will run
     """
-    next_date_of_interest: dt.date = modelling_date
-
     dates_of_interest: list[dt.date] = []
+    k = 1
+    next_date_of_interest: dt.date = modelling_date + relativedelta(years=k * years_interval)
     while next_date_of_interest <= end_date:
-        next_date_of_interest += datetime.timedelta(days=days_interval)
         dates_of_interest.append(next_date_of_interest)
+        k += 1
+        # Always offset from the modelling date, so a 29 February start is not stuck on 28 February
+        next_date_of_interest = modelling_date + relativedelta(years=k * years_interval)
 
     return pd.Series(dates_of_interest, name="Dates of interest")
 
