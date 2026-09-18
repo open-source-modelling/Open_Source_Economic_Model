@@ -249,6 +249,8 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 - Year fractions: use `days / 365.25` in the main loop and DCF discounting (some older equity helpers use `365.5` — prefer `365.25` for new code).
 - Payment schedules: `relativedelta(months=(12 // frequency))` from `issue_date`, skipping dates before `modelling_date`.
 - `Frequency` is an `IntEnum` (`MONTHLY=12`, `QUARTERLY=4`, etc.) stored as int in CSV.
+- **Coupon rate is per payment, not annualised.** `CorpBond.coupon_rate` (CSV `Coupon_Rate`) is the rate paid on each coupon date whatever the `Frequency`: `coupon_amount() = coupon_rate × notional`. A quarterly bond with `Coupon_Rate 0.02` pays 8% a year. For a bond quoted with annual coupon `c` paid `f` times a year, enter `c / f`. This is intended behaviour — do not divide by the frequency in the code.
+- **Dividend yield is per payment too.** `EquityShare.dividend_yield` (CSV `Dividend_Yield`) is the yield paid on each dividend date: `dividend_amount(price) = price × dividend_yield`. A quarterly share with `Dividend_Yield 0.01` pays about 4% a year; for an annual yield `y` paid `f` times a year, enter `y / f`. Same rule: do not divide by the frequency in the code.
 
 ### Pricing and curves
 
