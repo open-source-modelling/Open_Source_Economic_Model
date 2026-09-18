@@ -183,7 +183,7 @@ class CorpBond:
     def gross_redemption_yield(self):
         pass
 
-    def price_bond(self, coupons: Dict[date, float], notional: Dict[date, float], modelling_date: date, proj_period: int, curves: Curves, spread: float) -> float:
+    def price_bond(self, coupons: Dict[date, float], notional: Dict[date, float], valuation_date: date, proj_period: int, curves: Curves, spread: float) -> float:
         """
         Calculate the price of a bond with defined coupon and notional payments using the
         yield curve obtained from the curves object with a fixed extra spread passed in spread.
@@ -196,10 +196,11 @@ class CorpBond:
             A dictionary with dates of coupon cashflows as keys and monetary amounts as values.
         notional: dict
             A dictionary with dates of repayments of the notional as keys and monetary amounts as values.
-        modelling_date: datetime.date
-            The date from which the dividend dates and values start.
+        valuation_date: datetime.date
+            The date at which the bond is valued. Cash-flow times are measured from this date.
         proj_period: int
-            Which modelling date in dates of interest is the pricing function using.
+            Projection year of valuation_date (0 at the modelling date). Selects the projected
+            curve, whose maturities are measured from that year, so it must match valuation_date.
         curves: Curves
             Instance of the Curves class with calibrated term structure.
         spread: float
@@ -216,12 +217,12 @@ class CorpBond:
         cash_flow: List[float] = []
         
         for key, value in coupons.items():
-            date_tmp = (key-modelling_date).days/365.25
+            date_tmp = (key-valuation_date).days/365.25
             date_frac.append(date_tmp)
             cash_flow.append(value)
-            
+
         for key, value in notional.items():
-            date_tmp = (key-modelling_date).days/365.25
+            date_tmp = (key-valuation_date).days/365.25
             date_frac.append(date_tmp)
             cash_flow.append(value)
         
@@ -514,9 +515,9 @@ class CorpBondPortfolio():
         notional_df: pd.DataFrame
             DataFrame containing notional amounts for each bond.
         settings: Settings
-            Settings object containing modeling date.
+            Settings object. Not used for pricing; kept for interface compatibility.
         proj_period: int
-            Projection period for pricing.
+            Projection year of date_of_interest (0 at the modelling date); selects the projected curve.
         curves: Curves
             Curves data required for pricing.
         bond_zspread_df: pd.DataFrame
@@ -524,7 +525,7 @@ class CorpBondPortfolio():
         bond_price_df: pd.DataFrame
             DataFrame to store bond prices.
         date_of_interest: date
-            Date of interest for pricing.
+            Valuation date. Remaining cash flows are discounted to this date.
 
         Returns
         -------
@@ -536,7 +537,7 @@ class CorpBondPortfolio():
         """
         for asset_id in coupon_df.index:
             price: float = self.corporate_bonds[asset_id].price_bond(coupon_df.loc[asset_id],
-            notional_df.loc[asset_id],settings.modelling_date, proj_period,curves,bond_zspread_df.loc[asset_id].iloc[0])
+            notional_df.loc[asset_id], date_of_interest, proj_period, curves, bond_zspread_df.loc[asset_id].iloc[0])
             bond_price_df.loc[asset_id, date_of_interest] = price
         return bond_price_df
     
