@@ -77,6 +77,7 @@ def test_dividend_dates(equity_share):
 
 
 def test_dividend_amount(equity_share):
+    # dividend_yield is the yield per payment, not annualised, so no division by the frequency
     market_price = 100.0
     dividend = equity_share.dividend_amount(market_price=market_price)
     manual_calculation_dividend = market_price * 0.03
