@@ -138,7 +138,7 @@ Note: `Configuration` also stores paths for `input_curves`, `input_param_no_VA`,
 ### Assets
 
 - **Equities:** deterministic growth each period using the fixed per-asset `eq_growth_df[modelling_date]` column; not re-priced via DCF in the loop. Growth is scaled by `time_frac = (current_date - previous_date).days / 365.25`
-- **Bonds:** carry forward `bd_price_df[previous_date]` into the new column, then DCF repricing each period via `price_bond_portfolio`; z-spread calibrated once at t0 via `calibrate_bond_portfolio` (stored in `bd_zspread_df`, not on `CorpBond` instances)
+- **Bonds:** carry forward `bd_price_df[previous_date]` into the new column, then DCF repricing each period via `price_bond_portfolio` (remaining flows discounted to `current_date` on the year `proj_period + 1` curve); z-spread calibrated once at t0 via `calibrate_bond_portfolio` (stored in `bd_zspread_df`, not on `CorpBond` instances)
 
 ### Liabilities
 
@@ -253,7 +253,7 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 ### Pricing and curves
 
 - Curve setup once in `main.py`; `curves` is read-only in the loop.
-- Pricing calls `retrieve_rates(proj_period, maturities_numpy, "Discount", spread)`.
+- Pricing calls `retrieve_rates(proj_period, maturities_numpy, "Discount", spread)`. The projected curve for year `k` has maturities measured from projection year `k`, so the two must match: `maturities_numpy` are year fractions from the **valuation date**, and `proj_period` is that date's projection year. In the main loop `proj_period` counts completed periods, so repricing at `current_date` passes `proj_period + 1`; the t0 calibration uses `0` and the modelling date.
 - **Equity spreads:** `spread_country + spread_sector + spread_stress`.
 - **Bond spreads:** z-spread calibrated once at t0 via bisection into `bd_zspread_df`, then read from the DataFrame during repricing (not from `CorpBond.zspread` in the loop).
 
