@@ -146,3 +146,54 @@ def test_invalid_frequency_rejected_at_construction(frequency):
     """
     with pytest.raises(ValueError):
         _make_equity_share(frequency)
+
+
+class FlatCurve:
+    """Stand-in for Curves with a flat annually compounded rate."""
+
+    def __init__(self, rate: float, ufr: float = 0.035):
+        self.rate = rate
+        self.ufr = ufr  # bisection_growth reads curves.ufr as the terminal rate
+
+    def retrieve_rates(self, proj_step: int, target_mat, type: str, spread: float):
+        import numpy as np
+        import pandas as pd
+        target_mat = np.asarray(target_mat, dtype=float)
+        return pd.DataFrame(data=(1 + self.rate + spread) ** (-target_mat), columns=["Discount"])
+
+
+def test_price_share_returns_a_plain_float(equity_share: EquityShare):
+    """
+    price_share used to sum a 2-D frame with the builtin sum(), which adds the rows
+    and returns one total per column. That gave a 1-element array rather than a
+    number: it could not be formatted, it made callers subscript the result with
+    [0], and it would have silently returned a vector had the frame ever gained a
+    second column.
+    """
+    modelling_date = datetime.date(2023, 4, 29)
+    end_date = datetime.date(2033, 4, 29)
+    curve = FlatCurve(0.03)
+
+    dividends = equity_share.create_single_cash_flows(modelling_date, end_date, equity_share.growth_rate)
+    terminal = equity_share.create_single_terminal(modelling_date, end_date, 0.035, equity_share.growth_rate)
+
+    price = equity_share.price_share(dividends, terminal, modelling_date, 0, curve)
+
+    assert type(price) is float
+    assert price > 0
+    assert f"{price:.2f}"          # a 1-element array raises TypeError here
+    assert isinstance(price > 0, bool)
+
+
+def test_bisection_growth_recovers_the_market_price(equity_share: EquityShare):
+    modelling_date = datetime.date(2023, 4, 29)
+    end_date = datetime.date(2033, 4, 29)
+    curve = FlatCurve(0.03)
+
+    growth = equity_share.bisection_growth(-1, 1, modelling_date, end_date, 0, curve, 1e-8, 100000)
+
+    dividends = equity_share.create_single_cash_flows(modelling_date, end_date, growth)
+    terminal = equity_share.create_single_terminal(modelling_date, end_date, 0.035, growth)
+    price = equity_share.price_share(dividends, terminal, modelling_date, 0, curve)
+
+    assert price == pytest.approx(equity_share.market_price, abs=1e-5)

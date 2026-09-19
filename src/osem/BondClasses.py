@@ -92,7 +92,8 @@ class CorpBond:
         modelling_date: datetime.date
             The earliest date considered.
         end_date: datetime.date
-            The latest date considered
+            The latest date considered. A bond still alive at the end of the modelling window is
+            redeemed there at par by create_single_maturity, so its coupons stop there as well.
 
         Returns
         -------
@@ -100,15 +101,15 @@ class CorpBond:
             The date at which the coupon payment occurs
         """
 
-        end_date = min(end_date, self.maturity_date)
+        last_date = min(end_date, self.maturity_date)
 
         delta = relativedelta(months=(12 // self.frequency))
         this_date = self.issue_date - delta
-        while this_date < self.maturity_date:  # Coupon payment dates
+        while this_date < last_date:  # Coupon payment dates
             this_date = this_date + delta
             if this_date < modelling_date: #Not interested in past payments
                 continue
-            if this_date <= self.maturity_date:
+            if this_date <= last_date:
                 yield this_date
 
 
@@ -286,6 +287,21 @@ class CorpBond:
             return x_start
         if np.abs(y_end) < precision:
             return x_end  # If final point already satisfies the conditions return end point
+
+        # The price falls monotonically in the spread, so a root exists only if the market price
+        # lies between the two bracket prices. Without this check the loop below never sees a sign
+        # change, walks x_start all the way up to x_end and returns the bracket bound as if it were
+        # a calibrated spread. The max_iter guard does not catch that: the interval collapses to
+        # `precision` in a few dozen halvings, long before max_iter is reached.
+        if np.sign(y_start) == np.sign(y_end):
+            raise ValueError(
+                f"Spread calibration for bond {self.asset_id} has no solution in "
+                f"[{x_start}, {x_end}]: the bond prices at {y_start + self.market_price:.4f} "
+                f"and {y_end + self.market_price:.4f} at those spreads, but its market price is "
+                f"{self.market_price}. Either widen the bracket, or check that coupon_rate is the "
+                f"rate paid on each coupon date rather than an annualised one (see coupon_amount)."
+            )
+
         i_iter = 0
         while i_iter <= max_iter:
             x_mid = (x_end + x_start) / 2  # calculate mid-point
@@ -474,11 +490,15 @@ class CorpBondPortfolio():
             asset_id_tmp.append(self.corporate_bonds[key].asset_id)
             units_tmp.append(self.corporate_bonds[key].units)
 
-        market_price = pd.DataFrame(data=market_price_tmp, index=asset_id_tmp, columns=[modelling_date])
+        # dtype=float explicitly: these frames are written back to with computed prices, spreads
+        # and unit counts. A portfolio whose inputs happened to be whole numbers would otherwise
+        # produce int64 columns, and pandas 3 refuses to store a float into one rather than
+        # upcasting as earlier versions did.
+        market_price = pd.DataFrame(data=market_price_tmp, index=asset_id_tmp, columns=[modelling_date], dtype=float)
 
-        zspread = pd.DataFrame(data=zspread_tmp, index=asset_id_tmp, columns=[modelling_date])
-        
-        units = pd.DataFrame(data=units_tmp, index=asset_id_tmp, columns=[modelling_date])
+        zspread = pd.DataFrame(data=zspread_tmp, index=asset_id_tmp, columns=[modelling_date], dtype=float)
+
+        units = pd.DataFrame(data=units_tmp, index=asset_id_tmp, columns=[modelling_date], dtype=float)
 
         return [market_price, zspread, units]
 

@@ -52,7 +52,7 @@ def par_bond() -> CorpBond:
         recovery_rate=0.4,
         default_probability=0.0,
         units=10,
-        market_price=100,
+        market_price=100.0,  # float: an int seeds an int64 price column that cannot take a price back
     )
 
 

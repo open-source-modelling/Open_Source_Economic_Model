@@ -91,5 +91,20 @@ def test_dividend_dates(corp_bond: CorpBond):
     assert dividend_dates[-1] <= corp_bond.maturity_date
 
 
+def test_coupon_dates_stop_at_the_end_of_the_modelling_window(corp_bond: CorpBond):
+    # The bond matures in 2030 but the window closes in 2026. create_single_maturity redeems the
+    # position at par at the window end, so no coupon may fall after it.
+    modelling_date = datetime.date(2023, 7, 24)
+    end_date = datetime.date(2026, 12, 1)
+
+    coupon_dates = list(corp_bond.generate_coupon_dates(modelling_date, end_date))
+    notional_date = next(iter(corp_bond.create_single_maturity(end_date)))
+
+    assert end_date < corp_bond.maturity_date
+    assert coupon_dates
+    assert max(coupon_dates) <= end_date
+    assert max(coupon_dates) <= notional_date
+
+
 def test_term_to_maturity(corp_bond: CorpBond):
     assert corp_bond.term_to_maturity(datetime.date(2029, 12, 1)) == 365

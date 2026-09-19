@@ -79,15 +79,19 @@ class Curves:
         if n_years<0:
             return "N should be greater than 0"
 
-        # Calculate first spot rate and initiate the dataframe
-        spot = ((1+self.fwd_rates["Forward"]).cumprod(axis=None)**(1/self.m_obs_ini["Maturity"])-1)-1
+        # Calculate first spot rate and initiate the dataframe.
+        # fwd_rates["Forward"] already holds 1 + fw (calc_fwd_rates stores the ratio of
+        # capitalisation factors), so the spot rate is the geometric mean of those factors less
+        # one. Adding 1 before the cumprod and subtracting 2 afterwards, as this line used to,
+        # is only a first-order approximation of that and drifts as the forwards spread out.
+        spot = self.fwd_rates["Forward"].cumprod(axis=None)**(1/self.m_obs_ini["Maturity"])-1
         self.m_obs["Maturities_year_0"] = self.m_obs_ini["Maturity"].values
         self.r_obs["Yield_year_0"] = spot.values
 
         if n_years>=1:
             for year in range(1, n_years):
                 maturities = self.m_obs_ini["Maturity"]-year
-                spot = ((1+self.fwd_rates["Forward"][year:]).cumprod(axis=None)**(1/maturities)-1)[year:]-1
+                spot = (self.fwd_rates["Forward"][year:].cumprod(axis=None)**(1/maturities)-1)[year:]
                 self.m_obs = self.m_obs.join(pd.Series(data=maturities.values[year:], index=None, name="Maturities_year_"+str(year)))
                 self.r_obs = self.r_obs.join(pd.Series(data=spot.values, index=None, name="Yield_year_"+str(year)))
 
@@ -386,6 +390,24 @@ class Curves:
         if np.abs(y_end) < precision:
             #self.alpha = xEnd
             return x_end # If final point already satisfies the conditions return end point
+
+        # g_alfa returns the gap at the convergence point less tau, and it falls as alpha grows,
+        # so the constraint g(alpha) <= tau holds on an upper interval of the bracket. EIOPA asks
+        # for the SMALLEST alpha that satisfies it, so the two unbracketed cases mean different
+        # things and only one of them is an error. Without these checks the loop below never sees
+        # a sign change, walks x_start all the way up to x_end and returns the LARGEST alpha in
+        # the bracket, which is the opposite of what the rule prescribes.
+        if y_start < 0:
+            # The constraint is already met at the lower bound, so that bound is the answer.
+            return x_start
+        if y_end > 0:
+            # The constraint is met nowhere in the bracket, so no admissible alpha exists here.
+            raise ValueError(
+                f"Alpha calibration has no admissible value in [{x_start}, {x_end}]: the gap at "
+                f"the convergence point is {y_end + tau:.3e} even at alpha={x_end}, above the "
+                f"tolerance tau={tau}. Widen the bracket."
+            )
+
         i_iter = 0
         while i_iter <= max_iter:
             x_mid = (x_end+x_start)/2 # calculate mid-point 

@@ -250,7 +250,10 @@ class EquityShare:
         discount = curves.retrieve_rates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
 
         nodisc_value = cash_flow.values*discount
-        disc_value = sum(nodisc_value.values)
+        # np.sum over the whole frame, not the builtin sum: the builtin iterates the rows of a
+        # 2-D array and returns one total per column, so it produced a 1-element array rather
+        # than a number, and would silently return a vector if the frame ever gained a column.
+        disc_value: float = float(np.sum(nodisc_value))
         return disc_value
 
     def bisection_growth(self, x_start: float, x_end:float, modelling_date:date, end_date:date, proj_period:int, curves: Curves, precision: float, max_iter:int)->float:
@@ -279,11 +282,11 @@ class EquityShare:
         terminal_rate = curves.ufr
         dividends = self.create_single_cash_flows(modelling_date, end_date, x_start)
         terminal = self.create_single_terminal(modelling_date, end_date, terminal_rate, x_start)
-        y_start = self.price_share(dividends, terminal, modelling_date, proj_period, curves)[0]-self.market_price
+        y_start = self.price_share(dividends, terminal, modelling_date, proj_period, curves)-self.market_price
 
         dividends = self.create_single_cash_flows(modelling_date, end_date, x_end)
         terminal = self.create_single_terminal(modelling_date, end_date, terminal_rate, x_end)
-        y_end = self.price_share(dividends, terminal, modelling_date, proj_period, curves)[0]-self.market_price
+        y_end = self.price_share(dividends, terminal, modelling_date, proj_period, curves)-self.market_price
 
         if np.abs(y_start) < precision:
             return x_start
@@ -295,7 +298,7 @@ class EquityShare:
 
             dividends = self.create_single_cash_flows(modelling_date, end_date, x_mid)
             terminal = self.create_single_terminal(modelling_date, end_date, terminal_rate, x_mid)
-            y_mid = self.price_share(dividends, terminal, modelling_date, proj_period, curves)[0]-self.market_price
+            y_mid = self.price_share(dividends, terminal, modelling_date, proj_period, curves)-self.market_price
             if (y_mid == 0 or (x_end - x_start) / 2 < precision):  # Solution found
                 return x_mid
             else:  # Solution not found
