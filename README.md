@@ -78,8 +78,6 @@ For coding agents, see [AGENTS.md](AGENTS.md) at the repository root. It describ
 Send us an email at gregor@osmodelling.com with feedback, comments, ideas on what we could do better etc. Do you want to help us on this open source project?
 Check our wiki page also on [GitHub Wiki]
 
-[Generative Agent Simulations of 1,000 People]:https://arxiv.org/pdf/2411.10109
-
 [GitHub Wiki]: https://github.com/open-source-modelling/Open_Source_Economic_Model/wiki/Introduction
 [Documentation]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/Documentation
 [OSEM pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/Documentation/OSEM_Documentation_draft.pdf
