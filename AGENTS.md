@@ -317,7 +317,6 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 
 - Every function: short description, then `Parameters` and `Returns` sections.
 - Use the hybrid Sphinx style already in the codebase (`:type param: type` under `Parameters`).
-- Align with the intent in `Archive/llm_modelfile/modelfile.txt`.
 - Many modules set up a module-level `logger` with a dedicated log file (e.g. `EquityClasses.log`, `BondClass.log`, `ALM.log`).
 
 ### Validation and immutability
