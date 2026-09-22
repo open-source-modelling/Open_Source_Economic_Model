@@ -9,7 +9,7 @@ This directory contains maintained notebooks and their rendered PDFs. Keeping ex
 | [`prototypes/`](prototypes/) | Topic deep dives for pricing, curves, unit-linked liabilities, and trading |
 | [`examples/`](examples/) | Notebooks focused on presenting or summarizing model output |
 
-The [`Documentation/`](../Documentation/) directory contains the maintained methodology document. Historical or superseded notebooks remain in [`Archive/`](../Archive/) and liability-specific working material remains in [`Liability_Dev/`](../Liability_Dev/).
+The [`Documentation/`](../Documentation/) directory contains the maintained methodology document. Liability-specific working material remains in [`Liability_Dev/`](../Liability_Dev/).
 
 ## Conventions
 
