@@ -70,7 +70,7 @@ A simple summary of what goes into the run and what are the outputs can be found
 
 [Summary pdf]:https://github.com/open-source-modelling/Open_Source_Economic_Model/blob/main/notebooks/examples/summary_charts.pdf
 
-## Modelfile
+## For coding agents
 
 For coding agents, see [AGENTS.md](AGENTS.md) at the repository root. It describes the architecture, methodology, and coding conventions agents should follow when editing this project.
 
