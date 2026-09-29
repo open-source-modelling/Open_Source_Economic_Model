@@ -292,7 +292,7 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 | Private/internal helpers: leading underscore optional but casing rule still applies | `calculate_expired_dates` |
 | Test functions: `test_<function_or_behaviour>`, mirroring the snake_case name of what they test | `test_calc_fwd_rates`, `test_is_empty` |
 
-Do not introduce PascalCase or camelCase for a new function or method, even to visually match an embedded class name (e.g. do not write `get_CorpBond` because the class is `CorpBond` — it is `get_corporate_bonds`/`get_corp_bond`). This was previously inconsistent (`Curves` methods were PascalCase, `IsEmpty()` was PascalCase, and `get_Cash`/`get_EquityShare`/`get_Liability` embedded the class name) and has been normalized across the codebase, call sites, and tests — keep new code consistent with this rule rather than with any lingering PascalCase example you might find in old notebooks or the `Archive/` folder.
+Do not introduce PascalCase or camelCase for a new function or method, even to visually match an embedded class name (e.g. do not write `get_CorpBond` because the class is `CorpBond` — it is `get_corporate_bonds`/`get_corp_bond`). This was previously inconsistent (`Curves` methods were PascalCase, `IsEmpty()` was PascalCase, and `get_Cash`/`get_EquityShare`/`get_Liability` embedded the class name) and has been normalized across the codebase, call sites, and tests — keep new code consistent with this rule rather than with any lingering PascalCase.
 
 ### Type hints and arrays
 
@@ -376,12 +376,9 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 Do not duplicate full methodology here. Refer to:
 
 - `Documentation/Unit_Linked_Methodology.md` / `Liability_Dev/Unit_Linked_Methodology.html` — unit-linked MVP
-- `Archive/OSEM_Documentation_draft.pdf` — methodology draft (PDF)
 - `Documentation/OSEM_Documentation_draft.ipynb` — same content as notebook
-- `Archive/` — yield-curve, equity, and bond pricing prototypes (notebooks and PDFs)
 - `notebooks/prototypes/` — maintained topic-specific deep dives and their rendered PDFs
 - `notebooks/examples/` — maintained example-output notebooks and their rendered PDFs
-- `Archive/` — historical notebooks and other superseded development artifacts
 
 ## Maintenance
 
