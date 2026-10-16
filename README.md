@@ -21,7 +21,7 @@ Financial institutions such as life insurers or pension funds have a fiduciary d
  - The impact on profitability by different trading strategies in response to outflows and inflows throughout time  
 
 ## Description
-The aim of this project is to write an Asset-Liability model that uses agent-based modelling concepts to generate insight on the company's portfolio. All technologies used are open-source and widely used (Pyhon and specific packages such as Pands, Numpy, Datetime etc.).
+The aim of this project is to write an Asset-Liability model that uses agent-based modelling concepts to generate insight on the company's portfolio. All technologies used are open-source and widely used (Python and specific packages such as Pandas, Numpy, Datetime etc.).
 
 Ultimately, OSEM should be able to take as input:
  - Description and size of investments
