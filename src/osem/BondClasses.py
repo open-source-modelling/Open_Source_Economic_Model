@@ -520,12 +520,11 @@ class CorpBondPortfolio():
         """
         maturities: Dict[date, float] = {}
         corp_bond: CorpBond
-        maturity_date: date
 
         for asset_id in self.corporate_bonds:
             corp_bond = self.corporate_bonds[asset_id]
             if corp_bond.maturity_date in maturities:
-                maturities[maturity_date] += corp_bond.notional_amount
+                maturities[corp_bond.maturity_date] += corp_bond.notional_amount
             else:
                 maturities.update({corp_bond.maturity_date:corp_bond.notional_amount})
         return maturities

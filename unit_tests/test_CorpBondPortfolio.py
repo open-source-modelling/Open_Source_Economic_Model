@@ -2,7 +2,7 @@ from osem.BondClasses import CorpBond, CorpBondPortfolio
 from osem.FrequencyClass import Frequency
 import pytest
 import datetime
-
+import dataclasses
 
 @pytest.fixture
 def corp_bond_1() -> CorpBond:
@@ -193,6 +193,21 @@ def test_create_maturity_cashflow_multiple_bonds(corp_bond_1: CorpBond, corp_bon
     maturity_cashflow = corporate_bond_portfolio.create_maturity_cashflow(modelling_date)
     assert len(maturity_cashflow) == 2
     assert corp_bond_1.maturity_date in maturity_cashflow
+
+
+def test_create_maturity_cashflow_sums_notionals_on_same_date(corp_bond_1: CorpBond, corp_bond_2: CorpBond):
+    same_maturity_bond = dataclasses.replace(corp_bond_2, asset_id=3, maturity_date=corp_bond_1.maturity_date, notional_amount=250)
+
+    corporate_bond_portfolio = CorpBondPortfolio()
+    corporate_bond_portfolio.add(corp_bond_1)
+    corporate_bond_portfolio.add(corp_bond_2)
+    corporate_bond_portfolio.add(same_maturity_bond)
+    modelling_date = datetime.date(2023, 6, 1)
+    maturity_cashflow = corporate_bond_portfolio.create_maturity_cashflow(modelling_date)
+
+    assert len(maturity_cashflow) == 2
+    assert maturity_cashflow[corp_bond_1.maturity_date] == corp_bond_1.notional_amount + same_maturity_bond.notional_amount
+    assert maturity_cashflow[corp_bond_2.maturity_date] == corp_bond_2.notional_amount
 
 
 def test_create_maturity_cashflow_from_dict(corp_bond_1: CorpBond, corp_bond_2: CorpBond):
