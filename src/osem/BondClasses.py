@@ -4,7 +4,7 @@ from datetime import timedelta
 from datetime import date
 from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
-from typing import List, Dict, Optional, Iterator, Tuple
+from typing import List, Dict, Optional, Iterator, Tuple, cast
 from osem.FrequencyClass import Frequency
 from osem.CurvesClass import Curves
 from osem.SettingsClasses import Settings
@@ -334,14 +334,10 @@ class CorpBondPortfolio():
             A dictionary of CorpBond instances, keyed by asset_id. If None, the portfolio is initialized as empty.
         """
 
-        self.corporate_bonds = corporate_bonds
+        self.corporate_bonds: Dict[int, CorpBond] = corporate_bonds if corporate_bonds is not None else {}
 
     def is_empty(self)-> bool:
-        if self.corporate_bonds is None:
-            return True
-        if len(self.corporate_bonds) == 0:
-            return True
-        return False
+        return len(self.corporate_bonds) == 0
 
     def add(self, corp_bond: CorpBond) -> None:
         """
@@ -352,10 +348,7 @@ class CorpBondPortfolio():
         corp_bond : CorpBond
             The bond position to add, keyed by asset_id in the portfolio dict.
         """
-        if self.corporate_bonds is not None:
-            self.corporate_bonds.update({corp_bond.asset_id: corp_bond})
-        else:
-            self.corporate_bonds = {corp_bond.asset_id: corp_bond}
+        self.corporate_bonds.update({corp_bond.asset_id: corp_bond})
 
     def create_aggregate_coupon_dates(self, modelling_date:date, end_date:date) -> Dict[date, float]:
         """
@@ -481,10 +474,11 @@ class CorpBondPortfolio():
 
         asset_keys = self.corporate_bonds.keys()
 
-        market_price_tmp = []
-        zspread_tmp = []
-        asset_id_tmp = []
-        units_tmp = []
+        market_price_tmp: List[float] = []
+        zspread_tmp: List[float] = []
+        asset_id_tmp: List[int] = []
+        units_tmp: List[float] = []
+
         for key in asset_keys:
             market_price_tmp.append(self.corporate_bonds[key].market_price)
             zspread_tmp.append(self.corporate_bonds[key].zspread)
@@ -501,7 +495,7 @@ class CorpBondPortfolio():
 
         units = pd.DataFrame(data=units_tmp, index=asset_id_tmp, columns=[modelling_date], dtype=float)
 
-        return [market_price, zspread, units]
+        return market_price, zspread, units
 
 
     def create_maturity_cashflow(self, modelling_date: date) -> Dict[date, float]:
@@ -560,10 +554,14 @@ class CorpBondPortfolio():
         Note: Assumes self.corporate_bonds is a dictionary with keys as asset IDs and values as CorpBond objects.
         To Do
         """
+        asset_id: int
         for asset_id in coupon_df.index:
-            price: float = self.corporate_bonds[asset_id].price_bond(coupon_df.loc[asset_id],
-            notional_df.loc[asset_id], date_of_interest, proj_period, curves, bond_zspread_df.loc[asset_id].iloc[0])
+            coupons = cast(Dict[date, float], coupon_df.loc[asset_id].to_dict())
+            notional = cast(Dict[date, float], notional_df.loc[asset_id].to_dict())
+            zspread = cast(float, bond_zspread_df.loc[asset_id].iloc[0])
+            price: float = self.corporate_bonds[asset_id].price_bond(coupons, notional, date_of_interest, proj_period, curves, zspread)
             bond_price_df.loc[asset_id, date_of_interest] = price
+
         return bond_price_df
     
     def calibrate_bond_portfolio(self, zspread_df: pd.DataFrame, settings: Settings, proj_period: int, curves: Curves) -> pd.DataFrame:
