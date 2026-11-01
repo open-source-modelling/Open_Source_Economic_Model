@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from osem.CurvesClass import Curves
 from osem.FrequencyClass import Frequency
 import logging
+import numpy.typing as npt
 from osem.logging_utils import get_file_logger
 
 logger = get_file_logger(__name__, "EquityClasses.log", level=logging.INFO)
@@ -154,7 +155,7 @@ class EquityShare:
         """
 
         dividend_amount = 0
-        dividends = {}
+        dividends: Dict[date, float] = {}
         for dividend_date in self.generate_dividend_dates(modelling_date, end_date):
             if dividend_date in dividends:  # If two cash flows on same date
                 pass
@@ -191,7 +192,7 @@ class EquityShare:
             List of dictionaries containing the cash flow date and the size.        
         """
 
-        terminals = {}
+        terminals: Dict[date, float] = {}
         market_price = self.generate_market_value(modelling_date, end_date, self.market_price,
                                                             growth_rate)
         terminal_amount = self.terminal_amount(market_price=market_price)
@@ -223,8 +224,8 @@ class EquityShare:
         :type disc_value: float
             The price of the share.         
         """
-        date_frac = []
-        cash_flow = []
+        date_frac: List[float] = []
+        cash_flow: List[float] = []
         for key, value in dividends.items():
             date_tmp = (key-modelling_date).days/365.25
             date_frac.append(date_tmp)
@@ -235,15 +236,15 @@ class EquityShare:
             date_frac.append(date_tmp)
             cash_flow.append(value)
         
-        date_frac = pd.DataFrame(data = date_frac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
-        cash_flow = pd.DataFrame(data = cash_flow, columns = ["Cash flow"])
+        date_frac_df = pd.DataFrame(data = date_frac, columns = ["Date Fraction"]) # No need for Dataframes. Remove them
+        cash_flow_df = pd.DataFrame(data = cash_flow, columns = ["Cash flow"])
 
         spread = self.spread_country + self.spread_sector+ self.spread_stress
 
         #discount = curves.retrieve_rates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
-        discount = curves.retrieve_rates(proj_period, np.asarray(date_frac.iloc[:, 0], dtype=np.float64), "Discount", spread)
+        discount = curves.retrieve_rates(proj_period, np.asarray(date_frac_df.iloc[:, 0], dtype=np.float64), "Discount", spread)
 
-        nodisc_value = cash_flow.values*discount
+        nodisc_value = np.asarray(cash_flow_df, dtype=np.float64) * np.asarray(discount, dtype=np.float64)
         # np.sum over the whole frame, not the builtin sum: the builtin iterates the rows of a
         # 2-D array and returns one total per column, so it produced a 1-element array rather
         # than a number, and would silently return a vector if the frame ever gained a column.
@@ -301,11 +302,11 @@ class EquityShare:
                     x_start = x_mid
                 else:  # If the start point and the middle point have a different sign than by mean value theorem the interval must contain at least one root
                     x_end = x_mid
-        return "Did not converge"
+        raise RuntimeError("Growth calibration did not converge")
 
 
 class EquitySharePortfolio():
-    def __init__(self, equity_share: dict[int, EquityShare] = None):
+    def __init__(self, equity_share: Optional[Dict[int, EquityShare]] = None):
         """
         Initialize the EquitySharePortfolio instance with the first EquityShare instance
 
@@ -314,14 +315,10 @@ class EquitySharePortfolio():
         :type equity_share: dict[int,EquityShare]
         """
         logger.info("EquitySharePortfolio initializer called")
-        self.equity_share = equity_share
+        self.equity_share: Dict[int, EquityShare] = equity_share if equity_share is not None else {}
 
     def is_empty(self) -> bool:
-        if self.equity_share is None:
-            return True
-        if len(self.equity_share) == 0:
-            return True
-        return False
+        return len(self.equity_share) == 0
 
     def add(self, equity_share: EquityShare) -> None:
         """
@@ -335,10 +332,7 @@ class EquitySharePortfolio():
             The EquityShare instance representing a single equity instrument.
 
         """
-        if self.equity_share is None:
-            self.equity_share = {equity_share.asset_id: equity_share}
-        else:
-            self.equity_share.update({equity_share.asset_id: equity_share})
+        self.equity_share.update({equity_share.asset_id: equity_share})
 
     def create_dividend_flows(self, modelling_date: date, end_date: date) -> Dict[int, Dict[date, float]]:
         """
@@ -389,7 +383,6 @@ class EquitySharePortfolio():
         all_terminals: Dict[int, Dict[date, float]] = {}
         terminals: Dict[date, float] = {}
         equity_share: EquityShare
-        terminal_date: date
 
         for asset_id in self.equity_share:
             equity_share = self.equity_share[asset_id]
@@ -397,7 +390,7 @@ class EquitySharePortfolio():
             all_terminals[asset_id]=terminals
         return all_terminals
 
-    def create_dividend_fractions(self, modelling_date: date, dividend_array: Dict[int, Dict[date, float]]) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+    def create_dividend_fractions(self, modelling_date: date, dividend_array: Dict[int, Dict[date, float]]) -> Tuple[List[npt.NDArray[np.float64]], List[npt.NDArray[np.int_]]]:
         """
         Create the list of year-fractions at which each dividend is paid out (compared to the modelling date) and the list of
         relevant indices (aka. indices of cash flows that are within the modelling period)
@@ -425,18 +418,18 @@ class EquitySharePortfolio():
         # Remove numpy arrays in construction
 
         # Data structures list of lists for dividend payments
-        all_date_frac: List[np.ndarray] = []  # this will save the date fractions of dividends for the portfolio
-        all_dates_considered: List[np.ndarray] = []  # this will save if a cash flow is already expired before the modelling date in the portfolio
+        all_date_frac: List[npt.NDArray[np.float64]] = []  # this will save the date fractions of dividends for the portfolio
+        all_dates_considered: List[npt.NDArray[np.int_]] = []  # for each asset, the positions of its dividends paid after the modelling date
 
         for one_dividend_array in dividend_array.values():
             # equity_share = self.equity_share[asset_id]
             #            one_dividend_array = dividend_array[asset_id]
 
             # Reset objects for the next asset
-            equity_date_frac: np.ndarray = np.array([])  # this will save date fractions of dividends of a single asset
-            equity_dates_considered: np.ndarray = np.array([])  # this will save the boolean, if the dividend date is after the modelling date
+            equity_date_frac: npt.NDArray[np.float64] = np.array([])  # this will save date fractions of dividends of a single asset
+            equity_dates_considered: npt.NDArray[np.int_] = np.array([])  # positions in one_dividend_array of the dividends paid after the modelling date
 
-            dividend_counter = 0  # Counter of future dividend cash flows initialized to 0
+            dividend_counter = 0  # Position of the current date in one_dividend_array, counting past and future dates
 
             for one_dividend_date in list(one_dividend_array.keys()):  # for each dividend date of the selected equity
                 one_dividend_days = (one_dividend_date - modelling_date).days
@@ -446,22 +439,22 @@ class EquitySharePortfolio():
                     )  # append date fraction
                     equity_dates_considered = np.append(
                         equity_dates_considered, int(dividend_counter)
-                    )  # append "is after modelling date" flag
+                    )  # append this dividend's position in one_dividend_array
                 dividend_counter += 1
                 # else skip
             all_date_frac.append(
                 equity_date_frac
             )  # append what fraction of the date is each cash flow compared to the modelling date
             all_dates_considered.append(
-                equity_dates_considered.astype(int)
+                equity_dates_considered.astype(np.int_)
             )  # append which cash flows are after the modelling date
 
         return (all_date_frac, all_dates_considered)
 
-    def create_terminal_fractions(self, modelling_date: date, terminal_array: Dict[int, Dict[date, float]]) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+    def create_terminal_fractions(self, modelling_date: date, terminal_array: Dict[int, Dict[date, float]]) -> Tuple[List[npt.NDArray[np.float64]], List[npt.NDArray[np.int_]]]:
         """
         Create the list of year-fractions at which the terminal amount is paid out (compared to the modelling date) and the list of
-        relevant indices (aka. indices of cash flows that are within the modelling period)
+        flags showing which terminal dates are after the modelling date
 
         Parameters
         ----------
@@ -478,22 +471,22 @@ class EquitySharePortfolio():
         :rtype dict Array with two elements: 
             all_terminal_date_frac: A list of numpy arrays, Each element in the list represents a sigle asset. Each numpy array represents the time fraction
             between the modelling date and the terminal date (ex. 18 months from modelling date is 1.5).
-            all_terminal_dates_considered: list of numpy arrays. Each element in the list represents a single asset. Each numpy array represents the index of
-            the cash flow from the terminal_array that matures within the period between the modelling date and the terminal date.
+            all_terminal_dates_considered: list of numpy arrays. Each element in the list represents a single asset. Each numpy array is a flag: [1] if the
+            terminal date of the asset is after the modelling date, otherwise empty. The value is not an index into terminal_array.
         """
 
         # other counting conventions MISSING
         # Remove numpy arrays in construction
 
         # Data structures list of lists for dividend payments
-        all_terminal_date_frac: List[np.ndarray] = []  # this will save the date fractions of dividends for the portfolio
-        all_terminal_dates_considered: List[np.ndarray] = []  # this will save if a cash flow is already expired before the modelling date in the portfolio
+        all_terminal_date_frac: List[npt.NDArray[np.float64]] = []  # this will save the date fractions of dividends for the portfolio
+        all_terminal_dates_considered: List[npt.NDArray[np.int_]] = []  # for each asset, [1] if its terminal date is after the modelling date, otherwise empty
 
         for one_terminal_array in terminal_array.values():
 
             # Reset objects for the next asset
-            equity_terminal_date_frac: np.ndarray = np.array([])  # this will save date fractions of dividends of a single asset
-            equity_terminal_dates_considered: np.ndarray = np.array([])  # this will save the boolean, if the dividend date is after the modelling date
+            equity_terminal_date_frac: npt.NDArray[np.float64] = np.array([])  # this will save date fractions of dividends of a single asset
+            equity_terminal_dates_considered: npt.NDArray[np.int_] = np.array([])  # [1] if the terminal date is after the modelling date, otherwise empty
 
             one_dividend_date = list(one_terminal_array.keys())[0]  # for each dividend date of the selected equity
             one_dividend_days = (one_dividend_date - modelling_date).days
@@ -509,7 +502,7 @@ class EquitySharePortfolio():
                 equity_terminal_date_frac
             )  # append what fraction of the date is each cash flow compared to the modelling date
             all_terminal_dates_considered.append(
-                equity_terminal_dates_considered.astype(int)
+                equity_terminal_dates_considered.astype(np.int_)
             )  # append which cash flows are after the modelling date
 
         return (all_terminal_date_frac, all_terminal_dates_considered)
@@ -541,7 +534,7 @@ class EquitySharePortfolio():
 
         return sorted(unique_dates)
 
-    def cash_flow_profile_list_to_matrix(self, cash_flow_profile: Dict[int, Dict[date, float]]) -> Tuple[List[date], np.ndarray]:
+    def cash_flow_profile_list_to_matrix(self, cash_flow_profile: Dict[int, Dict[date, float]]) -> Tuple[List[date], npt.NDArray[np.float64]]:
 
         unique_dates = self.unique_dates_profile(cash_flow_profile)
         width = len(unique_dates)
@@ -560,20 +553,20 @@ class EquitySharePortfolio():
 
         asset_keys = self.equity_share.keys()
 
-        market_price_tmp = []
-        growth_rate_tmp = []
-        asset_id_tmp = []
-        units_tmp = []
+        market_price_tmp: List[float] = []
+        growth_rate_tmp: List[float] = []
+        asset_id_tmp: List[int] = []
+        units_tmp: List[float] = []
         for key in asset_keys:
             market_price_tmp.append(self.equity_share[key].market_price)
             growth_rate_tmp.append(self.equity_share[key].growth_rate)
             asset_id_tmp.append(self.equity_share[key].asset_id)
             units_tmp.append(self.equity_share[key].units)
 
-        market_price = pd.DataFrame(data=market_price_tmp, index=asset_id_tmp, columns=[modelling_date])
+        market_price = pd.DataFrame(data=market_price_tmp, index=asset_id_tmp, columns=[modelling_date], dtype=float)
 
-        growth_rate = pd.DataFrame(data=growth_rate_tmp, index=asset_id_tmp, columns=[modelling_date])
+        growth_rate = pd.DataFrame(data=growth_rate_tmp, index=asset_id_tmp, columns=[modelling_date], dtype=float)
         
-        units = pd.DataFrame(data=units_tmp, index=asset_id_tmp, columns=[modelling_date])
+        units = pd.DataFrame(data=units_tmp, index=asset_id_tmp, columns=[modelling_date], dtype=float)
 
-        return [market_price, growth_rate, units]
+        return market_price, growth_rate, units
