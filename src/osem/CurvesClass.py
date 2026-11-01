@@ -1,7 +1,7 @@
 import datetime
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
-from typing import Sequence
 
 class Curves:
     def __init__(self, ufr: float, precision: float, tau: float, initial_date: datetime.date, country: str) -> None:
@@ -21,7 +21,7 @@ class Curves:
         self.alpha = pd.DataFrame(data=None, columns=["Alpha_year_0"], dtype="float64")
         self.b = pd.DataFrame(data=None, columns=["Calibration_year_0"])
 
-    def set_observed_term_structure(self, maturity_vec: np.ndarray, yield_vec: np.ndarray) -> None:
+    def set_observed_term_structure(self, maturity_vec: npt.NDArray[np.float64], yield_vec: npt.NDArray[np.float64]) -> None:
         """
         Set the initial vector of liquid maturities and the coresponding yield rates into the curves class. Both vectors are saved as dataframes into
         The vector of maturities is saved into the m_obs_ini property.
@@ -54,10 +54,10 @@ class Curves:
             The Curves class instance        
         """
 
-
-        fwdata0 = 1 + self.r_obs_ini["Yield"][0] # First forward rate is equal to the first spot rate
-        fwdata = ((1 + self.r_obs_ini["Yield"]) ** self.m_obs_ini["Maturity"])/((1 + self.r_obs_ini["Yield"].shift(periods=1)) ** self.m_obs_ini["Maturity"].shift(periods=1))
-        out = np.insert(fwdata.values[1:], 0, fwdata0) # First forward in fwdata is NaN. instead fwdata0 is inserted at the start
+        yields = np.asarray(self.r_obs_ini["Yield"], dtype=np.float64)
+        maturities = np.asarray(self.m_obs_ini["Maturity"], dtype=np.float64)
+        capitalisation = (1 + yields) ** maturities
+        out = np.insert(capitalisation[1:] / capitalisation[:-1], 0, 1 + yields[0]) # First forward rate is equal to the first spot rate
         self.fwd_rates = pd.DataFrame(data=out, index=None, columns=["Forward"])
 
 
@@ -84,16 +84,17 @@ class Curves:
         # capitalisation factors), so the spot rate is the geometric mean of those factors less
         # one. Adding 1 before the cumprod and subtracting 2 afterwards, as this line used to,
         # is only a first-order approximation of that and drifts as the forwards spread out.
-        spot = self.fwd_rates["Forward"].cumprod(axis=None)**(1/self.m_obs_ini["Maturity"])-1
-        self.m_obs["Maturities_year_0"] = self.m_obs_ini["Maturity"].values
-        self.r_obs["Yield_year_0"] = spot.values
+
+        spot = self.fwd_rates["Forward"].cumprod()**(1/self.m_obs_ini["Maturity"])-1
+        self.m_obs["Maturities_year_0"] = np.asarray(self.m_obs_ini["Maturity"], dtype=np.float64)
+        self.r_obs["Yield_year_0"] = np.asarray(spot, dtype=np.float64)
 
         if n_years>=1:
             for year in range(1, n_years):
                 maturities = self.m_obs_ini["Maturity"]-year
-                spot = (self.fwd_rates["Forward"][year:].cumprod(axis=None)**(1/maturities)-1)[year:]
-                self.m_obs = self.m_obs.join(pd.Series(data=maturities.values[year:], index=None, name="Maturities_year_"+str(year)))
-                self.r_obs = self.r_obs.join(pd.Series(data=spot.values, index=None, name="Yield_year_"+str(year)))
+                spot = (self.fwd_rates["Forward"][year:].cumprod()**(1/maturities)-1)[year:]
+                self.m_obs = self.m_obs.join(pd.Series(data=np.asarray(maturities, dtype=np.float64)[year:], index=None, name="Maturities_year_"+str(year)))
+                self.r_obs = self.r_obs.join(pd.Series(data=np.asarray(spot, dtype=np.float64), index=None, name="Yield_year_"+str(year)))
 
     def calibrate_projected(self, n_years: int, ini_guess: float, end: float, max_iter: int) -> None:
         """
@@ -136,8 +137,10 @@ class Curves:
         calib_head = "Calibration_year_0"
         alpha_head = "Alpha_year_0"
 
-        r_obs = np.transpose(np.array(self.r_obs[yield_head])) # Obtain the yield curve
-        m_obs = np.transpose(np.array(self.m_obs[mat_head])) # Obtain the maturities curve
+        #r_obs = np.transpose(np.array(self.r_obs[yield_head])) # Obtain the yield curve
+        r_obs = np.asarray(self.r_obs[yield_head], dtype=np.float64)
+        #m_obs = np.transpose(np.array(self.m_obs[mat_head])) # Obtain the maturities curve
+        m_obs = np.asarray(self.m_obs[mat_head], dtype=np.float64)
 
         # Calculate the calibration parameter alpha 
         alpha_optimized = [self.bisection_alpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, max_iter)]
@@ -155,8 +158,11 @@ class Curves:
             calib_head = "Calibration_year_" + str(i_year)
             alpha_head = "Alpha_year_" + str(i_year)
             
-            r_obs = np.transpose(np.array(self.r_obs[yield_head]))[:-i_year] # Obtain the yield curve
-            m_obs = np.transpose(np.array(self.m_obs[mat_head]))[:-i_year]
+            #r_obs = np.transpose(np.array(self.r_obs[yield_head]))[:-i_year] # Obtain the yield curve
+            #m_obs = np.transpose(np.array(self.m_obs[mat_head]))[:-i_year]
+
+            r_obs = np.asarray(self.r_obs[yield_head], dtype=np.float64)[:-i_year] # Obtain the yield curve
+            m_obs = np.asarray(self.m_obs[mat_head], dtype=np.float64)[:-i_year]
 
             alpha_optimized = [self.bisection_alpha(ini_guess, end, m_obs, r_obs, ufr, tau, precision, max_iter)]
             self.alpha[alpha_head] = alpha_optimized
@@ -166,13 +172,15 @@ class Curves:
             
             self.b[calib_head] = b_calibrated
 
-    def retrieve_rates(self, proj_step: int, target_mat: np.ndarray, type: str, spread: float) -> pd.DataFrame | None:
+    def retrieve_rates(self, proj_step: int, target_mat: npt.NDArray[np.float64], type: str, spread: float) -> pd.DataFrame | None:
     
         maturity_name = "Maturities_year_" + str(proj_step)
         calibration_name = "Calibration_year_" + str(proj_step)
         alpha_name = "Alpha_year_" + str(proj_step)
-        calib_b = self.b[calibration_name].iloc[: len(self.b[calibration_name]) - proj_step].values
-        calib_maturities = self.m_obs[maturity_name].iloc[: len(self.m_obs[maturity_name]) - proj_step].values
+        #calib_b = self.b[calibration_name].iloc[: len(self.b[calibration_name]) - proj_step].to_numpy(dtype=np.float64)
+        calib_b = np.asarray(self.b[calibration_name].iloc[: len(self.b[calibration_name]) - proj_step], dtype=np.float64)
+        calib_maturities = np.asarray(self.m_obs[maturity_name].iloc[: len(self.m_obs[maturity_name]) - proj_step], dtype=np.float64)
+        #calib_maturities = self.m_obs[maturity_name].iloc[: len(self.m_obs[maturity_name]) - proj_step].to_numpy(dtype=np.float64)
         calib_alpha = self.alpha[alpha_name][0]
         yield_result = self.sw_extrapolate(target_mat, calib_maturities, calib_b, self.ufr, calib_alpha) + spread
 
@@ -185,7 +193,7 @@ class Curves:
         else:
             pass
 
-    def sw_heart(self, u: np.ndarray, v: np.ndarray, alpha: float) -> np.ndarray:
+    def sw_heart(self, u: npt.NDArray[np.float64], v: npt.NDArray[np.float64], alpha: float) -> npt.NDArray[np.float64]:
         """
         SWHEART Calculate the heart of the Wilson function.
         sw_heart(u, v, alpha) calculates the matrix H (Heart of the Wilson
@@ -215,7 +223,7 @@ class Curves:
         v_mat = np.tile(v, [u.size, 1])
         return 0.5 * (alpha * (u_mat + v_mat) + np.exp(-alpha * (u_mat + v_mat)) - alpha * np.absolute(u_mat-v_mat) - np.exp(-alpha * np.absolute(u_mat-v_mat))); # Heart of the Wilson function from paragraph 132
 
-    def sw_calibrate(self, r: np.ndarray, M: np.ndarray, ufr: float, alpha: float) -> np.ndarray:
+    def sw_calibrate(self, r: npt.NDArray[np.float64], M: npt.NDArray[np.float64], ufr: float, alpha: float) -> npt.NDArray[np.float64]:
         """
         SWCALIBRATE Calculate the calibration vector using a Smith-Wilson algorithm
         b = sw_calibrate(r, T, ufr, alpha) calculates the vector b used for
@@ -249,7 +257,7 @@ class Curves:
 
         return np.linalg.inv(Q.transpose() @ H @ Q) @ (p-q)          # Calibration vector b from paragraph 149
     
-    def sw_extrapolate(self, m_target: np.ndarray, m_obs: np.ndarray, b: np.ndarray, ufr: float, alpha: float) -> np.ndarray:
+    def sw_extrapolate(self, m_target: npt.NDArray[np.float64], m_obs: npt.NDArray[np.float64], b: npt.NDArray[np.float64], ufr: float, alpha: float) -> npt.NDArray[np.float64]:
         """"
         SWEXTRAPOLATE Interpolate or/and extrapolate rates for targeted maturities using a Smith-Wilson algorithm.
         r = sw_extrapolate(m_target,m_obs, b, ufr, alpha) calculates the rates for maturities specified in M_Target using the calibration vector b.
@@ -283,7 +291,7 @@ class Curves:
         p = np.exp(-np.log(1+ufr)* m_target) + np.diag(np.exp(-np.log(1+ufr) * m_target)) @ H @ Q @ b # Discount pricing function for targeted maturities from paragraph 147
         return p ** (-1/ m_target) -1 # Convert obtained prices to rates and return prices
 
-    def g_alfa(self, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, alpha: float, tau: float) -> float:
+    def g_alfa(self, m_obs: npt.NDArray[np.float64], r_obs: npt.NDArray[np.float64], ufr: float, alpha: float, tau: float) -> float:
         """
         Calculates the gap at the convergence point between the allowable tolerance tau and the curve extrapolated using the Smith-Wilson algorithm.
         interpolation and extrapolation of rates.
@@ -334,7 +342,7 @@ class Curves:
         K = (1+alpha * m_obs @ Q@ b) / (np.sinh(alpha * m_obs.transpose())@ Q@ b) # Calculate kappa as defined in the paragraph 155
         return( alpha/np.abs(1 - K*np.exp(alpha*T))-tau) # Size of the gap at the convergence point between the allowable tolerance Tau and the actual curve. Defined in paragraph 158
 
-    def bisection_alpha(self, x_start: float, x_end: float, m_obs: np.ndarray, r_obs: np.ndarray, ufr: float, tau: float, precision: float, max_iter: int) -> float | None:
+    def bisection_alpha(self, x_start: float, x_end: float, m_obs: npt.NDArray[np.float64], r_obs: npt.NDArray[np.float64], ufr: float, tau: float, precision: float, max_iter: int) -> float | None:
         """
         Bisection root finding algorithm for finding the root of a function. The function here is the allowed difference between the ultimate forward rate and the extrapolated curve using Smith & Wilson.
 

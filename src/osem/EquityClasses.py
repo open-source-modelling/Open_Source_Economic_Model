@@ -240,7 +240,8 @@ class EquityShare:
 
         spread = self.spread_country + self.spread_sector+ self.spread_stress
 
-        discount = curves.retrieve_rates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
+        #discount = curves.retrieve_rates(proj_period, date_frac.iloc[:, 0].to_numpy(), "Discount", spread)
+        discount = curves.retrieve_rates(proj_period, np.asarray(date_frac.iloc[:, 0], dtype=np.float64), "Discount", spread)
 
         nodisc_value = cash_flow.values*discount
         # np.sum over the whole frame, not the builtin sum: the builtin iterates the rows of a

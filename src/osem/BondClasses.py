@@ -235,7 +235,8 @@ class CorpBond:
         date_frac_df = pd.DataFrame(data=date_frac, columns=["Date Fraction"])  # No need for DataFrames. Kept for compatibility
         cash_flow_df = pd.DataFrame(data=cash_flow, columns=["Cash flow"])
 
-        discount = curves.retrieve_rates(proj_period, date_frac_df.iloc[:, 0].to_numpy(), "Discount", spread)
+        #discount = curves.retrieve_rates(proj_period, date_frac_df.iloc[:, 0].to_numpy(), "Discount", spread)
+        discount = curves.retrieve_rates(proj_period, np.asarray(date_frac_df.iloc[:, 0], dtype=np.float64), "Discount", spread)
 
         nodisc_value = cash_flow_df.values * discount
         disc_value: float = float(np.sum(nodisc_value))
