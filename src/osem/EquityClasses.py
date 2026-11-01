@@ -58,7 +58,7 @@ class EquityShare:
         return dividend_size
 
 #    @tracer
-    def terminal_amount(self, market_price: float, growth_rate: float, terminal_rate: float) -> float:
+    def terminal_amount(self, market_price: float) -> float:
         """
         Calculates the terminal value of an equity share. Currently set as the market value.
         
@@ -67,10 +67,6 @@ class EquityShare:
         self: EquityShare class
         :type market_price: float
             The current market price of the equity share 
-        :type growth_rate: float
-            The annual growth rate of the particular stock
-        :type terminal_rate: float
-            The assumed terminal interest rate
         
         Returns
         -------
@@ -78,7 +74,6 @@ class EquityShare:
             The monetary amount that can be obtained by selling the share at the end of the modelling window 
         """
 
-        #return market_price / (terminal_rate - growth_rate)
         return market_price
 
 #    @tracer
@@ -174,7 +169,7 @@ class EquityShare:
         return dividends
 
 
-    def create_single_terminal(self, modelling_date: date, end_date: date, terminal_rate: float, growth_rate: float)->Dict[date, float]:
+    def create_single_terminal(self, modelling_date: date, end_date: date, growth_rate: float)->Dict[date, float]:
         """
         Create a dictionary of terminal cash flows using information about an equity share. The 
         return dictionary has dates of the cash flows as keys and monetary amounts as values. 
@@ -187,8 +182,6 @@ class EquityShare:
             The date from which the dividend dates and values start.
         :type end_date: datetime.date
             The last date that the model considers (end of the modelling window).
-        :type terminal_rate: float
-            Long term interest rate assumed by the run.      
         :type growth_rate: float
             Annualized growth rate of the equity of interest.
             
@@ -201,7 +194,7 @@ class EquityShare:
         terminals = {}
         market_price = self.generate_market_value(modelling_date, end_date, self.market_price,
                                                             growth_rate)
-        terminal_amount = self.terminal_amount(market_price, growth_rate, terminal_rate)
+        terminal_amount = self.terminal_amount(market_price=market_price)
         terminals.update({end_date: terminal_amount})
         return terminals
 
@@ -279,13 +272,12 @@ class EquityShare:
         Implemented by Gregor Fabjan from Qnity Consultants on 08/02/2024.
         """
         
-        terminal_rate = curves.ufr
         dividends = self.create_single_cash_flows(modelling_date, end_date, x_start)
-        terminal = self.create_single_terminal(modelling_date, end_date, terminal_rate, x_start)
+        terminal = self.create_single_terminal(modelling_date = modelling_date, end_date = end_date, growth_rate = x_start)
         y_start = self.price_share(dividends, terminal, modelling_date, proj_period, curves)-self.market_price
 
         dividends = self.create_single_cash_flows(modelling_date, end_date, x_end)
-        terminal = self.create_single_terminal(modelling_date, end_date, terminal_rate, x_end)
+        terminal = self.create_single_terminal(modelling_date = modelling_date, end_date = end_date, growth_rate = x_end)
         y_end = self.price_share(dividends, terminal, modelling_date, proj_period, curves)-self.market_price
 
         if np.abs(y_start) < precision:
@@ -297,7 +289,7 @@ class EquityShare:
             x_mid = (x_end + x_start) / 2  # calculate mid-point
 
             dividends = self.create_single_cash_flows(modelling_date, end_date, x_mid)
-            terminal = self.create_single_terminal(modelling_date, end_date, terminal_rate, x_mid)
+            terminal = self.create_single_terminal(modelling_date = modelling_date, end_date = end_date, growth_rate = x_mid)
             y_mid = self.price_share(dividends, terminal, modelling_date, proj_period, curves)-self.market_price
             if (y_mid == 0 or (x_end - x_start) / 2 < precision):  # Solution found
                 return x_mid
@@ -374,7 +366,7 @@ class EquitySharePortfolio():
             all_dividends[asset_id] = dividends
         return all_dividends
 
-    def create_terminal_flows(self, modelling_date: date, terminal_date: date, terminal_rate: float) -> Dict[int, Dict[date, float]]:
+    def create_terminal_flows(self, modelling_date: date, terminal_date: date) -> Dict[int, Dict[date, float]]:
         """
         Create the list of dictionaries containing dates at which the terminal cash-flows are paid out and the total amounts for
         all equity shares in the portfolio, for dates on or after the modelling date but not after the terminal date.
@@ -387,8 +379,6 @@ class EquitySharePortfolio():
             The date from which the terminal dates and market values start.
         :type end_date: datetime.date
             The last date that the model considers (end of the modelling window).
-        :type terminal_rate: float
-            The assumed ultimate forward rate. The long term interest rate used in the Gordon growth model to calculate the terminal cash-flow
 
         Returns
         -------
@@ -402,7 +392,7 @@ class EquitySharePortfolio():
 
         for asset_id in self.equity_share:
             equity_share = self.equity_share[asset_id]
-            terminals = equity_share.create_single_terminal(modelling_date, terminal_date, terminal_rate, equity_share.growth_rate)
+            terminals = equity_share.create_single_terminal(modelling_date=modelling_date, end_date=terminal_date, growth_rate=equity_share.growth_rate)
             all_terminals[asset_id]=terminals
         return all_terminals
 

@@ -67,7 +67,7 @@ def test_construct():
     assert test_share_1.growth_rate == growth_rate
 
 
-def test_dividend_dates(equity_share):
+def test_dividend_dates(equity_share: EquityShare):
     modelling_date = datetime.date(2023, 7, 24)
     end_date = datetime.date(2023 + 49, 12, 31)
     dividend_dates = list(equity_share.generate_dividend_dates(modelling_date, end_date))
@@ -76,7 +76,7 @@ def test_dividend_dates(equity_share):
     assert dividend_dates[-1] <= end_date
 
 
-def test_dividend_amount(equity_share):
+def test_dividend_amount(equity_share: EquityShare):
     # dividend_yield is the yield per payment, not annualised, so no division by the frequency
     market_price = 100.0
     dividend = equity_share.dividend_amount(market_price=market_price)
@@ -84,19 +84,16 @@ def test_dividend_amount(equity_share):
     assert dividend == manual_calculation_dividend
 
 
-def test_terminal_amount_calculation(equity_share):
+def test_terminal_amount_calculation(equity_share: EquityShare):
     """
-    Capitalised market value is equal to the terminal value of a stock
+    Capitalised market value is equal to the market value of a stock
     """
-    growth_rate = 0.05
-    terminal_rate = 0.02
     market_value = 100
-    gordon_manual = market_value
-    gordon_calc = equity_share.terminal_amount(market_value, growth_rate, terminal_rate)
-    assert gordon_calc == gordon_manual
+    function_calc = equity_share.terminal_amount(market_value)
+    assert function_calc == market_value
 
 
-def _make_equity_share(frequency) -> EquityShare:
+def _make_equity_share(frequency: FrequencyClass.Frequency) -> EquityShare:
     return EquityShare(
         asset_id=1,
         nace="A.1.2",
@@ -128,13 +125,13 @@ def _make_equity_share(frequency) -> EquityShare:
         12,
     ],
 )
-def test_valid_frequency_accepted(frequency):
+def test_valid_frequency_accepted(frequency: FrequencyClass.Frequency):
     equity_share = _make_equity_share(frequency)
     assert equity_share.frequency == frequency
 
 
 @pytest.mark.parametrize("frequency", [0, -1, 5, 13, 24, 365])
-def test_invalid_frequency_rejected_at_construction(frequency):
+def test_invalid_frequency_rejected_at_construction(frequency: FrequencyClass.Frequency):
     """
     Regression test: generate_dividend_dates() computes
     relativedelta(months=(12 // self.frequency)). Any frequency > 12 makes
@@ -175,7 +172,7 @@ def test_price_share_returns_a_plain_float(equity_share: EquityShare):
     curve = FlatCurve(0.03)
 
     dividends = equity_share.create_single_cash_flows(modelling_date, end_date, equity_share.growth_rate)
-    terminal = equity_share.create_single_terminal(modelling_date, end_date, 0.035, equity_share.growth_rate)
+    terminal = equity_share.create_single_terminal(modelling_date, end_date, equity_share.growth_rate)
 
     price = equity_share.price_share(dividends, terminal, modelling_date, 0, curve)
 
@@ -193,7 +190,7 @@ def test_bisection_growth_recovers_the_market_price(equity_share: EquityShare):
     growth = equity_share.bisection_growth(-1, 1, modelling_date, end_date, 0, curve, 1e-8, 100000)
 
     dividends = equity_share.create_single_cash_flows(modelling_date, end_date, growth)
-    terminal = equity_share.create_single_terminal(modelling_date, end_date, 0.035, growth)
+    terminal = equity_share.create_single_terminal(modelling_date, end_date, growth)
     price = equity_share.price_share(dividends, terminal, modelling_date, 0, curve)
 
     assert price == pytest.approx(equity_share.market_price, abs=1e-5)

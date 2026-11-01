@@ -130,8 +130,7 @@ def main() -> None:
     logger.info("Create dictionary of cash flows and dates for equities")
     div_dict = eq_ptf.create_dividend_flows(modelling_date = settings.modelling_date, end_date = settings.end_date)
     ter_dict = eq_ptf.create_terminal_flows(modelling_date=settings.modelling_date,
-                                                            terminal_date=settings.end_date,
-                                                            terminal_rate=curves.ufr)
+                                                            terminal_date=settings.end_date)
 
     logger.info("Create dictionary of cash flows and dates for corporate bonds")
     cpn_flows = bd_ptf.create_coupon_flows(modelling_date=settings.modelling_date, end_date=settings.end_date)
