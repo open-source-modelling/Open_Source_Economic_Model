@@ -25,7 +25,6 @@ from osem.ImportData import (
 )
 from osem.TraceClass import tracer
 from osem.MainLoop import (
-    POLICY_HISTORY_COLUMNS,
     create_cashflow_dataframe,
     create_liabilities_df,
     set_dates_of_interest,
@@ -35,7 +34,7 @@ from osem.MainLoop import (
     liquidate_positions,
     trade,
     portfolio_market_value,
-    asset_class_market_value,
+    holdings_market_value,
     remaining_liability_payments,
     portfolio_total_return,
     process_unit_linked_period,
@@ -290,8 +289,8 @@ def main() -> None:
         ],
         "UL deaths": [None],
         "UL lapses": [None],
-        "Equity market value": [asset_class_market_value(eq_price_df, eq_units_df, settings.modelling_date)],
-        "Bond market value": [asset_class_market_value(bd_price_df, bd_units_df, settings.modelling_date)],
+        "Equity market value": [holdings_market_value(eq_price_df, eq_units_df, settings.modelling_date)],
+        "Bond market value": [holdings_market_value(bd_price_df, bd_units_df, settings.modelling_date)],
         "Cash before trade": [None],
         "Remaining liability payments": [
             None if use_unit_linked else remaining_liability_payments(liab_df)
@@ -479,8 +478,8 @@ def main() -> None:
         summary_df.loc[current_date, "End market value"] = portfolio_market_value(
             eq_price_df, eq_units_df, bd_price_df, bd_units_df, current_date
         )
-        summary_df.loc[current_date, "Equity market value"] = asset_class_market_value(eq_price_df, eq_units_df, current_date)
-        summary_df.loc[current_date, "Bond market value"] = asset_class_market_value(bd_price_df, bd_units_df, current_date)
+        summary_df.loc[current_date, "Equity market value"] = holdings_market_value(eq_price_df, eq_units_df, current_date)
+        summary_df.loc[current_date, "Bond market value"] = holdings_market_value(bd_price_df, bd_units_df, current_date)
 
         previous_date = current_date
         prev_mkt_value = portfolio_market_value(
@@ -492,9 +491,11 @@ def main() -> None:
     logger.info("Main loop finished, saving results")
     summary_df.to_csv(os.path.join(conf.output_path, "Results.csv"))
     if use_unit_linked:
-        pd.DataFrame(policy_history, columns=POLICY_HISTORY_COLUMNS).to_csv(
-            os.path.join(conf.output_path, "UL_Policy_History.csv"), index=False
-        )
+        # Listed so that the file keeps its header even when there are no policies
+        pd.DataFrame(
+            policy_history,
+            columns=["Date", "Policy_ID", "Is_Guaranteed", "Closing_MV", "Exit_Type", "Amount_Paid"],
+        ).to_csv(os.path.join(conf.output_path, "UL_Policy_History.csv"), index=False)
     # After the csv files are saved, so a problem with the report cannot lose the results
     logger.info("Create run report")
     create_report(conf.output_path)

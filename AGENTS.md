@@ -164,7 +164,7 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
 | `set_dates_of_interest(modelling_date, end_date)` | Annual projection date schedule (anniversaries of the modelling date, last one = `end_date`) |
 | `sum_series(values)` | Add up a Series in order, keeping NaN visible in the total (`Series.sum` would skip it) |
 | `portfolio_market_value(eq_price, eq_units, bd_price, bd_units, as_of)` | Total invested assets MV at a date column |
-| `asset_class_market_value(price, units, as_of)` | MV of one asset class at a date column |
+| `holdings_market_value(price, units, as_of)` | MV of the holdings in the given price and units tables at a date column; pass one asset class's tables to get that class's MV |
 | `remaining_liability_payments(cash_flows)` | Undiscounted total of liability flows not yet expired |
 | `portfolio_total_return(start_market_value, end_market_value, asset_income)` | Period total return including asset cash flows received; feeds UL capitalisation |
 | `process_expired_cf` / `process_expired_liab` | Expire cash flows, return cash amount and shrunk DataFrames |

@@ -10,8 +10,6 @@ from osem.SocietyClass import Society
 from osem.LiabilityClasses import Liability
 from osem.UnitLinkedClasses import PolicyExit, UnitLinkedFund, UnitLinkedPolicy
 
-POLICY_HISTORY_COLUMNS = ["Date", "Policy_ID", "Is_Guaranteed", "Closing_MV", "Exit_Type", "Amount_Paid"]
-
 def sum_series(values: pd.Series) -> float:
     """
     Add up the values of a Series in order. Used instead of Series.sum, which skips missing
@@ -135,6 +133,26 @@ def create_liabilities_df(liabilities: Liability) -> pd.DataFrame:
     cash_flows.index = [liabilities.liability_id]
     return cash_flows
 
+def holdings_market_value(price: pd.DataFrame, units: pd.DataFrame, as_of: dt.date) -> float:
+    """
+    Calculate the market value of the holdings in the given tables at a given date.
+
+    Parameters
+    ----------
+    price : pd.DataFrame
+        Per-asset prices indexed by asset_id with date columns.
+    units : pd.DataFrame
+        Per-asset units indexed by asset_id with date columns.
+    as_of : dt.date
+        Valuation date (column name in the price and units DataFrames).
+
+    Returns
+    -------
+    float
+        Market value of the holdings at as_of.
+    """
+    return sum_series(units[as_of] * price[as_of])
+
 def portfolio_market_value(
     eq_price: pd.DataFrame,
     eq_units: pd.DataFrame,
@@ -163,27 +181,7 @@ def portfolio_market_value(
     float
         Combined market value of equities and bonds at as_of.
     """
-    return sum_series(eq_units[as_of] * eq_price[as_of]) + sum_series(bd_units[as_of] * bd_price[as_of])
-
-def asset_class_market_value(price: pd.DataFrame, units: pd.DataFrame, as_of: dt.date) -> float:
-    """
-    Calculate the market value of one asset class at a given date.
-
-    Parameters
-    ----------
-    price : pd.DataFrame
-        Per-asset prices indexed by asset_id with date columns.
-    units : pd.DataFrame
-        Per-asset units indexed by asset_id with date columns.
-    as_of : dt.date
-        Valuation date (column name in the price and units DataFrames).
-
-    Returns
-    -------
-    float
-        Market value of the asset class at as_of.
-    """
-    return sum_series(units[as_of] * price[as_of])
+    return holdings_market_value(eq_price, eq_units, as_of) + holdings_market_value(bd_price, bd_units, as_of)
 
 def remaining_liability_payments(cash_flows: pd.DataFrame) -> float:
     """

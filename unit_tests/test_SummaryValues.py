@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from osem.MainLoop import (
-    asset_class_market_value,
+    holdings_market_value,
     portfolio_market_value,
     remaining_liability_payments,
 )
@@ -28,23 +28,21 @@ def bond_frames():
     return price, units
 
 
-def test_asset_class_market_value(equity_frames):
+def test_holdings_market_value(equity_frames):
     price, units = equity_frames
-    assert asset_class_market_value(price, units, T0) == pytest.approx(110.0)
+    assert holdings_market_value(price, units, T0) == pytest.approx(110.0)
 
 
-def test_asset_classes_add_up_to_portfolio_market_value(equity_frames, bond_frames):
+def test_portfolio_market_value_adds_equities_and_bonds(equity_frames, bond_frames):
     eq_price, eq_units = equity_frames
     bd_price, bd_units = bond_frames
-    equities = asset_class_market_value(eq_price, eq_units, T0)
-    bonds = asset_class_market_value(bd_price, bd_units, T0)
-    assert equities + bonds == portfolio_market_value(eq_price, eq_units, bd_price, bd_units, T0)
+    assert portfolio_market_value(eq_price, eq_units, bd_price, bd_units, T0) == pytest.approx(300.0)
 
 
-def test_asset_class_market_value_keeps_missing_price_visible(equity_frames):
+def test_holdings_market_value_keeps_missing_price_visible(equity_frames):
     price, units = equity_frames
     price.loc[2, T0] = float("nan")
-    assert pd.isna(asset_class_market_value(price, units, T0))
+    assert pd.isna(holdings_market_value(price, units, T0))
 
 
 def test_remaining_liability_payments_adds_all_dates():

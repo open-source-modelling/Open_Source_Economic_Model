@@ -234,8 +234,7 @@ def test_create_report_flags_failed_check_in_report(tmp_path, cashflow_results):
     assert not all(check["passed"] for check in data["checks"])
 
 
-@pytest.mark.parametrize("mode", ["cashflow", "unit_linked"])
-def test_main_writes_report(tmp_path, monkeypatch, mode):
+def _set_up_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str) -> None:
     shutil.copy(REPO_ROOT / "ALM.ini", tmp_path / "ALM.ini")
     shutil.copytree(REPO_ROOT / "Input", tmp_path / "Input")
     (tmp_path / "Output").mkdir()
@@ -247,6 +246,11 @@ def test_main_writes_report(tmp_path, monkeypatch, mode):
     parameters.write_text(text, encoding="utf-8")
     monkeypatch.chdir(tmp_path)
 
+
+@pytest.mark.parametrize("mode", ["cashflow", "unit_linked"])
+def test_main_writes_report(tmp_path, monkeypatch, mode):
+    _set_up_run(tmp_path, monkeypatch, mode)
+
     osem.main.main()
 
     data = _report_data((tmp_path / "Output" / "Report.html").read_text(encoding="utf-8"))
@@ -257,3 +261,21 @@ def test_main_writes_report(tmp_path, monkeypatch, mode):
     results = pd.read_csv(tmp_path / "Output" / "Results.csv", index_col=0)
     assert results["Equity market value"].notna().all()
     assert results["Bond market value"].notna().all()
+
+
+def test_main_writes_report_without_policies(tmp_path, monkeypatch):
+    _set_up_run(tmp_path, monkeypatch, "unit_linked")
+    policies = tmp_path / "Input" / "Unit_Linked_Policies.csv"
+    header = policies.read_text(encoding="utf-8-sig").splitlines()[0]
+    policies.write_text(header + "\n", encoding="utf-8")
+
+    osem.main.main()
+
+    history = pd.read_csv(tmp_path / "Output" / "UL_Policy_History.csv")
+    assert history.empty
+    assert list(history.columns) == ["Date", "Policy_ID", "Is_Guaranteed", "Closing_MV", "Exit_Type", "Amount_Paid"]
+    data = _report_data((tmp_path / "Output" / "Report.html").read_text(encoding="utf-8"))
+    assert data["mode"] == "unit_linked"
+    assert data["policies"] == []
+    assert data["paid_out"] == 0.0
+    assert all(check["passed"] for check in data["checks"])
