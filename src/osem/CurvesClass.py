@@ -1,11 +1,34 @@
 import datetime
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
+import numpy.typing as npt
 
 class Curves:
     def __init__(self, ufr: float, precision: float, tau: float, initial_date: datetime.date, country: str) -> None:
-    
+        """
+        Store the Smith-Wilson parameters and create the empty tables that hold the curve data.
+        The tables are filled by set_observed_term_structure, calc_fwd_rates, project_forward_rate
+        and calibrate_projected, which must be called in that order.
+
+        Parameters
+        ----------
+        ufr: float
+            Ultimate forward rate as a decimal. Ex. ufr = 0.042
+        precision: float
+            Stopping tolerance of the bisection used to calibrate alpha. Ex. precision = 1e-10
+        tau: float
+            Allowed gap between the extrapolated forward rate and the ufr at the convergence
+            point. Ex. tau = 0.0001
+        initial_date: datetime.date
+            Modelling date of the run. Stored for reference, not used in the calculations.
+        country: str
+            Name of the country of the curve. Stored for reference, not used in the calculations.
+
+        Returns
+        -------
+        None
+        """
+            
         self.initial_date = initial_date
         self.country = country
         self.start_date = pd.DataFrame(data=None)
