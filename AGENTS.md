@@ -157,7 +157,7 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
 | Function | Role |
 |----------|------|
 | `create_cashflow_dataframe(cf_dict, unique_dates)` | Build per-asset cash-flow matrix (rows = asset_id, columns = dates) |
-| `create_liabilities_df(liabilities)` | Build liability cash-flow DataFrame from `Liability` |
+| `create_liabilities_df(liabilities)` | Build liability cash-flow DataFrame from `Liability`, adding up amounts on a repeated date |
 | `set_dates_of_interest(modelling_date, end_date)` | Annual projection date schedule (anniversaries of the modelling date, last one = `end_date`) |
 | `sum_series(values)` | Add up a Series in order, keeping NaN visible in the total (`Series.sum` would skip it) |
 | `portfolio_market_value(eq_price, eq_units, bd_price, bd_units, as_of)` | Total invested assets MV at a date column |

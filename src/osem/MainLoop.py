@@ -110,20 +110,26 @@ def set_dates_of_interest(modelling_date: dt.date, end_date: dt.date, years_inte
 
 def create_liabilities_df(liabilities: Liability) -> pd.DataFrame:
     """
-    Create a liability DataFrame with dates as columns and individual positions as rows.
-        
+    Create a liability DataFrame with dates as columns and a single row of aggregated cash flows.
+    Amounts on a repeated date are added together, so each date is one column.
+
     Parameters
     ----------
-    modelling_date: dt.date
-        The starting modelling date
+    liabilities: Liability
+        The liability with its cash flow dates and amounts
 
     Returns
     -------
     pd.DataFrame
-        The DataFrame with liability cash flows       
+        The DataFrame with liability cash flows, with liability_id as the index and the dates in
+        the order they first appear in liabilities.cash_flow_dates
     """
-    cash_flows = pd.DataFrame(columns=liabilities.cash_flow_dates)
-    cash_flows.loc[-1] = liabilities.cash_flow_series
+    amounts: Dict[dt.date, float] = {}
+    for cash_flow_date, amount in zip(liabilities.cash_flow_dates, liabilities.cash_flow_series):
+        amounts[cash_flow_date] = amounts.get(cash_flow_date, 0.0) + amount
+
+    cash_flows = pd.DataFrame(columns=list(amounts.keys()))
+    cash_flows.loc[-1] = list(amounts.values())
     cash_flows.index = [liabilities.liability_id]
     return cash_flows
 
