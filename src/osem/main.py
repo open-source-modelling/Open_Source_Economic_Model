@@ -77,6 +77,36 @@ def get_logging_level(logging_level: str) -> int:
 
 
 def main() -> None:
+    """
+    Run the asset-liability model from the current working directory and save the results.
+
+    Reads ALM.ini from the current working directory and the input files it and
+    Input/Parameters.csv point to. Then calibrates the risk free curve and the bond z-spreads at
+    the modelling date. For each projection date, the main loop:
+
+    1. Carries forward units and cash from the previous date
+    2. Credits expired asset cash flows to the bank account, and debits expired liabilities in
+       cashflow mode
+    3. Grows equity prices, reprices bonds and calculates the period total return
+    4. Processes the unit-linked policies in unit_linked mode
+    5. Closes equity positions whose terminal value was paid out and matured bonds, then trades
+       proportionally to drive the bank account toward zero
+
+    Results are written to Results.csv in the output folder set in ALM.ini.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If there are more projection dates than projected curve years
+    """
     #logging.basicConfig(filename="ALM.log", level=logging.DEBUG)
 
     ####### PREPARATION OF ENVIRONMENT #######

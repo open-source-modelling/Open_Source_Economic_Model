@@ -28,7 +28,7 @@ class Curves:
         -------
         None
         """
-            
+
         self.initial_date = initial_date
         self.country = country
         self.start_date = pd.DataFrame(data=None)
@@ -196,14 +196,37 @@ class Curves:
             self.b[calib_head] = b_calibrated
 
     def retrieve_rates(self, proj_step: int, target_mat: npt.NDArray[np.float64], type: str, spread: float) -> pd.DataFrame | None:
+        """
+        Calculate rates for the target maturities from the Smith-Wilson curve calibrated for a
+        projection year. The spread is added to the interpolated or extrapolated yield, before it
+        is converted to a capitalisation or discount factor.
+
+        Parameters
+        ----------
+        proj_step: int
+            Projection year of the curve (0 at the modelling date). calibrate_projected must have
+            calibrated this year.
+        target_mat: np.ndarray
+            1-D array of maturities in years, measured from projection year proj_step and greater
+            than 0. Ex. target_mat = [1.0, 2.5, 10.0]
+        type: str
+            The output to return: "Yield", "Capitalisation" or "Discount".
+        spread: float
+            Extra spread added to the yield as a decimal. Ex. spread = 0.01
+
+        Returns
+        -------
+        pd.DataFrame | None
+            One row per target maturity, with a single column named after type: the yield, or
+            (1 + yield) ** target_mat for "Capitalisation", or (1 + yield) ** (-target_mat) for
+            "Discount". None if type is any other value.
+        """
     
         maturity_name = "Maturities_year_" + str(proj_step)
         calibration_name = "Calibration_year_" + str(proj_step)
         alpha_name = "Alpha_year_" + str(proj_step)
-        #calib_b = self.b[calibration_name].iloc[: len(self.b[calibration_name]) - proj_step].to_numpy(dtype=np.float64)
         calib_b = np.asarray(self.b[calibration_name].iloc[: len(self.b[calibration_name]) - proj_step], dtype=np.float64)
         calib_maturities = np.asarray(self.m_obs[maturity_name].iloc[: len(self.m_obs[maturity_name]) - proj_step], dtype=np.float64)
-        #calib_maturities = self.m_obs[maturity_name].iloc[: len(self.m_obs[maturity_name]) - proj_step].to_numpy(dtype=np.float64)
         calib_alpha = self.alpha[alpha_name][0]
         yield_result = self.sw_extrapolate(target_mat, calib_maturities, calib_b, self.ufr, calib_alpha) + spread
 
