@@ -25,6 +25,7 @@ from osem.ImportData import (
 )
 from osem.TraceClass import tracer
 from osem.MainLoop import (
+    POLICY_HISTORY_COLUMNS,
     create_cashflow_dataframe,
     create_liabilities_df,
     set_dates_of_interest,
@@ -38,6 +39,7 @@ from osem.MainLoop import (
     remaining_liability_payments,
     portfolio_total_return,
     process_unit_linked_period,
+    record_policy_history,
 )
 from osem.logging_utils import get_file_logger
 
@@ -257,8 +259,10 @@ def main() -> None:
     )
 
     ul_reserve_t0 = None
+    policy_history: List[Dict[str, object]] = []
     if use_unit_linked and ul_ptf is not None:
         ul_reserve_t0 = ul_ptf.total_reserve(ul_mv_df, settings.modelling_date)
+        policy_history += record_policy_history(settings.modelling_date, ul_mv_df, [], ul_policies)
 
     ini_out: Dict[str, List[Optional[float]]] = {
         "Start cash": [None], 
@@ -290,6 +294,7 @@ def main() -> None:
         "Remaining liability payments": [
             None if use_unit_linked else remaining_liability_payments(liab_df)
         ],
+        "UL return credited": [None],
         }
     
     summary_df = pd.DataFrame(data = ini_out, index=[settings.modelling_date]) 
@@ -408,7 +413,7 @@ def main() -> None:
         if use_unit_linked:
             assert ul_ptf is not None and ul_fund is not None and society is not None
             logger.info("Process unit-linked period (capitalize, premiums, fees, mortality, lapse)")
-            ul_mv_df, ul_gv_df, ul_premium_df, ul_cfs = process_unit_linked_period(
+            ul_mv_df, ul_gv_df, ul_premium_df, ul_cfs, ul_exits = process_unit_linked_period(
                 current_date=current_date,
                 previous_date=previous_date,
                 portfolio_return=portfolio_return,
@@ -426,6 +431,9 @@ def main() -> None:
             bank_account[current_date] -= ul_cfs["death"] + ul_cfs["surrender"]
             company_account[current_date] += ul_cfs["entry_fee"] + ul_cfs["admin_fee"]
 
+            policy_history += record_policy_history(current_date, ul_mv_df, ul_exits, ul_policies)
+
+            summary_df.loc[current_date, "UL return credited"] = ul_cfs["return_credited"]
             summary_df.loc[current_date, "UL gross premium cash flow"] = ul_cfs["gross_premium"]
             summary_df.loc[current_date, "UL entry fee cash flow"] = ul_cfs["entry_fee"]
             summary_df.loc[current_date, "UL admin fee cash flow"] = ul_cfs["admin_fee"]
@@ -481,6 +489,10 @@ def main() -> None:
 
     logger.info("Main loop finished, saving results")
     summary_df.to_csv(os.path.join(conf.output_path, "Results.csv"))
+    if use_unit_linked:
+        pd.DataFrame(policy_history, columns=POLICY_HISTORY_COLUMNS).to_csv(
+            os.path.join(conf.output_path, "UL_Policy_History.csv"), index=False
+        )
     logger.info("Run completed")
 
 if __name__ == "__main__":

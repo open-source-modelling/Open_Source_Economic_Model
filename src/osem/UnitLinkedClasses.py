@@ -66,6 +66,25 @@ class UnitLinkedPolicy:
 
 
 @dataclass(frozen=True)
+class PolicyExit:
+    """
+    One policy leaving the portfolio during a period.
+
+    Parameters
+    ----------
+    :type policy_id: int
+        Unique identifier of the policy.
+    :type exit_type: str
+        How the policy left: "Death" or "Lapse".
+    :type amount_paid: float
+        Market value paid out when the policy left.
+    """
+    policy_id: int
+    exit_type: str
+    amount_paid: float
+
+
+@dataclass(frozen=True)
 class UnitLinkedFund:
     """
     Single-pool fund parameters for unit-linked business.
