@@ -3,12 +3,14 @@ import logging
 import os
 from datetime import date
 import pandas as pd
+import numpy as np
 from typing import Dict, List, Optional
 from osem.ConfigurationClass import Configuration
 from osem.CurvesClass import Curves
 from osem.EquityClasses import EquitySharePortfolio
 from osem.BondClasses import CorpBondPortfolio
-from osem.UnitLinkedClasses import UnitLinkedPortfolio
+from osem.SocietyClass import Society
+from osem.UnitLinkedClasses import UnitLinkedPortfolio, UnitLinkedFund, UnitLinkedPolicy
 from osem.ImportData import (
     get_configuration,
     get_settings,
@@ -98,9 +100,9 @@ def main() -> None:
                     settings.country)
     logger.info("Process risk free rate curve")
     curves.set_observed_term_structure(
-        maturity_vec=curve_country.index.to_numpy(dtype=float),
-        yield_vec=curve_country.values,
-    )
+    maturity_vec=np.asarray(curve_country.index, dtype=np.float64),
+    yield_vec=np.asarray(curve_country, dtype=np.float64))
+ 
     logger.info("Calculate 1-year forward rate")
     curves.calc_fwd_rates()
     logger.info("Calculate projected spot rates")
@@ -145,7 +147,11 @@ def main() -> None:
     unique_not_dates = bd_ptf.unique_dates_profile(not_flows)
 
     ul_ptf: Optional[UnitLinkedPortfolio] = None
-    ul_policies = {}
+    ul_fund: Optional[UnitLinkedFund] = None
+    society: Optional[Society] = None
+    ul_policies: Dict[int, UnitLinkedPolicy] = {}
+    company_account = pd.DataFrame()
+
     ul_mv_df = ul_gv_df = ul_premium_df = pd.DataFrame([])
     unique_liabilities_dates: List[date] = []
     liab_df = pd.DataFrame()
@@ -253,6 +259,7 @@ def main() -> None:
 
     # --------- START MAIN LOOP THAT MOVES FORWARD IN TIME --------
     logger.info("Start main loop")
+    current_date: date
     for current_date in dates_of_interest.values:
         logger.info("Set last period's values as initial point for this period")
         init_mkt_value = portfolio_market_value(
@@ -266,7 +273,7 @@ def main() -> None:
         if use_unit_linked:
             company_account[current_date] = company_account[previous_date]
         
-        summary_df.loc[current_date, "Start cash"] = float(bank_account.loc[0, previous_date])
+        summary_df.loc[current_date, "Start cash"] = float(bank_account[previous_date].iloc[0])
         summary_df.loc[current_date, "Start market value"] = float(init_mkt_value)
 
         logger.info("Calculate the fraction of time to move forward")
@@ -342,6 +349,7 @@ def main() -> None:
         summary_df.loc[current_date, "Portfolio return"] = portfolio_return
 
         if use_unit_linked:
+            assert ul_ptf is not None and ul_fund is not None and society is not None
             logger.info("Process unit-linked period (capitalize, premiums, fees, mortality, lapse)")
             ul_mv_df, ul_gv_df, ul_premium_df, ul_cfs = process_unit_linked_period(
                 current_date=current_date,
@@ -359,8 +367,7 @@ def main() -> None:
             )
             bank_account[current_date] += ul_cfs["gross_premium"]
             bank_account[current_date] -= ul_cfs["death"] + ul_cfs["surrender"]
-            if use_unit_linked: 
-                company_account[current_date] += ul_cfs["entry_fee"] + ul_cfs["admin_fee"]
+            company_account[current_date] += ul_cfs["entry_fee"] + ul_cfs["admin_fee"]
 
             summary_df.loc[current_date, "UL gross premium cash flow"] = ul_cfs["gross_premium"]
             summary_df.loc[current_date, "UL entry fee cash flow"] = ul_cfs["entry_fee"]
@@ -370,10 +377,8 @@ def main() -> None:
             summary_df.loc[current_date, "UL reserve"] = ul_ptf.total_reserve(
                 ul_mv_df, current_date
             )
-            if use_unit_linked:
-                summary_df.loc[current_date, "Company account"] = float(
-                    company_account.loc[0, current_date]
-                )
+            summary_df.loc[current_date, "Company account"] = float(company_account[current_date].iloc[0])
+            
             summary_df.loc[current_date, "UL policies in force"] = ul_cfs["in_force"]
             summary_df.loc[current_date, "UL deaths"] = ul_cfs["deaths"]
             summary_df.loc[current_date, "UL lapses"] = ul_cfs["lapses"]
@@ -402,7 +407,7 @@ def main() -> None:
 
 
         logger.info("Log final positions and prepare for entering next modelling period")
-        summary_df.loc[current_date, "End cash"] = float(bank_account.loc[0, current_date])
+        summary_df.loc[current_date, "End cash"] = float(bank_account[current_date].iloc[0])
         summary_df.loc[current_date, "End market value"] = portfolio_market_value(
             eq_price_df, eq_units_df, bd_price_df, bd_units_df, current_date
         )
