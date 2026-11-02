@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSEM run report</title>
+<style>
+:root {
+  --page: #ffffff; --card: #f7f6f3; --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #6f6d67;
+  --line: rgba(11,11,11,.12); --line-2: rgba(11,11,11,.28);
+  --accent-bg: #e6f1fb; --accent-ink: #185fa5; --bad-bg: #fcebeb; --bad-ink: #a32d2d; --good-ink: #2d6a0e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #141413; --card: #1f1f1d; --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #9a988f;
+    --line: rgba(255,255,255,.14); --line-2: rgba(255,255,255,.32);
+    --accent-bg: #0c447c; --accent-ink: #e6f1fb; --bad-bg: #501313; --bad-ink: #f7c1c1; --good-ink: #97c459;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 24px; font-weight: 500; margin: 0; }
+h2 { font-size: 17px; font-weight: 500; margin: 28px 0 2px; }
+p { margin: 0; }
+button { font: inherit; font-size: 14px; color: var(--ink); background: transparent; border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--accent-bg); color: var(--accent-ink); }
+code { font-size: 13px; }
+.sub { color: var(--ink-2); }
+.note { color: var(--ink-3); font-size: 13px; margin: 0 0 10px; }
+.num { font-variant-numeric: tabular-nums; }
+.banner { background: var(--bad-bg); color: var(--bad-ink); border-radius: 8px; padding: 12px 14px; margin-top: 14px; }
+.status { font-size: 13px; color: var(--good-ink); margin-top: 4px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 18px 0 0; }
+.tile { background: var(--card); border-radius: 8px; padding: 12px; }
+.tile div:first-child { font-size: 13px; color: var(--ink-2); }
+.tile div:last-child { font-size: 22px; font-weight: 500; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 8px; font-size: 12px; color: var(--ink-2); }
+.legend span { display: flex; align-items: center; gap: 4px; }
+.swatch { width: 10px; height: 10px; border-radius: 2px; }
+.dash { width: 16px; border-top: 2px dashed var(--ink); }
+.chart { position: relative; width: 100%; }
+.year { position: sticky; top: 0; z-index: 1; background: var(--page); display: flex; align-items: center; gap: 12px; padding: 10px 0; margin-top: 6px; }
+.year input { flex: 1; min-width: 0; }
+.year output { font-weight: 500; min-width: 40px; }
+.card { background: var(--card); border-radius: 12px; padding: 14px 16px; }
+.card-label { font-size: 13px; color: var(--ink-2); }
+.bridge { font-size: 16px; font-weight: 500; margin-bottom: 10px; }
+.flow { display: grid; grid-template-columns: 112px minmax(0, 1fr) 84px; gap: 8px; align-items: center; font-size: 13px; height: 24px; }
+.flow > span:first-child, .lane > span:first-child { color: var(--ink-2); }
+.flow > span:last-child, .lane > span:last-child { text-align: right; }
+.track { position: relative; height: 100%; }
+.axis { position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1px solid var(--line-2); }
+.bar { position: absolute; top: 3px; bottom: 3px; }
+.foot { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 10px; font-size: 14px; }
+.lane { display: grid; grid-template-columns: 64px minmax(0, 1fr) 132px; gap: 8px; align-items: center; font-size: 13px; height: 26px; }
+.strip { position: relative; height: 18px; display: flex; background: var(--card); border-radius: 2px; overflow: hidden; }
+.strip > div { flex: 1; }
+.strip .now { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--ink); }
+.ends { display: flex; justify-content: space-between; }
+.lane.scale { font-size: 12px; color: var(--ink-3); height: 20px; }
+.lane.scale > span:first-child { color: inherit; }
+details { margin-top: 28px; }
+summary { cursor: pointer; font-weight: 500; }
+.table-wrap { overflow-x: auto; margin-top: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: right; padding: 4px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 500; color: var(--ink-2); }
+th:first-child, td:first-child { text-align: left; }
+#horizon { display: flex; gap: 8px; margin-top: 18px; }
+@media (max-width: 480px) {
+  .flow { grid-template-columns: 92px minmax(0, 1fr) 78px; }
+  .lane { grid-template-columns: 52px minmax(0, 1fr) 112px; }
+}
+</style>
+</head>
+<body>
+<main>
+<h1>OSEM run report</h1>
+<p class="sub" id="subtitle"></p>
+<p class="status" id="status"></p>
+<div class="banner" id="banner" role="alert" hidden></div>
+
+<div class="tiles">
+<div class="tile"><div>Opening assets</div><div class="num" id="opening"></div></div>
+<div class="tile"><div>Closing assets</div><div class="num" id="closing"></div></div>
+<div class="tile"><div id="paid-label"></div><div class="num" id="paid"></div></div>
+<div class="tile"><div>Annualised return</div><div class="num" id="return"></div></div>
+</div>
+
+<div id="horizon"><button id="h-paid">Until last payment</button><button id="h-full">Full run</button></div>
+
+<h2>Assets and what they must cover</h2>
+<p class="note">Investments and cash at the end of each year. Click a year to see what happened in it.</p>
+<div class="legend">
+<span><span class="swatch" id="s-equity"></span>Equities</span>
+<span><span class="swatch" id="s-bond"></span>Bonds</span>
+<span><span class="swatch" id="s-cash"></span>Cash</span>
+<span><span class="dash"></span><span id="obligation-label"></span></span>
+</div>
+<div class="chart" style="height:270px"><canvas id="assets-chart" role="img" aria-label="Stacked area of equities, bonds and cash by year, with a dashed line for the obligation">Yearly values are in the table at the end of this page.</canvas></div>
+
+<div class="year">
+<label for="year-slider" class="sub">Year</label>
+<input type="range" id="year-slider" min="1" step="1">
+<output id="year-out" class="num" for="year-slider"></output>
+</div>
+
+<div class="card">
+<div class="card-label">Assets in the year</div>
+<div class="bridge num" id="asset-bridge"></div>
+<div id="asset-flows"></div>
+<div class="foot" id="trade"></div>
+</div>
+
+<section id="unit-linked" hidden>
+<h2>Unit-linked reserve movement</h2>
+<p class="note">What policyholders' balances gained and lost each year. Bars above zero add to the reserve and bars below reduce it.</p>
+<div class="legend" id="reserve-legend"></div>
+<div class="chart" style="height:240px"><canvas id="reserve-chart" role="img" aria-label="Stacked bars by year: return credited and net premiums add to the reserve, admin fees, lapses and deaths reduce it">Yearly values are in Results.csv.</canvas></div>
+
+<div class="card" style="margin-top:12px">
+<div class="card-label">Reserve in the year</div>
+<div class="bridge num" id="reserve-bridge"></div>
+<div id="reserve-flows"></div>
+<div class="foot num" id="reserve-foot"></div>
+</div>
+<p class="note" style="margin-top:8px">Surplus includes fees, which stay invested while also being recorded in the company account.</p>
+
+<h2>Each policy's value</h2>
+<p class="note">Stronger colour means a higher value, and a solid line marks the year a policy ended. Deaths and lapses are one random draw, so another seed gives different years. G marks a guaranteed policy; this version pays out at market value.</p>
+<div id="lanes"></div>
+</section>
+
+<details>
+<summary>Yearly numbers</summary>
+<div class="table-wrap"><table id="year-table"></table></div>
+</details>
+</main>
+
+<script>__CHART_LIBRARY__</script>
+<script>
+const D = __REPORT_DATA__;
+
+const darkQuery = matchMedia('(prefers-color-scheme: dark)');
+darkQuery.addEventListener('change', () => location.reload());
+const COLORS = darkQuery.matches
+  ? { equity: '#3987e5', bond: '#d95926', cash: '#199e70', up: '#3987e5', down: '#e66767', grid: '#2c2c2a', tick: '#9a988f', ink: '#f0efec', page: '#141413', lane: '57,135,229',
+      return_credited: '#008300', net_premiums: '#d55181', admin_fees: '#c98500', lapses: '#9085e9', deaths: '#e66767' }
+  : { equity: '#2a78d6', bond: '#eb6834', cash: '#1baf7a', up: '#2a78d6', down: '#e34948', grid: '#e1e0d9', tick: '#6f6d67', ink: '#0b0b0b', page: '#ffffff', lane: '42,120,214',
+      return_credited: '#008300', net_premiums: '#e87ba4', admin_fees: '#eda100', lapses: '#6250d6', deaths: '#e34948' };
+const RESERVE_LABELS = { return_credited: 'Return credited', net_premiums: 'Net premiums', admin_fees: 'Admin fees', lapses: 'Lapses', deaths: 'Deaths' };
+const EXIT_LABELS = { Death: 'Died', Lapse: 'Lapsed' };
+const MINUS = '−';
+const LAST = D.years.length - 1;
+const UNIT_LINKED = D.mode === 'unit_linked';
+
+const el = id => document.getElementById(id);
+const fmt = v => {
+  if (v === null || v === undefined) return 'n/a';
+  const r = Math.round(v);
+  return (r < 0 ? MINUS : '') + Math.abs(r).toLocaleString('en-US');
+};
+const signed = v => (Math.round(v) > 0 ? '+' : '') + fmt(v);
+const short = v => {
+  const a = Math.abs(v), s = v < 0 ? MINUS : '';
+  return a >= 1e6 ? s + (a / 1e6).toFixed(a >= 1e7 ? 0 : 1) + 'M' : a >= 1e3 ? s + Math.round(a / 1e3) + 'k' : s + Math.round(a);
+};
+
+let horizon = D.last_payment_index;
+let selected = Math.max(1, D.largest_payment_index);
+
+const marker = {
+  id: 'marker',
+  afterDatasetsDraw(chart) {
+    const x = chart.scales.x.getPixelForValue(selected), area = chart.chartArea, g = chart.ctx;
+    g.save(); g.strokeStyle = COLORS.ink; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(x, area.top); g.lineTo(x, area.bottom); g.stroke(); g.restore();
+  }
+};
+const pickYear = (event, _, chart) => {
+  const position = Math.round(chart.scales.x.getValueForPixel(event.x));
+  if (position >= 1 && position <= horizon) { selected = position; render(); }
+};
+const chartOptions = tooltip => ({
+  responsive: true, maintainAspectRatio: false, animation: false,
+  interaction: { mode: 'index', intersect: false },
+  onClick: pickYear,
+  plugins: { legend: { display: false }, tooltip },
+  scales: {
+    x: { stacked: true, grid: { display: false }, ticks: { color: COLORS.tick, maxTicksLimit: 9, maxRotation: 0, font: { size: 12 } } },
+    y: { stacked: true, grid: { color: COLORS.grid }, border: { display: false }, ticks: { color: COLORS.tick, callback: short, maxTicksLimit: 6, font: { size: 12 } } }
+  }
+});
+const tooltipLabel = { label: c => c.dataset.label + ': ' + fmt(c.parsed.y) };
+const areaSeries = (label, color) => ({ label, data: [], backgroundColor: color + 'b3', borderColor: COLORS.page, borderWidth: 1.5, fill: true, pointRadius: 0, tension: 0, stack: 'assets', order: 1 });
+
+const obligationLabel = UNIT_LINKED ? 'Policy reserve' : 'Remaining liability payments (undiscounted)';
+const assetsChart = new Chart(el('assets-chart'), {
+  type: 'line',
+  plugins: [marker],
+  data: { labels: [], datasets: [
+    areaSeries('Equities', COLORS.equity), areaSeries('Bonds', COLORS.bond), areaSeries('Cash', COLORS.cash),
+    { label: UNIT_LINKED ? 'Policy reserve' : 'Remaining payments', data: [], borderColor: COLORS.ink, borderWidth: 2, borderDash: [5, 4], pointRadius: 0, fill: false, tension: 0, stack: 'obligation', order: 0 }
+  ] },
+  options: chartOptions({ callbacks: tooltipLabel })
+});
+
+const RESERVE_KEYS = Object.keys(RESERVE_LABELS);
+const reserveChart = UNIT_LINKED ? new Chart(el('reserve-chart'), {
+  type: 'bar',
+  plugins: [marker],
+  data: { labels: [], datasets: RESERVE_KEYS.map(k => ({ label: RESERVE_LABELS[k], data: [], backgroundColor: COLORS[k], maxBarThickness: 24, borderColor: COLORS.page, borderWidth: 1, stack: 'movement' })) },
+  options: chartOptions({ filter: item => item.parsed.y !== 0, callbacks: tooltipLabel })
+}) : null;
+
+function flowRows(rows) {
+  const largest = Math.max(1, ...rows.map(r => Math.abs(r.value || 0)));
+  return rows.map(r => {
+    const value = r.value || 0, down = value < 0;
+    const side = down ? 'right:50%;border-radius:4px 0 0 4px;' : 'left:50%;border-radius:0 4px 4px 0;';
+    const width = (Math.abs(value) / largest * 50).toFixed(2);
+    return '<div class="flow"><span>' + r.label + '</span><div class="track"><div class="axis"></div>' +
+      '<div class="bar" style="' + side + 'width:' + width + '%;min-width:' + (value === 0 ? 0 : 2) + 'px;background:' + (down ? COLORS.down : COLORS.up) + '"></div></div>' +
+      '<span class="num">' + signed(value) + '</span></div>';
+  }).join('');
+}
+
+function tradeText(i) {
+  const before = D.cash_before_trade[i], invested = D.total[i] - before, end = fmt(D.cash[i]);
+  if (invested <= 0 && i === LAST) return 'End of the run: every position is sold and ' + end + ' is left in cash.';
+  if (invested <= 0) return 'No investments are left to trade. Cash ends at ' + end + '.';
+  if (Math.abs(before) < 1) return 'Cash is already at zero, so nothing is traded.';
+  const share = Math.abs(before) / invested * 100;
+  return before < 0
+    ? 'Cash falls to ' + fmt(before) + ', so <code>trade()</code> sells ' + Math.min(100, share).toFixed(1) + '% of every holding. Cash ends at ' + end + '.'
+    : 'Cash rises to ' + signed(before) + ', so <code>trade()</code> buys ' + share.toFixed(1) + '% more of every holding. Cash ends at ' + end + '.';
+}
+
+function policyLanes() {
+  const count = horizon + 1;
+  const largest = Math.max(1, ...D.policies.flatMap(p => p.values));
+  const left = ((selected + 0.5) / count * 100).toFixed(2);
+  const lanes = D.policies.map(p => {
+    let cells = '';
+    for (let i = 0; i < count; i++) {
+      const alpha = p.values[i] > 0 ? (0.2 + 0.8 * p.values[i] / largest).toFixed(2) : 0;
+      const ended = p.exit && p.exit.index === i;
+      cells += '<div style="background:' + (alpha ? 'rgba(' + COLORS.lane + ',' + alpha + ')' : 'transparent') + ';' + (ended ? 'border-left:2px solid ' + COLORS.ink : '') + '"></div>';
+    }
+    let state = fmt(p.values[selected]);
+    if (p.exit && selected > p.exit.index) state = EXIT_LABELS[p.exit.type] + ' ' + D.years[p.exit.index];
+    if (p.exit && selected === p.exit.index) state = EXIT_LABELS[p.exit.type] + ': paid ' + fmt(p.exit.amount);
+    return '<div class="lane"><span>' + p.id + (p.guaranteed ? ' G' : '') + '</span><div class="strip">' + cells + '<div class="now" style="left:' + left + '%"></div></div><span class="num">' + state + '</span></div>';
+  }).join('');
+  return lanes + '<div class="lane scale"><span></span><div class="ends"><span>' + D.years[0] + '</span><span>' + D.years[horizon] + '</span></div><span>Value at ' + D.years[selected] + '</span></div>';
+}
+
+function render() {
+  const count = horizon + 1;
+  el('h-paid').setAttribute('aria-pressed', horizon === D.last_payment_index);
+  el('h-full').setAttribute('aria-pressed', horizon === LAST);
+  if (selected > horizon) selected = horizon;
+
+  const slider = el('year-slider');
+  slider.max = horizon;
+  slider.value = selected;
+  el('year-out').textContent = D.years[selected];
+
+  assetsChart.data.labels = D.years.slice(0, count);
+  [D.equity, D.bond, D.cash, D.obligation].forEach((series, j) => { assetsChart.data.datasets[j].data = series.slice(0, count); });
+  assetsChart.update('none');
+
+  el('asset-bridge').textContent = fmt(D.total[selected - 1]) + ' → ' + fmt(D.total[selected]);
+  el('asset-flows').innerHTML = flowRows(D.flows.map(f => ({ label: f.label, value: f.values[selected] })));
+  el('trade').innerHTML = tradeText(selected);
+
+  if (UNIT_LINKED) {
+    reserveChart.data.labels = D.years.slice(0, count);
+    RESERVE_KEYS.forEach((k, j) => { reserveChart.data.datasets[j].data = D.reserve_movements[k].slice(0, count); });
+    reserveChart.update('none');
+    const inForce = D.policies_in_force[selected];
+    el('reserve-bridge').textContent = fmt(D.obligation[selected - 1]) + ' → ' + fmt(D.obligation[selected]) + ' · ' + inForce + (inForce === 1 ? ' policy' : ' policies') + ' in force';
+    el('reserve-flows').innerHTML = flowRows(RESERVE_KEYS.map(k => ({ label: RESERVE_LABELS[k], value: D.reserve_movements[k][selected] })));
+    el('reserve-foot').textContent = 'Assets ' + fmt(D.total[selected]) + ' · reserve ' + fmt(D.obligation[selected]) + ' · surplus ' + fmt(D.total[selected] - D.obligation[selected]) + ' · fees to date ' + fmt(D.company_account[selected]);
+    el('lanes').innerHTML = policyLanes();
+  }
+}
+
+function yearTable() {
+  const head = ['Year', 'Equities', 'Bonds', 'Cash', 'Total', UNIT_LINKED ? 'Reserve' : 'Remaining payments'];
+  const rows = D.years.map((year, i) => '<tr><td>' + year + '</td>' + [D.equity[i], D.bond[i], D.cash[i], D.total[i], D.obligation[i]].map(v => '<td class="num">' + fmt(v) + '</td>').join('') + '</tr>');
+  return '<thead><tr>' + head.map(h => '<th scope="col">' + h + '</th>').join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody>';
+}
+
+el('subtitle').textContent = (UNIT_LINKED ? 'Unit-linked' : 'Fixed cash-flow') + ' run, ' + D.years[0] + ' to ' + D.years[LAST];
+el('opening').textContent = fmt(D.opening_assets);
+el('closing').textContent = fmt(D.closing_assets);
+el('paid-label').textContent = UNIT_LINKED ? 'Paid to policyholders' : 'Liabilities paid';
+el('paid').textContent = fmt(D.paid_out);
+el('return').textContent = D.annualised_return === null ? 'n/a' : (D.annualised_return * 100).toFixed(1) + '%';
+el('obligation-label').textContent = obligationLabel;
+['equity', 'bond', 'cash'].forEach(k => { el('s-' + k).style.background = COLORS[k]; });
+
+const failed = D.checks.filter(c => !c.passed);
+if (failed.length) {
+  el('banner').hidden = false;
+  el('banner').textContent = 'These numbers did not reconcile, so check the run before relying on this report: ' + failed.map(c => c.name).join('; ') + '.';
+} else {
+  el('status').textContent = '✓ All ' + D.checks.length + ' reconciliation checks passed';
+}
+
+if (D.last_payment_index === LAST) el('horizon').hidden = true;
+if (UNIT_LINKED) {
+  el('unit-linked').hidden = false;
+  el('reserve-legend').innerHTML = RESERVE_KEYS.map(k => '<span><span class="swatch" style="background:' + COLORS[k] + '"></span>' + RESERVE_LABELS[k] + '</span>').join('');
+}
+el('year-table').innerHTML = yearTable();
+
+el('year-slider').addEventListener('input', e => { selected = Number(e.target.value); render(); });
+el('h-paid').addEventListener('click', () => { horizon = D.last_payment_index; render(); });
+el('h-full').addEventListener('click', () => { horizon = LAST; render(); });
+render();
+</script>
+</body>
+</html>
