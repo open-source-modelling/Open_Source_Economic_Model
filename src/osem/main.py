@@ -41,6 +41,7 @@ from osem.MainLoop import (
     process_unit_linked_period,
     record_policy_history,
 )
+from osem.ReportClass import create_report
 from osem.logging_utils import get_file_logger
 
 logger = get_file_logger(__name__, "ALM.log", level=logging.DEBUG)
@@ -96,7 +97,8 @@ def main() -> None:
     5. Closes equity positions whose terminal value was paid out and matured bonds, then trades
        proportionally to drive the bank account toward zero
 
-    Results are written to Results.csv in the output folder set in ALM.ini.
+    Results are written to Results.csv in the output folder set in ALM.ini, along with
+    UL_Policy_History.csv in unit_linked mode and the Report.html run report.
 
     Parameters
     ----------
@@ -493,6 +495,9 @@ def main() -> None:
         pd.DataFrame(policy_history, columns=POLICY_HISTORY_COLUMNS).to_csv(
             os.path.join(conf.output_path, "UL_Policy_History.csv"), index=False
         )
+    # After the csv files are saved, so a problem with the report cannot lose the results
+    logger.info("Create run report")
+    create_report(conf.output_path)
     logger.info("Run completed")
 
 if __name__ == "__main__":
