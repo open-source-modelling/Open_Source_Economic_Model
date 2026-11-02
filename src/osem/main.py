@@ -42,6 +42,24 @@ from osem.logging_utils import get_file_logger
 logger = get_file_logger(__name__, "ALM.log", level=logging.DEBUG)
 
 def get_logging_level(logging_level: str) -> int:
+    """
+    Convert the logging level name from ALM.ini into the matching constant of the logging module.
+
+    Parameters
+    ----------
+    logging_level: str
+        Name of the logging level in capitals: DEBUG, INFO, WARNING, ERROR or CRITICAL
+
+    Returns
+    -------
+    int
+        The matching logging module constant. Ex. logging.INFO for "INFO"
+
+    Raises
+    ------
+    ValueError
+        If logging_level is not one of the names above
+    """
     if logging_level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
         raise ValueError("logging level is invalid")
 
