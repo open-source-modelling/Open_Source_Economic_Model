@@ -64,7 +64,13 @@ This installs `osem` in editable mode (from `pyproject.toml`, `src`-layout) alon
 osem
 ```
 
-Results are written to `Output/Results.csv`.
+Results are written to `Output/Results.csv`, and unit-linked runs also write each policy's path to `Output/UL_Policy_History.csv`.
+
+Every run also creates `Output/Report.html`. Open it in a browser to see how the assets compare with what they must cover, what moved the balance in any year, and in unit-linked runs the reserve movement and each policy's value. The report is a single file that works offline. It is rebuilt from the saved csv files, so you can recreate it without running the model again:
+
+```bash
+python -c "from osem.ReportClass import create_report; create_report('Output')"
+```
 
 A simple summary of what goes into the run and what are the outputs can be found in the [Summary pdf]
 
