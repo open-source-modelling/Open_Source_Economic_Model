@@ -1,15 +1,31 @@
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import datetime
 import datetime as dt
 import random
-from typing import Dict, List, Optional
-
+from typing import Dict, List, Optional, cast
 from dateutil.relativedelta import relativedelta
-
 from osem.LiabilityClasses import Liability
 from osem.UnitLinkedClasses import UnitLinkedFund, UnitLinkedPolicy
 from osem.SocietyClass import Society
+
+def sum_series(values: pd.Series) -> float:
+    """
+    Add up the values of a Series in order. Used instead of Series.sum, which skips missing
+    values, so that a missing price or cash flow still shows up as NaN in the total.
+
+    Parameters
+    ----------
+    values: pd.Series
+        The values to add up
+
+    Returns
+    -------
+    float
+        The sum of the values
+    """
+    return float(sum(cast(List[float], values.tolist())))
 
 def create_cashflow_dataframe(cf_dict: dict[int, dict[datetime.date, float]], unique_dates: list[datetime.date]) -> pd.DataFrame:
     """
@@ -30,7 +46,8 @@ def create_cashflow_dataframe(cf_dict: dict[int, dict[datetime.date, float]], un
     """
 
     cash_flows = pd.DataFrame(data=np.zeros((len(cf_dict), len(unique_dates))),
-                              columns=unique_dates, index=cf_dict.keys())  # Dataframe of cashflows (columns are dates, rows, assets)
+                            columns=unique_dates, index=list(cf_dict.keys()))  # Dataframe of cashflows (columns are dates, rows, assets)
+
     for asset_id in cf_dict.keys():
         keys = cf_dict[asset_id]
         for key in keys:
@@ -138,10 +155,7 @@ def portfolio_market_value(
     float
         Combined market value of equities and bonds at as_of.
     """
-    return float(
-        sum(eq_units[as_of] * eq_price[as_of])
-        + sum(bd_units[as_of] * bd_price[as_of])
-    )
+    return sum_series(eq_units[as_of] * eq_price[as_of]) + sum_series(bd_units[as_of] * bd_price[as_of])
 
 def portfolio_total_return(start_market_value: float, end_market_value: float, asset_income: float) -> float:
     """
@@ -195,7 +209,7 @@ def process_expired_cf(unique_dates: list[datetime.date], expiration_date: dt.da
  
     cash = 0.0
     for expired_date in expired_dates:
-        cash += sum(units[expiration_date] * cash_flows[expired_date])
+        cash += sum_series(units[expiration_date] * cash_flows[expired_date])
     if expired_dates:
         cash_flows = cash_flows.drop(columns=expired_dates)
         unique_dates = [d for d in unique_dates if d not in expired_dates]
@@ -225,7 +239,7 @@ def find_terminated_positions(unique_dates: list[datetime.date], expiration_date
                                             deadline = expiration_date)
     if not expired_dates:
         return []
-    has_terminal = (cash_flows[expired_dates] != 0).any(axis=1)
+    has_terminal: npt.NDArray[np.bool_] = np.any(np.asarray(cash_flows[expired_dates], dtype=np.float64) != 0, axis=1)
     return list(cash_flows.index[has_terminal])
 
 def liquidate_positions(units: pd.DataFrame, asset_ids: list[int], current_date: dt.date) -> pd.DataFrame:
@@ -276,7 +290,7 @@ def process_expired_liab(unique_dates: list[datetime.date], date_of_interest: dt
     expired_dates = calculate_expired_dates(unique_dates, date_of_interest)
     cash = 0.0
     for expired_date in expired_dates:
-        cash += sum(cash_flows[expired_date])
+        cash += sum_series(cash_flows[expired_date])
     if expired_dates:
         cash_flows = cash_flows.drop(columns=expired_dates)
         unique_dates = [d for d in unique_dates if d not in expired_dates]
@@ -362,10 +376,11 @@ def capitalize_policies(
         Updated mv_df and gv_df.
     """
     factor = 1.0 + portfolio_return
+    policy_id: int
     for policy_id in sorted(mv_df.index):
-        mv_df.loc[policy_id, current_date] = mv_df.loc[policy_id, current_date] * factor
+        mv_df.loc[policy_id, current_date] = float(mv_df[current_date].loc[policy_id]) * factor
         if policies[policy_id].is_guaranteed: # Only capitalize GV if the policy is guaranteed
-            gv_df.loc[policy_id, current_date] = gv_df.loc[policy_id, current_date] * factor
+            gv_df.loc[policy_id, current_date] = float(gv_df[current_date].loc[policy_id]) * factor
     return mv_df, gv_df
 
 
@@ -399,13 +414,14 @@ def apply_premiums(
     """
     gross_total = 0.0
     entry_total = 0.0
+    policy_id: int
     for policy_id in sorted(mv_df.index):
-        prev_premium = float(premium_df.loc[policy_id, current_date])
+        prev_premium = float(premium_df[current_date].loc[policy_id])
         gross = prev_premium * ((1.0 + fund.premium_growth) ** time)
         entry = gross * fund.entry_fee
         net = gross - entry
         premium_df.loc[policy_id, current_date] = gross
-        mv_df.loc[policy_id, current_date] = float(mv_df.loc[policy_id, current_date]) + net
+        mv_df.loc[policy_id, current_date] = float(mv_df[current_date].loc[policy_id]) + net
         gross_total += gross
         entry_total += entry
     return mv_df, premium_df, gross_total, entry_total
@@ -439,7 +455,7 @@ def apply_admin_fees(
     fee_factor = 1.0 - ((1.0 - fund.admin_fee) ** time)
     admin_total = 0.0
     for policy_id in sorted(mv_df.index):
-        mv = float(mv_df.loc[policy_id, current_date])
+        mv = float(mv_df[current_date].loc[policy_id])
         fee = mv * fee_factor
         mv_df.loc[policy_id, current_date] = mv - fee
         admin_total += fee
@@ -492,7 +508,7 @@ def apply_mortality(
         q_annual = society.mortality_rate(policy.age_at(current_date), policy.is_female)
         q_period = 1.0 - ((1.0 - q_annual) ** time)
         if rng.random() < q_period:
-            death_total += float(mv_df.loc[policy_id, current_date])
+            death_total += float(mv_df[current_date].loc[policy_id])
             death_ids.append(policy_id)
     mv_df = mv_df.drop(index=death_ids)
     gv_df = gv_df.drop(index=death_ids)
@@ -541,7 +557,7 @@ def apply_lapse(
     lapse_ids: List[int] = []
     for policy_id in sorted(mv_df.index):
         if rng.random() < lapse_period:
-            surrender_total += float(mv_df.loc[policy_id, current_date])
+            surrender_total += float(mv_df[current_date].loc[policy_id])
             lapse_ids.append(policy_id)
     mv_df = mv_df.drop(index=lapse_ids)
     gv_df = gv_df.drop(index=lapse_ids)

@@ -21,7 +21,7 @@ All production code is an installable package under `src/osem/` (`import osem`, 
 - **Elsewhere in this file**, a bare filename like `MainLoop.py` or `CurvesClass.py` means `src/osem/MainLoop.py` / `src/osem/CurvesClass.py` unless stated otherwise.
 - **Setup:** `pip install -e .` (registers the `osem` package in editable mode; also installs `numpy`/`pandas`/`python-dateutil`).
 - **Run:** `python -m osem.main`, or the `osem` console-script installed by the editable install, from the repository root (so `ALM.ini`/`Input/`/`Output/` resolve via `os.getcwd()` as before — this did not change).
-- **Import inside the package:** modules import siblings as `from osem.CurvesClass import Curves`, never flat (`from CurvesClass import Curves`).
+- **Import inside the package:** modules import siblings as `from osem.CurvesClass import Curves`, never flat (`from CurvesClass import Curves`). Production code never imports from `unit_tests`: the tests import `osem`, so this creates a circular import that stops the model from loading. Check for stray editor auto-imports.
 - **Tests:** `unit_tests/*.py` import the same way (`from osem.CurvesClass import Curves`). `pyproject.toml` sets `pythonpath = ["src"]` under `[tool.pytest.ini_options]`, so `pytest` resolves `osem` without requiring the editable install.
 - **Notebooks:** each notebook locates the repo root by walking up for `ALM.ini`, then does `sys.path.insert(0, str(base_folder / "src"))` before importing `osem.*` — keep this bootstrap cell first if you add a new notebook that imports production code.
 
@@ -159,6 +159,7 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
 | `create_cashflow_dataframe(cf_dict, unique_dates)` | Build per-asset cash-flow matrix (rows = asset_id, columns = dates) |
 | `create_liabilities_df(liabilities)` | Build liability cash-flow DataFrame from `Liability` |
 | `set_dates_of_interest(modelling_date, end_date)` | Annual projection date schedule (anniversaries of the modelling date, last one = `end_date`) |
+| `sum_series(values)` | Add up a Series in order, keeping NaN visible in the total (`Series.sum` would skip it) |
 | `portfolio_market_value(eq_price, eq_units, bd_price, bd_units, as_of)` | Total invested assets MV at a date column |
 | `portfolio_total_return(start_market_value, end_market_value, asset_income)` | Period total return including asset cash flows received; feeds UL capitalisation |
 | `process_expired_cf` / `process_expired_liab` | Expire cash flows, return cash amount and shrunk DataFrames |
@@ -199,6 +200,8 @@ Follow these patterns when adding or changing code. Prefer the style in `MainLoo
   | `create_*_flows()` | Per-asset cash-flow dicts |
   | `unique_dates_profile()` | Unique payment dates |
   | `init_*_portfolio_to_dataframe()` | Initial price / units / (growth or z-spread) matrices |
+
+- `EquitySharePortfolio` and `CorpBondPortfolio` always hold a dict: passing `None` or nothing gives an empty one. Do not add `None` checks on `equity_share` or `corporate_bonds`.
 
 - Mirror this shape when adding a new asset class: dataclass for the instrument, portfolio wrapper for aggregation, `get_*` loader in `ImportData.py`.
 
@@ -268,7 +271,7 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
   cash, div_df, unique_div_dates = process_expired_cf(...)
   ```
 
-- Use `portfolio_market_value()` for combined MV; do not add new inline `sum(...)` in `main.py` or `trade()`.
+- Use `portfolio_market_value()` for combined MV; do not add new inline `sum(...)` in `main.py` or `trade()`. For other Series totals in `MainLoop.py`, use `sum_series()`.
 
 ### Class and file naming
 
@@ -300,12 +303,23 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 
   ```python
   curves.set_observed_term_structure(
-      maturity_vec=curve_country.index.to_numpy(dtype=float),
-      yield_vec=curve_country.to_numpy(dtype=float),
+      maturity_vec=np.asarray(curve_country.index, dtype=np.float64),
+      yield_vec=np.asarray(curve_country, dtype=np.float64),
   )
   ```
 
 - Do not pass a bare pandas `Index` or `Series` to `pd.DataFrame(data=...)` inside curve methods — pandas treats them as column labels, not row data.
+- Annotate arrays with their element type, such as `npt.NDArray[np.float64]` (`import numpy.typing as npt`), not a bare `np.ndarray`.
+- Give empty lists and dicts a type when you create them: `date_frac: List[float] = []`.
+- A warning-free run under Pylance's `strict` mode is the target. Prefer these forms, because the bundled pandas stubs flag the alternatives:
+
+  | Instead of | Use |
+  |------------|-----|
+  | `series.to_numpy()`, `series.values` | `np.asarray(series, dtype=np.float64)` |
+  | `df.loc[row, date]` as a value to read | `df[date].loc[row]`, with `row: int` declared before a loop over the index |
+  | `index=some_dict.keys()` in `pd.DataFrame(...)` | `index=list(some_dict.keys())` |
+
+- Fixing a type warning must not change results. Do not swap `sum_series` for `Series.sum` or `np.sum`: the first skips NaN, and the second can change the last digits of a total. Compare `Output/Results.csv` in both liability modes after such a change.
 
 ### State mutation
 
