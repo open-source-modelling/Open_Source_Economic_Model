@@ -34,6 +34,8 @@ from osem.MainLoop import (
     liquidate_positions,
     trade,
     portfolio_market_value,
+    asset_class_market_value,
+    remaining_liability_payments,
     portfolio_total_return,
     process_unit_linked_period,
 )
@@ -282,6 +284,12 @@ def main() -> None:
         ],
         "UL deaths": [None],
         "UL lapses": [None],
+        "Equity market value": [asset_class_market_value(eq_price_df, eq_units_df, settings.modelling_date)],
+        "Bond market value": [asset_class_market_value(bd_price_df, bd_units_df, settings.modelling_date)],
+        "Cash before trade": [None],
+        "Remaining liability payments": [
+            None if use_unit_linked else remaining_liability_payments(liab_df)
+        ],
         }
     
     summary_df = pd.DataFrame(data = ini_out, index=[settings.modelling_date]) 
@@ -363,6 +371,7 @@ def main() -> None:
             cash, liab_df, unique_liabilities_dates = process_expired_liab(unique_liabilities_dates, current_date, liab_df)
             
             summary_df.loc[current_date, "Liability cash flow"] = -float(cash)
+            summary_df.loc[current_date, "Remaining liability payments"] = remaining_liability_payments(liab_df)
             bank_account[current_date] -= cash
 
         # ------- CALCULATE GROWTH OF ASSET VALUE IN THIS PERIOD --------
@@ -443,6 +452,7 @@ def main() -> None:
         bd_units_df = liquidate_positions(units = bd_units_df, asset_ids = matured_bd_ids, current_date = current_date)
 
         logger.info("Trading of excess/deficit liquidity, rebalancing")
+        summary_df.loc[current_date, "Cash before trade"] = float(bank_account[current_date].iloc[0])
         # Proportional trading without factors
         eq_units_df, bd_units_df, bank_account = trade(
             current_date=current_date,
@@ -459,6 +469,8 @@ def main() -> None:
         summary_df.loc[current_date, "End market value"] = portfolio_market_value(
             eq_price_df, eq_units_df, bd_price_df, bd_units_df, current_date
         )
+        summary_df.loc[current_date, "Equity market value"] = asset_class_market_value(eq_price_df, eq_units_df, current_date)
+        summary_df.loc[current_date, "Bond market value"] = asset_class_market_value(bd_price_df, bd_units_df, current_date)
 
         previous_date = current_date
         prev_mkt_value = portfolio_market_value(

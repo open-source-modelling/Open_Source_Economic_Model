@@ -163,6 +163,46 @@ def portfolio_market_value(
     """
     return sum_series(eq_units[as_of] * eq_price[as_of]) + sum_series(bd_units[as_of] * bd_price[as_of])
 
+def asset_class_market_value(price: pd.DataFrame, units: pd.DataFrame, as_of: dt.date) -> float:
+    """
+    Calculate the market value of one asset class at a given date.
+
+    Parameters
+    ----------
+    price : pd.DataFrame
+        Per-asset prices indexed by asset_id with date columns.
+    units : pd.DataFrame
+        Per-asset units indexed by asset_id with date columns.
+    as_of : dt.date
+        Valuation date (column name in the price and units DataFrames).
+
+    Returns
+    -------
+    float
+        Market value of the asset class at as_of.
+    """
+    return sum_series(units[as_of] * price[as_of])
+
+def remaining_liability_payments(cash_flows: pd.DataFrame) -> float:
+    """
+    Add up the liability cash flows that have not expired yet, without discounting. Includes any
+    payment scheduled after the end of the modelling window.
+
+    Parameters
+    ----------
+    cash_flows : pd.DataFrame
+        The dataframe of aggregated liability cash flows (absolute amounts, not per unit)
+
+    Returns
+    -------
+    float
+        Total of the remaining liability cash flows
+    """
+    remaining = 0.0
+    for payment_date in cash_flows.columns:
+        remaining += sum_series(cash_flows[payment_date])
+    return remaining
+
 def portfolio_total_return(start_market_value: float, end_market_value: float, asset_income: float) -> float:
     """
     Calculate the period total return of the invested portfolio. Cash paid out by the assets
