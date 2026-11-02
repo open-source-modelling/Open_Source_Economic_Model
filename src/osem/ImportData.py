@@ -3,16 +3,16 @@ import pandas as pd
 import csv
 import configparser
 from typing import Any, Iterator, Optional
-from osem.ConfigurationClass import Configuration
-from osem.BondClasses import CorpBond
-from osem.EquityClasses import EquityShare
-from osem.SettingsClasses import Settings
 from datetime import date, datetime
 from osem.CashClass import Cash
-from osem.LiabilityClasses import Liability
-from osem.UnitLinkedClasses import UnitLinkedPolicy, UnitLinkedFund
 from osem.SocietyClass import Society
+from osem.BondClasses import CorpBond
 from osem.FrequencyClass import Frequency
+from osem.SettingsClasses import Settings
+from osem.EquityClasses import EquityShare
+from osem.LiabilityClasses import Liability
+from osem.ConfigurationClass import Configuration
+from osem.UnitLinkedClasses import UnitLinkedPolicy, UnitLinkedFund
 
 
 def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[configparser.ConfigParser] = None) -> Configuration:
@@ -219,7 +219,6 @@ def get_cash(filename: str) -> Cash:
     Cash
         Returning a filled Cash class with the initial cash position
     """
-
 
     with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
         reader = csv.DictReader(csv_file)

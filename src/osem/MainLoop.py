@@ -6,9 +6,9 @@ import datetime as dt
 import random
 from typing import Dict, List, Optional, cast
 from dateutil.relativedelta import relativedelta
+from osem.SocietyClass import Society
 from osem.LiabilityClasses import Liability
 from osem.UnitLinkedClasses import UnitLinkedFund, UnitLinkedPolicy
-from osem.SocietyClass import Society
 
 def sum_series(values: pd.Series) -> float:
     """

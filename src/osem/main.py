@@ -1,15 +1,15 @@
 # Main script for POC
-import logging
 import os
-from datetime import date
+import logging
 import pandas as pd
 import numpy as np
+from datetime import date
 from typing import Dict, List, Optional
-from osem.ConfigurationClass import Configuration
 from osem.CurvesClass import Curves
-from osem.EquityClasses import EquitySharePortfolio
-from osem.BondClasses import CorpBondPortfolio
 from osem.SocietyClass import Society
+from osem.BondClasses import CorpBondPortfolio
+from osem.ConfigurationClass import Configuration
+from osem.EquityClasses import EquitySharePortfolio
 from osem.UnitLinkedClasses import UnitLinkedPortfolio, UnitLinkedFund, UnitLinkedPolicy
 from osem.ImportData import (
     get_configuration,
