@@ -194,3 +194,18 @@ def test_bisection_growth_recovers_the_market_price(equity_share: EquityShare):
     price = equity_share.price_share(dividends, terminal, modelling_date, 0, curve)
 
     assert price == pytest.approx(equity_share.market_price, abs=1e-5)
+
+
+@pytest.mark.parametrize("x_start, x_end", [(0.5, 0.6), (-0.9, -0.8)])
+def test_bisection_growth_raises_when_no_solution_in_bracket(equity_share: EquityShare, x_start: float, x_end: float):
+    """
+    The share prices above its market price across the first bracket and below it across the
+    second. Without the bracket check, both cases returned a value next to x_end as if it were
+    a calibrated growth rate.
+    """
+    modelling_date = datetime.date(2023, 4, 29)
+    end_date = datetime.date(2033, 4, 29)
+    curve = FlatCurve(0.03)
+
+    with pytest.raises(ValueError, match="no solution"):
+        equity_share.bisection_growth(x_start, x_end, modelling_date, end_date, 0, curve, 1e-8, 100000)

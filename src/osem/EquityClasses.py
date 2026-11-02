@@ -28,6 +28,22 @@ class EquityShare:
     spread_stress: float
 
     def __post_init__(self) -> None:
+        """
+        Check that the share uses one of the supported payment frequencies.
+
+        Parameters
+        ----------
+        self: EquityShare class
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If frequency is not monthly, quarterly, triannual, biannual or annual
+        """
         if self.frequency not in [Frequency.MONTHLY, Frequency.QUARTERLY, Frequency.TRIANNUAL, Frequency.BIANNUAL, Frequency.ANNUAL]:
             raise ValueError("Frequency must be either Monthly, Quarterly, Triannual, Biannual or Annual")
         logger.info("Equity class initiated")
@@ -86,7 +102,7 @@ class EquityShare:
         Parameters
         ----------
         self: EquityShare class
-        :type modeling_date: date
+        :type modelling_date: date
             Earlier date of interest 
         :type evaluated_date: date
             Later date of interest 
@@ -107,8 +123,8 @@ class EquityShare:
 #    @tracer
     def generate_dividend_dates(self, modelling_date: date, end_date: date) -> Iterator[date]:
         """
-        Generator yielding the dividend payment date starting from the first dividend
-        paid after the modelling date. 
+        Generator yielding the dividend payment dates, counted from the issue date, that fall on
+        or after the modelling date and on or before the end date.
 
         Parameters
         ----------
@@ -121,7 +137,7 @@ class EquityShare:
         Returns
         -------
         Iterator[date]
-            Dividend payment dates after modelling_date and on or before end_date.
+            Dividend payment dates on or after modelling_date and on or before end_date.
         """
         delta = relativedelta(months=(12 // self.frequency))
         this_date = self.issue_date - delta
@@ -150,8 +166,8 @@ class EquityShare:
             
         Returns
         -------
-        :type dividends: list of dict
-            Dictionary of dictionaries containing the cash flow date and the size.        
+        :type dividends: Dict[date, float]
+            The dividend amount per unit of the share on each payment date.
         """
 
         dividend_amount = 0
@@ -188,8 +204,9 @@ class EquityShare:
             
         Returns
         -------
-        :type dividends: list of dict
-            List of dictionaries containing the cash flow date and the size.        
+        :type terminals: Dict[date, float]
+            A single entry with end_date as the key and the terminal amount per unit of the share
+            as the value.
         """
 
         terminals: Dict[date, float] = {}
@@ -253,22 +270,42 @@ class EquityShare:
 
     def bisection_growth(self, x_start: float, x_end:float, modelling_date:date, end_date:date, proj_period:int, curves: Curves, precision: float, max_iter:int)->float:
         """
-        Bisection root finding algorithm for finding growth rate that when discounting with the risk free curve returns the market price.
+        Bisection root finding algorithm for finding the growth rate at which the share's dividends
+        and terminal value, discounted with the risk free curve plus the share's spreads, equal
+        its market price.
 
         Parameters
         ----------
-            self =           EquityShare object containing a single equity share positions
-            x_start =        1 x 1 floating number representing the minimum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.05
-            x_end =          1 x 1 floating number representing the maximum allowed value of the convergence speed parameter alpha. Ex. alpha = 0.8
-            modelling_date = 1 x 1 date, representing the date at which the entire run starts
-            end_date =       1 x 1 date, representing the date at which the modelling window closes
-            proj_period  =   1 x 1 integer, representing the projection step at which the equity is calibrated. Ex. 1, 2
-            curves =         Curves object containing data about the term structure
-            precision =      1 x 1 floating number representing the precision of the calculation. Higher the precision, more accurate the estimation of the root
-            max_iter =       1 x 1 positive integer representing the maximum number of iterations allowed. This is to prevent an infinite loop in case the method does not converge to a solution         
-            approx_function
-        Returns:
-            1 x 1 floating number representing the optimal growth of an equity to return the targeted market price 
+        self: EquityShare instance
+            The EquityShare instance with the equity position of interest.
+        :type x_start: float
+            The lower bound of the growth rate. Ex. x_start = -0.1
+        :type x_end: float
+            The upper bound of the growth rate. Ex. x_end = 0.2
+        :type modelling_date: date
+            The date at which the share is valued and from which its price is grown.
+        :type end_date: date
+            The date at which the modelling window closes.
+        :type proj_period: int
+            Projection year of modelling_date, which selects the projected curve.
+        :type curves: Curves
+            Instance of the Curves class with calibrated term structure.
+        :type precision: float
+            Stopping tolerance. A smaller value gives a more accurate result.
+        :type max_iter: int
+            Maximum number of iterations, to prevent an infinite loop.
+
+        Returns
+        -------
+        float
+            The growth rate that returns the market price.
+
+        Raises
+        ------
+        ValueError
+            If no solution lies between x_start and x_end
+        RuntimeError
+            If the calibration has not converged after max_iter iterations
 
 
         Implemented by Gregor Fabjan from Qnity Consultants on 08/02/2024.
@@ -286,6 +323,22 @@ class EquityShare:
             return x_start
         if np.abs(y_end) < precision:
             return x_end  # If final point already satisfies the conditions return end point
+
+        # The price rises monotonically in the growth rate, so a root exists only if the market
+        # price lies between the two bracket prices. Without this check the loop below never sees
+        # a sign change, walks x_start all the way up to x_end and returns the bracket bound as if
+        # it were a calibrated growth rate. The max_iter guard does not catch that: the interval
+        # collapses to `precision` in a few dozen halvings, long before max_iter is reached.
+        if np.sign(y_start) == np.sign(y_end):
+            raise ValueError(
+                f"Growth calibration for equity {self.asset_id} has no solution in "
+                f"[{x_start}, {x_end}]: the share prices at {y_start + self.market_price:.4f} "
+                f"and {y_end + self.market_price:.4f} at those growth rates, but its market price "
+                f"is {self.market_price}. Either widen the bracket, or check that dividend_yield "
+                f"is the yield paid on each dividend date rather than an annualised one (see "
+                f"dividend_amount)."
+            )
+
         i_iter = 0
         while i_iter <= max_iter:
             x_mid = (x_end + x_start) / 2  # calculate mid-point
@@ -308,16 +361,33 @@ class EquityShare:
 class EquitySharePortfolio():
     def __init__(self, equity_share: Optional[Dict[int, EquityShare]] = None):
         """
-        Initialize the EquitySharePortfolio instance with the first EquityShare instance
+        Initialize the EquitySharePortfolio instance with the given equity shares.
 
         Parameters
-        ----------        
-        :type equity_share: dict[int,EquityShare]
+        ----------
+        :type equity_share: Optional[Dict[int, EquityShare]]
+            The EquityShare instances, keyed by asset_id. If None, the portfolio starts empty.
+
+        Returns
+        -------
+        None
         """
         logger.info("EquitySharePortfolio initializer called")
         self.equity_share: Dict[int, EquityShare] = equity_share if equity_share is not None else {}
 
     def is_empty(self) -> bool:
+        """
+        Check whether the portfolio holds any equity shares.
+
+        Parameters
+        ----------
+        self: EquitySharePortfolio class instance
+
+        Returns
+        -------
+        bool
+            True if the portfolio has no equity shares
+        """
         return len(self.equity_share) == 0
 
     def add(self, equity_share: EquityShare) -> None:
@@ -336,8 +406,8 @@ class EquitySharePortfolio():
 
     def create_dividend_flows(self, modelling_date: date, end_date: date) -> Dict[int, Dict[date, float]]:
         """
-        Create the list of dictionaries containing dates at which the dividends are paid out and the total amounts for
-        all equity shares in the portfolio, for dates on or after the modelling date but not after the terminal date.
+        Create a dictionary with the dates at which the dividends are paid out and the amounts per unit for
+        each equity share in the portfolio, for dates on or after the modelling date but not after the end date.
 
         Parameters
         ----------
@@ -351,7 +421,7 @@ class EquitySharePortfolio():
         Returns
         -------
         :rtype all_dividends
-            A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the coupons are paid out.
+            A dictionary keyed by asset_id. Each value is a dictionary with the dividend dates as keys and the dividend amounts per unit as values.
         """
         all_dividends: Dict[int, Dict[date, float]] = {}
         equity_share: EquityShare
@@ -363,22 +433,22 @@ class EquitySharePortfolio():
 
     def create_terminal_flows(self, modelling_date: date, terminal_date: date) -> Dict[int, Dict[date, float]]:
         """
-        Create the list of dictionaries containing dates at which the terminal cash-flows are paid out and the total amounts for
-        all equity shares in the portfolio, for dates on or after the modelling date but not after the terminal date.
+        Create a dictionary with the terminal date and the terminal amount per unit for each equity share
+        in the portfolio. Each share's price is grown from the modelling date to the terminal date.
 
         Parameters
         ----------
         self: EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated portfolio.
         :type modelling_date: datetime.date
-            The date from which the terminal dates and market values start.
-        :type end_date: datetime.date
+            The date from which the market values are grown.
+        :type terminal_date: datetime.date
             The last date that the model considers (end of the modelling window).
 
         Returns
         -------
         :rtype all_terminals
-            A dictionary of dictionaries with datetime keys and cash-flow size values, containing all the dates at which the terminal cash-flows are paid out.
+            A dictionary keyed by asset_id. Each value is a dictionary with the terminal date as the key and the terminal amount per unit as the value.
         """
         all_terminals: Dict[int, Dict[date, float]] = {}
         terminals: Dict[date, float] = {}
@@ -393,7 +463,7 @@ class EquitySharePortfolio():
     def create_dividend_fractions(self, modelling_date: date, dividend_array: Dict[int, Dict[date, float]]) -> Tuple[List[npt.NDArray[np.float64]], List[npt.NDArray[np.int_]]]:
         """
         Create the list of year-fractions at which each dividend is paid out (compared to the modelling date) and the list of
-        relevant indices (aka. indices of cash flows that are within the modelling period)
+        positions of those dividends. Only dividends paid after the modelling date are included.
 
         Parameters
         ----------
@@ -401,17 +471,17 @@ class EquitySharePortfolio():
             The EquitySharePortfolio instance with populated portfolio.
         :type modelling_date: datetime.date
             The date from which the dividend fraction is calculated.
-        :type dividend_array: list of dictionaries
-            Each element of the list represents a single equity asset. Each element contains a dictionary where has keys as dates at which the dividend cash flows are paid out
-            and the values are the size of payment amount in local currency
-            
+        :type dividend_array: Dict[int, Dict[date, float]]
+            A dictionary keyed by asset_id. Each value is a dictionary with the dates at which the dividend cash flows are paid out as keys
+            and the size of the payment in local currency as values.
+
         Returns
         -------
-        :rtype dict Array with two elements: 
-            all_dividend_date_frac: A list of numpy arrays, Each element in the list represents a sigle asset. Each numpy array represents the time fraction
+        :rtype tuple with two lists, each with one numpy array per asset:
+            all_date_frac: Each numpy array represents the time fraction
             between the modelling date and the date of the cash flow (ex. 18 months from modelling date is 1.5).
-            all_dividend_dates_considered: list of numpy arrays. Each element in the list represents a single asset. Each numpy array represents the indices of
-            the cash flows from the dividend_array that mature within the period between the modelling date and the terminal date.
+            all_dates_considered: Each numpy array represents the positions, in that asset's dictionary in
+            dividend_array, of the dividends paid after the modelling date. No check is made against the end of the modelling window.
         """
 
         # other counting conventions MISSING
@@ -462,16 +532,16 @@ class EquitySharePortfolio():
             The EquitySharePortfolio instance with populated portfolio.
         :type modelling_date: datetime.date
             The date from which the terminal fraction is calculated.
-        :type terminal_array: list of dictionaries
-            Each element of the list represents a single equity asset. Each element contains a dictionary where keys are the dates at which the terminal cash flow is paid out
-            and the values are the size of payment in local currency
-            
+        :type terminal_array: Dict[int, Dict[date, float]]
+            A dictionary keyed by asset_id. Each value is a dictionary with the date at which the terminal cash flow is paid out as the key
+            and the size of the payment in local currency as the value. Only the first date of each asset is used.
+
         Returns
         -------
-        :rtype dict Array with two elements: 
-            all_terminal_date_frac: A list of numpy arrays, Each element in the list represents a sigle asset. Each numpy array represents the time fraction
-            between the modelling date and the terminal date (ex. 18 months from modelling date is 1.5).
-            all_terminal_dates_considered: list of numpy arrays. Each element in the list represents a single asset. Each numpy array is a flag: [1] if the
+        :rtype tuple with two lists, each with one numpy array per asset:
+            all_terminal_date_frac: Each numpy array represents the time fraction
+            between the modelling date and the terminal date (ex. 18 months from modelling date is 1.5), or is empty if that date is not after the modelling date.
+            all_terminal_dates_considered: Each numpy array is a flag: [1] if the
             terminal date of the asset is after the modelling date, otherwise empty. The value is not an index into terminal_array.
         """
 
@@ -509,16 +579,14 @@ class EquitySharePortfolio():
 
     def unique_dates_profile(self, cash_flow_profile: Dict[int, Dict[date, float]]) -> List[date]:
         """
-        Create a sorted list of dates at which there is an cash-flow event in any of the assets inside the portfolio and
-        a single numpy array (matrix) representing those cash flows.
-
+        Create a sorted list of dates at which there is a cash-flow event in any of the assets inside the portfolio.
 
         Parameters
         ----------
         self: EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated portfolio.
-        :type cashflow_profile: list of dictionaries containing the size and date of each 
-            cash-flow for the equity portfolio
+        :type cash_flow_profile: Dict[int, Dict[date, float]]
+            A dictionary keyed by asset_id, containing the date and size of each cash flow of that asset
 
         Returns
         -------
@@ -535,7 +603,22 @@ class EquitySharePortfolio():
         return sorted(unique_dates)
 
     def cash_flow_profile_list_to_matrix(self, cash_flow_profile: Dict[int, Dict[date, float]]) -> Tuple[List[date], npt.NDArray[np.float64]]:
+        """
+        Convert the cash flows of each asset into a single matrix with one row per asset and one
+        column per date.
 
+        Parameters
+        ----------
+        self: EquitySharePortfolio class instance
+        :type cash_flow_profile: Dict[int, Dict[date, float]]
+            Cash flow amounts by date for each asset_id
+
+        Returns
+        -------
+        Tuple[List[date], npt.NDArray[np.float64]]
+            The sorted unique dates, and the matrix of cash flows. Rows follow the order of
+            cash_flow_profile, columns follow the sorted dates, and dates without a cash flow are 0.
+        """
         unique_dates = self.unique_dates_profile(cash_flow_profile)
         width = len(unique_dates)
         height = len(cash_flow_profile)
@@ -550,7 +633,21 @@ class EquitySharePortfolio():
         return (unique_dates, cash_flow_matrix)
 
     def init_equity_portfolio_to_dataframe(self, modelling_date: date) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """
+        Create the initial market price, growth rate and units DataFrames of the portfolio.
 
+        Parameters
+        ----------
+        self: EquitySharePortfolio class instance
+        :type modelling_date: date
+            The date used as the name of the single column in each DataFrame
+
+        Returns
+        -------
+        Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
+            The market price, growth rate and units DataFrames, each with asset_id as the index
+            and values stored as floats.
+        """
         asset_keys = self.equity_share.keys()
 
         market_price_tmp: List[float] = []
