@@ -1,13 +1,13 @@
-from typing import List, Optional, Dict, Tuple, Iterator
 import numpy as np
 import pandas as pd
+import logging
+import numpy.typing as npt
+from typing import List, Optional, Dict, Tuple, Iterator
 from datetime import date
 from dataclasses import dataclass
 from dateutil.relativedelta import relativedelta
 from osem.CurvesClass import Curves
 from osem.FrequencyClass import Frequency
-import logging
-import numpy.typing as npt
 from osem.logging_utils import get_file_logger
 
 logger = get_file_logger(__name__, "EquityClasses.log", level=logging.INFO)

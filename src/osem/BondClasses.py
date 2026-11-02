@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import pandas as pd
 from datetime import timedelta
@@ -8,7 +9,6 @@ from typing import List, Dict, Optional, Iterator, Tuple, cast
 from osem.FrequencyClass import Frequency
 from osem.CurvesClass import Curves
 from osem.SettingsClasses import Settings
-import logging
 from osem.logging_utils import get_file_logger
 
 logger = get_file_logger(__name__, "BondClass.log", level=logging.DEBUG)

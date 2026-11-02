@@ -7,11 +7,12 @@ from osem.ConfigurationClass import Configuration
 from osem.BondClasses import CorpBond
 from osem.EquityClasses import EquityShare
 from osem.SettingsClasses import Settings
-from datetime import datetime
+from datetime import date, datetime
 from osem.CashClass import Cash
 from osem.LiabilityClasses import Liability
 from osem.UnitLinkedClasses import UnitLinkedPolicy, UnitLinkedFund
 from osem.SocietyClass import Society
+from osem.FrequencyClass import Frequency
 
 
 def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[configparser.ConfigParser] = None) -> Configuration:
@@ -22,18 +23,13 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
     ----------
     ini_file: string
     
-    op_sys: string
+    op_sys: Any
+        Operating system module (os) or a mock object for testing purposes
     
     config_parser: Optional[configparser.ConfigParser]
 
     ini_file
         Relative path to the setting file
-
-    op_sys
-        Instance of a os class
-
-    config_parser
-        Instance of a configuration parser class
 
     Returns
     -------
@@ -53,7 +49,7 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
         configuration.base_folder = op_sys.getcwd()
 
     if "TRACE" in config_parser:
-        configuration.trace_enabled = bool(config_parser["TRACE"]["enabled"])
+        configuration.trace_enabled = config_parser.getboolean("TRACE", "enabled")
     else:
         configuration.trace_enabled = False
 
@@ -63,8 +59,8 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
 
     if "INTERMEDIATE" in config_parser:
         intermediate = config_parser["INTERMEDIATE"]
-        configuration.intermediate_enabled = bool(intermediate["enabled"])
-        intermediate_path = os.path.join(configuration.base_folder, intermediate["file_path"])
+        configuration.intermediate_enabled = config_parser.getboolean("INTERMEDIATE", "enabled")
+        intermediate_path = op_sys.path.join(configuration.base_folder, intermediate["file_path"])
         configuration.intermediate_path = intermediate_path
         configuration.intermediate_cash_portfolio = op_sys.path.join(intermediate_path,
                                                                      intermediate["cash_portfolio_file"])
@@ -79,13 +75,12 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
 
     if "INPUT" in config_parser:
         inp = config_parser["INPUT"]
-        input_path = os.path.join(configuration.base_folder, inp["file_path"])
+        input_path = op_sys.path.join(configuration.base_folder, inp["file_path"])
         configuration.input_path = input_path
         configuration.input_bond_portfolio = op_sys.path.join(input_path, inp["bonds"])
         configuration.input_cash_portfolio = op_sys.path.join(input_path, inp["cash"])
         configuration.input_curves = op_sys.path.join(input_path, inp["curves"])
         configuration.input_equity_portfolio = op_sys.path.join(input_path, inp["equities"])
-        configuration.input_bond_portfolio = op_sys.path.join(input_path, inp["bonds"])
         configuration.input_param_no_VA = op_sys.path.join(input_path, inp["param_no_VA"])
         configuration.input_spread = op_sys.path.join(input_path, inp["sector_spread"])
         configuration.input_parameters = op_sys.path.join(input_path, inp["parameters"])
@@ -101,8 +96,7 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
                 input_path, inp["unit_linked_fund"]
             )
 
-        inp = config_parser["INPUT"]
-        output_path = os.path.join(configuration.base_folder, inp["output_path"])
+        output_path = op_sys.path.join(configuration.base_folder, inp["output_path"])
         configuration.output_path = output_path
         
     return configuration
@@ -133,12 +127,12 @@ def import_SWEiopa(param_file: str, curves_file: str, country: str) -> tuple[pd.
     maturities_country_raw = param_raw.loc[:, country + "_Maturities"].iloc[6:]
     param_country_raw = param_raw.loc[:, country + "_Values"].iloc[6:]
     extra_param = param_raw.loc[:, country + "_Values"].iloc[:6]
-    relevant_positions = pd.notna(maturities_country_raw.values)
-    maturities_country = maturities_country_raw.iloc[relevant_positions]
-    Qb = param_country_raw.iloc[relevant_positions]
+    relevant_positions = maturities_country_raw.notna()
+    maturities_country = maturities_country_raw.loc[relevant_positions]
+    Qb = param_country_raw.loc[relevant_positions]
     curve_raw = pd.read_csv(curves_file, sep=",", index_col=0)
     curve_country = curve_raw.loc[:, country]
-    return [maturities_country, curve_country, extra_param, Qb]
+    return maturities_country, curve_country, extra_param, Qb
 
 
 def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
@@ -170,7 +164,7 @@ def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
                                  zspread=float(row["Z_Spread"]),
                                  spread_stress=float(row["Spread_Stress"]),
                                  notional_amount=float(row["Notional_Amount"]),
-                                 frequency=int(row["Frequency"]),
+                                 frequency=Frequency(int(row["Frequency"])),
                                  recovery_rate=float(row["Recovery_Rate"]),
                                  default_probability=float(row["Default_Probability"]),
                                  units=float(row["Units"]),
@@ -201,7 +195,7 @@ def get_equity_share(filename: str) -> Iterator[EquityShare]:
                                        issuer=None,
                                        issue_date=datetime.strptime(row["Issue_Date"], "%d/%m/%Y").date(),
                                        dividend_yield=float(row["Dividend_Yield"]),
-                                       frequency=int(row["Frequency"]),
+                                       frequency=Frequency(int(row["Frequency"])),
                                        units = float(row["Units"]),
                                        market_price=float(row["Market_Price"]),
                                        growth_rate=float(row["Growth_Rate"]),
@@ -226,13 +220,17 @@ def get_cash(filename: str) -> Cash:
         Returning a filled Cash class with the initial cash position
     """
 
+
     with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
         reader = csv.DictReader(csv_file)
+        cash: Optional[Cash] = None
         for row in reader:
             cash = Cash(asset_id=int(row["Asset_ID"]),
                         bank_account=float(row["Bank_Account"]))
-    return cash
-
+        if cash is None:
+            raise ValueError(f"No cash row found in {filename}")
+        return cash
+        
 
 def get_liability(filename: str) -> Liability:
     """
@@ -252,8 +250,8 @@ def get_liability(filename: str) -> Liability:
     liability_id = 1  # To Remove and abstract away
     with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
         reader = csv.DictReader(csv_file)
-        cash_flow_series = []
-        cash_flow_date = []
+        cash_flow_series: list[float] = []
+        cash_flow_date: list[date] = []
         for row in reader:
             cash_flow_date.append(datetime.strptime(row["Liability_Date"], '%d/%m/%Y').date())
             cash_flow_series.append(float(row["Liability_Size"]))
@@ -371,8 +369,6 @@ def get_society(filename: str) -> Society:
         Populated Society with male and female mortality series
     """
 
-    mortality_df = pd.read_csv(filename, encoding="utf-8-sig")
-    mortality_df = mortality_df.set_index("AGE")
-    male = mortality_df["MALE"].astype(float)
-    female = mortality_df["FEMALE"].astype(float)
-    return Society(mortality_male=male, mortality_female=female)
+    mortality_df = pd.read_csv(filename, encoding="utf-8-sig", index_col="AGE",
+                           dtype={"MALE": float, "FEMALE": float})
+    return Society(mortality_male=mortality_df["MALE"], mortality_female=mortality_df["FEMALE"])
