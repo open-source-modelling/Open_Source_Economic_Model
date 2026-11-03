@@ -38,6 +38,7 @@ from osem.MainLoop import (
     holdings_market_value,
     remaining_liability_payments,
     portfolio_total_return,
+    assets_exhausted,
     process_unit_linked_period,
     record_policy_history,
 )
@@ -506,6 +507,18 @@ def main() -> None:
         prev_mkt_value = portfolio_market_value(
             eq_price_df, eq_units_df, bd_price_df, bd_units_df, current_date
         )
+
+        end_cash = float(bank_account[current_date].iloc[0])
+        if assets_exhausted(market_value=prev_mkt_value, cash=end_cash):
+            # Keep the periods run so far, so the path to the shortfall can be traced
+            summary_df.to_csv(os.path.join(conf.output_path, "Results.csv"))
+            logger.error(f"The assets ran out on {current_date}; Results.csv holds the periods up to then")
+            raise RuntimeError(
+                f"The assets ran out on {current_date}: every position was sold to pay this period's "
+                f"outflows and the bank account is still {end_cash:,.2f}. The model cannot continue "
+                f"without assets. Check that the assets at the modelling date cover the liabilities "
+                f"(in unit_linked mode, the policies' MV). Results.csv holds the periods up to {current_date}."
+            )
 
         proj_period+=1
 

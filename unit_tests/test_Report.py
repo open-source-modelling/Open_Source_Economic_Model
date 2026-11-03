@@ -323,3 +323,27 @@ def test_main_writes_report_without_policies(tmp_path, monkeypatch):
     assert data["policies"] == []
     assert data["paid_out"] == 0.0
     assert all(check["passed"] for check in data["checks"])
+
+
+def test_main_stops_when_the_assets_run_out(tmp_path, monkeypatch):
+    _set_up_run(tmp_path, monkeypatch, "unit_linked")
+    # Policy values twenty times the assets: the payouts sell the whole portfolio within a few years
+    policies = tmp_path / "Input" / "Unit_Linked_Policies.csv"
+    policies.write_text(
+        "Policy_ID,Birth_Date,Is_Female,Is_Guaranteed,Premium,MV,GV\n"
+        "1001,15/03/1970,1,0,5000,2400000,0\n"
+        "1002,22/07/1965,0,1,8000,5000000,4000000\n"
+        "1003,10/01/1980,1,0,3000,1500000,0\n"
+        "1004,05/11/1955,0,0,6000,3600000,0\n"
+        "1005,18/09/1975,1,0,4500,1900000,0\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RuntimeError, match="The assets ran out on"):
+        osem.main.main()
+
+    # The periods up to the shortfall are kept for inspection
+    results = pd.read_csv(tmp_path / "Output" / "Results.csv", index_col=0)
+    assert 1 < len(results) < 11
+    assert results["End market value"].iloc[-1] == pytest.approx(0.0)
+    assert results["End cash"].iloc[-1] < 0

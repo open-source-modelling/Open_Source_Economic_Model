@@ -5,7 +5,7 @@ import pytest
 
 @pytest.fixture
 def cash_position() -> Cash:
-    asset_id = 1
+    asset_id = "XXCA00000014"
     market_price = 126
 
     cash_position = Cash(asset_id = asset_id, market_price= market_price)
@@ -13,7 +13,7 @@ def cash_position() -> Cash:
 
 
 def test_construct():
-    asset_id = 1
+    asset_id = "XXCA00000014"
     bank_account = 12.6
 
     test_cash = Cash(asset_id = asset_id,bank_account= bank_account)
@@ -23,7 +23,7 @@ def test_construct():
     
 
 def test_add():
-    asset_id = 1
+    asset_id = "XXCA00000014"
     bank_account = 12.6
     bank_account_add = 100.0
 

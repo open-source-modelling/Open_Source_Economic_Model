@@ -1,5 +1,5 @@
 Asset_ID,Asset_Type,Issuer_Country,Issue_Date,Maturity_Date,Notional_Amount,Coupon_Rate,Z_Spread,Frequency,Units,Market_Price
-5001,Government_Bond,Slovenia,03/03/2022,03/03/2032,100,0.0125,0,1,200,83.66
-5002,Government_Bond,Germany,15/08/2018,15/08/2028,100,0.0025,0,1,150,89.53
-5003,Government_Bond,France,25/05/2021,25/05/2041,100,0.005,0,1,100,66.59
-5004,Government_Bond,Italy,01/09/2020,01/09/2030,100,0.0075,0,2,120,83.78
+XXGV00050010,Government_Bond,Slovenia,03/03/2022,03/03/2032,100,0.0125,0,1,200,83.66
+XXGV00050028,Government_Bond,Germany,15/08/2018,15/08/2028,100,0.0025,0,1,150,89.53
+XXGV00050036,Government_Bond,France,25/05/2021,25/05/2041,100,0.005,0,1,100,66.59
+XXGV00050044,Government_Bond,Italy,01/09/2020,01/09/2030,100,0.0075,0,2,120,83.78

@@ -6,7 +6,7 @@ import pytest
 
 from osem.BondClasses import CorpBond, GovBond
 from osem.FrequencyClass import Frequency
-from osem.ImportData import get_configuration, get_corporate_bonds, get_government_bonds
+from osem.ImportData import get_cash, get_configuration, get_corporate_bonds, get_equity_share, get_government_bonds
 
 CORP_HEADER = (
     "Asset_ID,Asset_Type,NACE,Issue_Date,Maturity_Date,Notional_Amount,Coupon_Rate,Spread_Country,"
@@ -135,3 +135,26 @@ def test_bond_file_without_asset_type_column_is_rejected(tmp_path):
 
     with pytest.raises(ValueError, match="no Asset_Type column"):
         list(get_government_bonds(str(bond_file)))
+
+
+def test_get_equity_share_reads_the_asset_id_as_text(tmp_path):
+    equity_file = tmp_path / "Equity_Portfolio.csv"
+    equity_file.write_text(
+        "Asset_ID,Asset_Type,NACE,Issue_Date,Dividend_Yield,Frequency,Units,Market_Price,Growth_Rate,"
+        "Spread_Country,Spread_Sector,Spread_Stress\n"
+        " XXEQ00011250 ,Equity_Share,A1.4.5,3/12/2021,0.03,1,100,123.01,0.01,0,0,0\n"
+    )
+
+    shares = list(get_equity_share(str(equity_file)))
+
+    assert [share.asset_id for share in shares] == ["XXEQ00011250"]
+
+
+def test_get_cash_reads_the_asset_id_as_text(tmp_path):
+    cash_file = tmp_path / "Cash_Portfolio.csv"
+    cash_file.write_text("Asset_ID,Bank_Account\nXXCA00000014,100000\n")
+
+    cash = get_cash(str(cash_file))
+
+    assert cash.asset_id == "XXCA00000014"
+    assert cash.bank_account == 100000

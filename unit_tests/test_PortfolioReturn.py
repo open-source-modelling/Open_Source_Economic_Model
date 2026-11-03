@@ -8,12 +8,14 @@ import pytest
 from osem.BondClasses import CorpBond, BondPortfolio
 from osem.FrequencyClass import Frequency
 from osem.MainLoop import (
+    assets_exhausted,
     create_cashflow_dataframe,
     find_terminated_positions,
     liquidate_positions,
     portfolio_market_value,
     portfolio_total_return,
     process_expired_cf,
+    trade,
 )
 
 
@@ -58,6 +60,42 @@ def test_portfolio_total_return_adds_back_asset_income():
 
 def test_portfolio_total_return_without_income_is_price_return():
     assert portfolio_total_return(start_market_value=1000.0, end_market_value=1050.0, asset_income=0.0) == pytest.approx(0.05)
+
+
+def test_portfolio_total_return_rejects_a_portfolio_with_no_assets():
+    # Used to fail with a bare ZeroDivisionError
+    with pytest.raises(ValueError, match="held no assets"):
+        portfolio_total_return(start_market_value=0.0, end_market_value=0.0, asset_income=0.0)
+
+
+@pytest.mark.parametrize(
+    "market_value, cash, expected",
+    [
+        (0.0, -500.0, True),  # Everything sold and still short
+        (0.0, 30000.0, False),  # End of the run: the assets paid out into cash
+        (0.0, -5.8e-11, False),  # Rounding noise left by trade()
+        (1000.0, -500.0, False),  # Assets left to sell
+    ],
+)
+def test_assets_exhausted(market_value: float, cash: float, expected: bool):
+    assert assets_exhausted(market_value, cash) is expected
+
+
+def test_outflow_larger_than_the_portfolio_exhausts_the_assets():
+    t0 = date(2023, 4, 29)
+    eq_price = pd.DataFrame({t0: [100.0]}, index=["XXEQ00000014"])
+    eq_units = pd.DataFrame({t0: [10.0]}, index=["XXEQ00000014"])
+    bd_price = pd.DataFrame(columns=[t0], dtype=float)
+    bd_units = pd.DataFrame(columns=[t0], dtype=float)
+    bank_account = pd.DataFrame({t0: [-1500.0]})  # Owes more than the 1000 the portfolio is worth
+
+    eq_units, bd_units, bank_account = trade(t0, bank_account, eq_units, eq_price, bd_units, bd_price)
+
+    market_value = portfolio_market_value(eq_price, eq_units, bd_price, bd_units, t0)
+    cash = float(bank_account[t0].iloc[0])
+    assert market_value == pytest.approx(0.0)
+    assert cash == pytest.approx(-500.0)
+    assert assets_exhausted(market_value, cash)
 
 
 def test_bond_maturity_is_not_reported_as_loss(maturing_bond: CorpBond):

@@ -175,8 +175,8 @@ def check_asset_type(row: Dict[str, str], expected: str, filename: str) -> None:
 
 def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
     """
-    Load the corporate bond input file into a CorpBond generator. Asset_ID is read as text, as it
-    holds the bond's ISIN.
+    Load the corporate bond input file into a CorpBond generator. Asset_ID is read as text, like
+    every asset id.
 
     Parameters
     ----------
@@ -220,7 +220,7 @@ def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
 def get_government_bonds(filename: str) -> Iterator[GovBond]:
     """
     Load the government bond input file into a GovBond generator. Asset_ID is read as text, like
-    the corporate bond ids, because both bond types share the bond DataFrames.
+    every asset id.
 
     Parameters
     ----------
@@ -257,7 +257,8 @@ def get_government_bonds(filename: str) -> Iterator[GovBond]:
 
 def get_equity_share(filename: str) -> Iterator[EquityShare]:
     """
-    Load an equity input file into an EquityShare class generator.
+    Load an equity input file into an EquityShare class generator. Asset_ID is read as text, like
+    every asset id.
 
     Parameters
     ----------
@@ -273,7 +274,7 @@ def get_equity_share(filename: str) -> Iterator[EquityShare]:
     with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
         reader = csv.DictReader(csv_file)
         for row in reader:
-            equity_share = EquityShare(asset_id=int(row["Asset_ID"]),
+            equity_share = EquityShare(asset_id=row["Asset_ID"].strip(),
                                        nace=row["NACE"],
                                        issuer=None,
                                        issue_date=datetime.strptime(row["Issue_Date"], "%d/%m/%Y").date(),
@@ -290,7 +291,8 @@ def get_equity_share(filename: str) -> Iterator[EquityShare]:
 
 def get_cash(filename: str) -> Cash:
     """
-    Load the initial cash input file into a Cash class object.
+    Load the initial cash input file into a Cash class object. Asset_ID is read as text, like
+    every asset id.
 
     Parameters
     ----------
@@ -307,7 +309,7 @@ def get_cash(filename: str) -> Cash:
         reader = csv.DictReader(csv_file)
         cash: Optional[Cash] = None
         for row in reader:
-            cash = Cash(asset_id=int(row["Asset_ID"]),
+            cash = Cash(asset_id=row["Asset_ID"].strip(),
                         bank_account=float(row["Bank_Account"]))
         if cash is None:
             raise ValueError(f"No cash row found in {filename}")

@@ -1,4 +1,5 @@
 import datetime
+from dataclasses import replace
 from osem.EquityClasses import EquityShare
 import osem.FrequencyClass as FrequencyClass
 import pytest
@@ -6,7 +7,7 @@ import pytest
 
 @pytest.fixture
 def equity_share() -> EquityShare:
-    asset_id = 1
+    asset_id = "XXEQ00000014"
     nace = "A.1.2"
     issuer = "Open Source Modelling"
     issue_date = datetime.date(2015, 12, 1)
@@ -32,7 +33,7 @@ def equity_share() -> EquityShare:
 
 
 def test_construct():
-    asset_id = 1
+    asset_id = "XXEQ00000014"
     nace = "A.1.2"
     issuer = "Open Source Modelling"
     issue_date = datetime.date(2015, 12, 1)
@@ -95,7 +96,7 @@ def test_terminal_amount_calculation(equity_share: EquityShare):
 
 def _make_equity_share(frequency: FrequencyClass.Frequency) -> EquityShare:
     return EquityShare(
-        asset_id=1,
+        asset_id="XXEQ00000014",
         nace="A.1.2",
         issuer="Open Source Modelling",
         issue_date=datetime.date(2015, 12, 1),
@@ -143,6 +144,12 @@ def test_invalid_frequency_rejected_at_construction(frequency: FrequencyClass.Fr
     """
     with pytest.raises(ValueError):
         _make_equity_share(frequency)
+
+
+@pytest.mark.parametrize("asset_id", ["", "   ", 1])  # Asset ids were integers before they became text
+def test_invalid_asset_id_rejected_at_construction(asset_id: object):
+    with pytest.raises(ValueError, match="Asset ID must be a non-empty string"):
+        replace(_make_equity_share(FrequencyClass.Frequency.ANNUAL), asset_id=asset_id)
 
 
 class FlatCurve:

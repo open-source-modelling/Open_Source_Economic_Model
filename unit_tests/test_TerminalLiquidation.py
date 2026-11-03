@@ -11,6 +11,7 @@ from osem.MainLoop import (
     trade,
 )
 
+EQ1, EQ2, EQ3 = "XXEQ00000014", "XXEQ00000022", "XXEQ00000030"
 PREVIOUS = date(2073, 4, 16)
 CURRENT = date(2074, 4, 16)
 TERMINAL = date(2074, 4, 10)
@@ -18,12 +19,12 @@ TERMINAL = date(2074, 4, 10)
 
 @pytest.fixture
 def ter_df() -> pd.DataFrame:
-    # Asset 1 has a terminal flow in this period, asset 2 has none (zero row),
-    # asset 3 terminates in a later period.
+    # Asset EQ1 has a terminal flow in this period, asset EQ2 has none (zero row),
+    # asset EQ3 terminates in a later period.
     later = date(2080, 1, 1)
     return pd.DataFrame(
         data=[[110.0, 0.0], [0.0, 0.0], [0.0, 55.0]],
-        index=[1, 2, 3],
+        index=[EQ1, EQ2, EQ3],
         columns=[TERMINAL, later],
     )
 
@@ -32,14 +33,14 @@ def ter_df() -> pd.DataFrame:
 def eq_units() -> pd.DataFrame:
     return pd.DataFrame(
         data=[[10.0, 10.0], [20.0, 20.0], [30.0, 30.0]],
-        index=[1, 2, 3],
+        index=[EQ1, EQ2, EQ3],
         columns=[PREVIOUS, CURRENT],
     )
 
 
 def test_find_terminated_positions(ter_df):
     unique_dates = list(ter_df.columns)
-    assert find_terminated_positions(unique_dates, CURRENT, ter_df) == [1]
+    assert find_terminated_positions(unique_dates, CURRENT, ter_df) == [EQ1]
 
 
 def test_find_terminated_positions_none_expired(ter_df):
@@ -48,12 +49,12 @@ def test_find_terminated_positions_none_expired(ter_df):
 
 
 def test_liquidate_positions(eq_units):
-    eq_units = liquidate_positions(eq_units, [1], CURRENT)
-    assert eq_units.loc[1, CURRENT] == 0.0
-    assert eq_units.loc[2, CURRENT] == 20.0
-    assert eq_units.loc[3, CURRENT] == 30.0
+    eq_units = liquidate_positions(eq_units, [EQ1], CURRENT)
+    assert eq_units.loc[EQ1, CURRENT] == 0.0
+    assert eq_units.loc[EQ2, CURRENT] == 20.0
+    assert eq_units.loc[EQ3, CURRENT] == 30.0
     # Earlier dates are untouched
-    assert eq_units.loc[1, PREVIOUS] == 10.0
+    assert eq_units.loc[EQ1, PREVIOUS] == 10.0
 
 
 def test_liquidate_positions_empty(eq_units):
@@ -68,12 +69,12 @@ def test_terminal_value_not_double_counted():
     be removed from the portfolio, so trade() does not reinvest the proceeds on top of
     the still-held position (which doubled End market value at the end of the run).
     """
-    eq_price = pd.DataFrame(data=[[100.0, 110.0]], index=[1], columns=[PREVIOUS, CURRENT])
-    eq_units = pd.DataFrame(data=[[10.0, 10.0]], index=[1], columns=[PREVIOUS, CURRENT])
+    eq_price = pd.DataFrame(data=[[100.0, 110.0]], index=[EQ1], columns=[PREVIOUS, CURRENT])
+    eq_units = pd.DataFrame(data=[[10.0, 10.0]], index=[EQ1], columns=[PREVIOUS, CURRENT])
     bd_price = pd.DataFrame(columns=[PREVIOUS, CURRENT], dtype=float)
     bd_units = pd.DataFrame(columns=[PREVIOUS, CURRENT], dtype=float)
     bank_account = pd.DataFrame(data=[[0.0, 0.0]], columns=[PREVIOUS, CURRENT])
-    ter_df = pd.DataFrame(data=[[110.0]], index=[1], columns=[TERMINAL])
+    ter_df = pd.DataFrame(data=[[110.0]], index=[EQ1], columns=[TERMINAL])
     unique_ter_dates = [TERMINAL]
 
     after_growth_mv = portfolio_market_value(eq_price, eq_units, bd_price, bd_units, CURRENT)

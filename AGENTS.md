@@ -166,7 +166,8 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
 | `portfolio_market_value(eq_price, eq_units, bd_price, bd_units, as_of)` | Total invested assets MV at a date column |
 | `holdings_market_value(price, units, as_of)` | MV of the holdings in the given price and units tables at a date column; pass one asset class's tables to get that class's MV |
 | `remaining_liability_payments(cash_flows)` | Undiscounted total of liability flows not yet expired |
-| `portfolio_total_return(start_market_value, end_market_value, asset_income)` | Period total return including asset cash flows received; feeds UL capitalisation |
+| `portfolio_total_return(start_market_value, end_market_value, asset_income)` | Period total return including asset cash flows received; feeds UL capitalisation. Raises `ValueError` if the start market value is not above 0 |
+| `assets_exhausted(market_value, cash)` | True when trading sold every asset and the bank account is still overdrawn (beyond rounding noise); `main.py` then stops the run |
 | `process_expired_cf` / `process_expired_liab` | Expire cash flows, return cash amount and shrunk DataFrames |
 | `find_terminated_positions` / `liquidate_positions` | Identify equities whose terminal flow expired and bonds whose notional was repaid (call before `process_expired_cf`) and zero their units so the paid-out value is not also kept in MV |
 | `calculate_expired_dates` | Internal helper: dates on or before the deadline |
@@ -183,7 +184,7 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
 3. Mark-to-market: apply equity growth using `eq_growth_df[modelling_date]` and `time_frac`; carry bond prices forward then reprice via `price_bond_portfolio`; record after-growth MV and the period total return (`portfolio_total_return`, which adds back the dividends, coupons and bond notionals credited in step 2; equity terminal flows are excluded because those equities are still in MV until liquidated in step 5 — matured bonds reprice to zero, so a price-only return would book their redemption as a loss)
 4. If `liability_mode=unit_linked`: `process_unit_linked_period` (capitalize, premiums, fees, mortality, lapse); update `bank_account` and `company_account`; record each policy's value and exit with `record_policy_history`
 5. Liquidate equities whose terminal flow was paid and bonds that matured in step 2 (`liquidate_positions`), record `Cash before trade`, then proportional `trade()`
-6. Log period-end cash, end market value, the equity and bond split, and the government and corporate bond market values (rows picked with `bd_ptf.asset_ids_of`) to `summary_df`; set `previous_date = current_date`; advance `proj_period`
+6. Log period-end cash, end market value, the equity and bond split, and the government and corporate bond market values (rows picked with `bd_ptf.asset_ids_of`) to `summary_df`; set `previous_date = current_date`. If `assets_exhausted`, save `Results.csv` up to this date and raise `RuntimeError`: the outflows exceeded the whole portfolio, usually because the assets at the modelling date are too small for the liabilities. Otherwise advance `proj_period`
 
 After the loop, `main.py` saves `Results.csv` (and `UL_Policy_History.csv` in `unit_linked` mode), then calls `create_report`.
 
@@ -193,7 +194,7 @@ Follow these patterns when adding or changing code. Prefer the style in `MainLoo
 
 ### Portfolio and asset structure
 
-- Build portfolios as a dict keyed by `asset_id` (`dict[int, EquityShare]`, `dict[str, FixedCouponBond]`), then pass to a portfolio wrapper:
+- Build portfolios as a `dict[str, Asset]` keyed by `asset_id`, then pass to a portfolio wrapper:
 
   ```python
   eq_input = {equity_share.asset_id: equity_share for equity_share in get_equity_share(filename)}
@@ -202,7 +203,7 @@ Follow these patterns when adding or changing code. Prefer the style in `MainLoo
 
   For bonds, build the dict with `bonds_by_asset_id(...)` instead of a comprehension. A comprehension keeps the last of two bonds with the same `asset_id` and drops the other without a warning; `bonds_by_asset_id` raises.
 
-- Bond asset ids are strings, so a bond portfolio is a `dict[str, FixedCouponBond]`. A corporate bond's id is its ISIN; the illustrative government bonds use `5001` to `5004`, read as text. Equity and cash ids stay `int`. `FixedCouponBond._validate_bond_terms` rejects an empty or non-string id. The `MainLoop.py` helpers that serve both asset classes (`create_cashflow_dataframe`, `find_terminated_positions`, `liquidate_positions`) take either, typed with `AssetId` / `AssetIdT`.
+- Asset ids are strings for every asset type: `EquityShare`, `CorpBond`, `GovBond` and `Cash`, and so the index of every asset DataFrame. A corporate bond's id is its ISIN. The illustrative equities, cash and government bonds have dummy ids in ISIN format: `XX` (a code no country holds, so no real security has it), an asset-class tag (`EQ`, `CA`, `GV`), the old integer id padded to 7 digits, and the ISIN check digit, such as `XXEQ00011250`. `EquityShare.__post_init__` and `FixedCouponBond._validate_bond_terms` reject an empty or non-string id. Policy, fund and liability ids are not asset ids and stay `int`.
 
 - Portfolio wrappers expose a consistent API:
 
@@ -223,7 +224,7 @@ Standard flow:
 
 ```
 instrument.create_single_cash_flows()
-  → portfolio.create_*_flows()     # Dict[int, Dict[date, float]]
+  → portfolio.create_*_flows()     # Dict[str, Dict[date, float]]
   → create_cashflow_dataframe()    # rows = asset_id, columns = dates
   → process_expired_cf() in loop   # per-unit flows × units
 ```
@@ -247,7 +248,8 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 
 - Single-object loaders: `get_configuration()`, `get_settings()`, `get_cash()`, `get_liability()`, `get_unit_linked_fund()`, `get_society()`.
 - Row iterators: `get_equity_share()`, `get_corporate_bonds()`, `get_government_bonds()`, `get_unit_linked_policies()` → `Iterator` (one instance per CSV row).
-- The bond loaders call `check_asset_type()` on every row and raise if its `Asset_Type` is not `Corporate_Bond` or `Government_Bond` respectively, so a row in the wrong file fails loudly. They read `Asset_ID` as text (stripped of spaces), not `int`.
+- The bond loaders call `check_asset_type()` on every row and raise if its `Asset_Type` is not `Corporate_Bond` or `Government_Bond` respectively, so a row in the wrong file fails loudly.
+- Every asset loader reads `Asset_ID` as text, stripped of spaces, never as `int`.
 - Use `encoding="utf-8-sig"`, `csv.DictReader`, dates as `'%d/%m/%Y'`.
 - CSV column names are `Pascal_Case` (`Asset_ID`, `Market_Price`, etc.).
 - Do not read CSVs inline in `main.py` — add a `get_*` function in `ImportData.py`.
@@ -329,7 +331,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
   | Instead of | Use |
   |------------|-----|
   | `series.to_numpy()`, `series.values` | `np.asarray(series, dtype=np.float64)` |
-  | `df.loc[row, date]` as a value to read | `df[date].loc[row]`, with `row: int` declared before a loop over the index |
+  | `df.loc[row, date]` as a value to read | `df[date].loc[row]`, with `row` declared with the index's type before a loop over it (`row: str` for an asset table) |
   | `index=some_dict.keys()` in `pd.DataFrame(...)` | `index=list(some_dict.keys())` |
 
 - Fixing a type warning must not change results. Do not swap `sum_series` for `Series.sum` or `np.sum`: the first skips NaN, and the second can change the last digits of a total. Compare `Output/Results.csv` in both liability modes after such a change.
@@ -349,7 +351,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 ### Validation and immutability
 
 - `CorpBond` is `@dataclass(frozen=True)` with range checks in `__post_init__`.
-- `EquityShare` is a mutable `@dataclass` with lighter validation.
+- `EquityShare` is a mutable `@dataclass` with lighter validation (asset id and frequency only).
 - New bond-like instruments should follow the stricter `CorpBond` pattern: a frozen dataclass that inherits from `FixedCouponBond`, declares the attributes listed on it as its own fields, and calls `self._validate_bond_terms()` at the start of `__post_init__`. `FixedCouponBond` holds the shared cash-flow, pricing and calibration methods. Keep it a plain class: as a dataclass it would put its fields first and change the positional field order of `CorpBond`, which the tests rely on. All bond instruments go into one `BondPortfolio`, keyed by `asset_id`. `GovBond` follows this pattern with the shared fields plus `issuer_country`, and no credit-risk fields: the sovereign's risk enters only through the calibrated z-spread.
 
 ### Testing
@@ -371,7 +373,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 
 1. Dataclass + portfolio wrapper for a new asset type.
 2. `get_*` loader in `ImportData.py`.
-3. `Dict[int, Dict[date, float]]` cash flows → matrix via `create_cashflow_dataframe`.
+3. `Dict[str, Dict[date, float]]` cash flows → matrix via `create_cashflow_dataframe`.
 4. Simulation state in DataFrames (rows = `asset_id`, columns = dates).
 5. Loop steps as `MainLoop.py` functions returning updated tuples.
 6. NumPy arrays into `Curves` APIs.
@@ -385,9 +387,9 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 |------|--------|
 | Configuration | `ALM.ini` → `Configuration` |
 | Run parameters | `Input/Parameters.csv` → `Settings` |
-| Portfolios | `Input/Cash_Portfolio.csv`, `Input/Equity_Portfolio.csv` |
+| Portfolios | `Input/Cash_Portfolio.csv`, `Input/Equity_Portfolio.csv` (illustrative positions with dummy asset ids `XXCA…` and `XXEQ…`) |
 | Corporate bonds | `Input/Corporate_Bond_Portfolio.csv`: 201 real euro fixed-coupon bullet bonds from the iShares Core € Corp Bond UCITS ETF holdings of 30 Oct 2026. They were picked from the bonds already issued at the modelling date, keeping the fund's sector mix with at most two bonds per issuer, and scaled to a market value of 330,400. Market prices are set on the t0 curve at each bond's z-spread observed on 30 Oct 2026 (against the EIOPA EUR curve of 30 Sep 2026), so the calibration recovers those spreads. `Z_Spread` holds the sector median as the starting value, `Default_Probability` is the risk-neutral rate z / (1 − `Recovery_Rate`), and `Issue_Date` is the start of the first coupon period. `Asset_ID` is the bond's ISIN. `Issuer` is for reference; the loader does not read it |
-| Government bonds | `Input/Government_Bond_Portfolio.csv` (illustrative positions, not real securities, with asset ids `5001` to `5004`; market prices set on the t0 curve so they calibrate to z-spreads of about +0.6% Slovenia, −0.5% Germany, +0.2% France and +1.3% Italy) |
+| Government bonds | `Input/Government_Bond_Portfolio.csv` (illustrative positions, not real securities, with dummy asset ids `XXGV00050010` to `XXGV00050044`; market prices set on the t0 curve so they calibrate to z-spreads of about +0.6% Slovenia, −0.5% Germany, +0.2% France and +1.3% Italy) |
 | EIOPA curves | `Input/Param_no_VA.csv`, `Input/Curves_no_VA.csv` (paths in `Settings`) |
 | Sector spreads | `Input/Sector_Spread.csv` (configured in `ALM.ini`; not yet used in main loop) |
 | Liabilities | `Input/Liability_Cashflow.csv` (`cashflow` mode) |

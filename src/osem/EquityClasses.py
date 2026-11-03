@@ -14,7 +14,7 @@ logger = get_file_logger(__name__, "EquityClasses.log", level=logging.INFO)
 
 @dataclass
 class EquityShare:
-    asset_id: int
+    asset_id: str  # Any unique text, such as the share's ISIN
     nace: str
     issuer: Optional[str]
     issue_date: date
@@ -29,7 +29,7 @@ class EquityShare:
 
     def __post_init__(self) -> None:
         """
-        Check that the share uses one of the supported payment frequencies.
+        Check that the share has an asset id and uses one of the supported payment frequencies.
 
         Parameters
         ----------
@@ -42,8 +42,14 @@ class EquityShare:
         Raises
         ------
         ValueError
-            If frequency is not monthly, quarterly, triannual, biannual or annual
+            If asset_id is not a non-empty string, or frequency is not monthly, quarterly,
+            triannual, biannual or annual
         """
+        # Read as object so the type check below is not dismissed as redundant: callers written
+        # when asset ids were integers may still pass one.
+        asset_id: object = self.asset_id
+        if not isinstance(asset_id, str) or not asset_id.strip():
+            raise ValueError(f"Asset ID must be a non-empty string, such as the share's ISIN, not {asset_id!r}")
         if self.frequency not in [Frequency.MONTHLY, Frequency.QUARTERLY, Frequency.TRIANNUAL, Frequency.BIANNUAL, Frequency.ANNUAL]:
             raise ValueError("Frequency must be either Monthly, Quarterly, Triannual, Biannual or Annual")
         logger.info("Equity class initiated")
@@ -359,13 +365,13 @@ class EquityShare:
 
 
 class EquitySharePortfolio():
-    def __init__(self, equity_share: Optional[Dict[int, EquityShare]] = None):
+    def __init__(self, equity_share: Optional[Dict[str, EquityShare]] = None):
         """
         Initialize the EquitySharePortfolio instance with the given equity shares.
 
         Parameters
         ----------
-        :type equity_share: Optional[Dict[int, EquityShare]]
+        :type equity_share: Optional[Dict[str, EquityShare]]
             The EquityShare instances, keyed by asset_id. If None, the portfolio starts empty.
 
         Returns
@@ -373,7 +379,7 @@ class EquitySharePortfolio():
         None
         """
         logger.info("EquitySharePortfolio initializer called")
-        self.equity_share: Dict[int, EquityShare] = equity_share if equity_share is not None else {}
+        self.equity_share: Dict[str, EquityShare] = equity_share if equity_share is not None else {}
 
     def is_empty(self) -> bool:
         """
@@ -404,7 +410,7 @@ class EquitySharePortfolio():
         """
         self.equity_share.update({equity_share.asset_id: equity_share})
 
-    def create_dividend_flows(self, modelling_date: date, end_date: date) -> Dict[int, Dict[date, float]]:
+    def create_dividend_flows(self, modelling_date: date, end_date: date) -> Dict[str, Dict[date, float]]:
         """
         Create a dictionary with the dates at which the dividends are paid out and the amounts per unit for
         each equity share in the portfolio, for dates on or after the modelling date but not after the end date.
@@ -423,7 +429,7 @@ class EquitySharePortfolio():
         :rtype all_dividends
             A dictionary keyed by asset_id. Each value is a dictionary with the dividend dates as keys and the dividend amounts per unit as values.
         """
-        all_dividends: Dict[int, Dict[date, float]] = {}
+        all_dividends: Dict[str, Dict[date, float]] = {}
         equity_share: EquityShare
         for asset_id in self.equity_share:
             equity_share = self.equity_share[asset_id]  # Select one asset position
@@ -431,7 +437,7 @@ class EquitySharePortfolio():
             all_dividends[asset_id] = dividends
         return all_dividends
 
-    def create_terminal_flows(self, modelling_date: date, terminal_date: date) -> Dict[int, Dict[date, float]]:
+    def create_terminal_flows(self, modelling_date: date, terminal_date: date) -> Dict[str, Dict[date, float]]:
         """
         Create a dictionary with the terminal date and the terminal amount per unit for each equity share
         in the portfolio. Each share's price is grown from the modelling date to the terminal date.
@@ -450,7 +456,7 @@ class EquitySharePortfolio():
         :rtype all_terminals
             A dictionary keyed by asset_id. Each value is a dictionary with the terminal date as the key and the terminal amount per unit as the value.
         """
-        all_terminals: Dict[int, Dict[date, float]] = {}
+        all_terminals: Dict[str, Dict[date, float]] = {}
         terminals: Dict[date, float] = {}
         equity_share: EquityShare
 
@@ -460,7 +466,7 @@ class EquitySharePortfolio():
             all_terminals[asset_id]=terminals
         return all_terminals
 
-    def create_dividend_fractions(self, modelling_date: date, dividend_array: Dict[int, Dict[date, float]]) -> Tuple[List[npt.NDArray[np.float64]], List[npt.NDArray[np.int_]]]:
+    def create_dividend_fractions(self, modelling_date: date, dividend_array: Dict[str, Dict[date, float]]) -> Tuple[List[npt.NDArray[np.float64]], List[npt.NDArray[np.int_]]]:
         """
         Create the list of year-fractions at which each dividend is paid out (compared to the modelling date) and the list of
         positions of those dividends. Only dividends paid after the modelling date are included.
@@ -471,7 +477,7 @@ class EquitySharePortfolio():
             The EquitySharePortfolio instance with populated portfolio.
         :type modelling_date: datetime.date
             The date from which the dividend fraction is calculated.
-        :type dividend_array: Dict[int, Dict[date, float]]
+        :type dividend_array: Dict[str, Dict[date, float]]
             A dictionary keyed by asset_id. Each value is a dictionary with the dates at which the dividend cash flows are paid out as keys
             and the size of the payment in local currency as values.
 
@@ -521,7 +527,7 @@ class EquitySharePortfolio():
 
         return (all_date_frac, all_dates_considered)
 
-    def create_terminal_fractions(self, modelling_date: date, terminal_array: Dict[int, Dict[date, float]]) -> Tuple[List[npt.NDArray[np.float64]], List[npt.NDArray[np.int_]]]:
+    def create_terminal_fractions(self, modelling_date: date, terminal_array: Dict[str, Dict[date, float]]) -> Tuple[List[npt.NDArray[np.float64]], List[npt.NDArray[np.int_]]]:
         """
         Create the list of year-fractions at which the terminal amount is paid out (compared to the modelling date) and the list of
         flags showing which terminal dates are after the modelling date
@@ -532,7 +538,7 @@ class EquitySharePortfolio():
             The EquitySharePortfolio instance with populated portfolio.
         :type modelling_date: datetime.date
             The date from which the terminal fraction is calculated.
-        :type terminal_array: Dict[int, Dict[date, float]]
+        :type terminal_array: Dict[str, Dict[date, float]]
             A dictionary keyed by asset_id. Each value is a dictionary with the date at which the terminal cash flow is paid out as the key
             and the size of the payment in local currency as the value. Only the first date of each asset is used.
 
@@ -577,7 +583,7 @@ class EquitySharePortfolio():
 
         return (all_terminal_date_frac, all_terminal_dates_considered)
 
-    def unique_dates_profile(self, cash_flow_profile: Dict[int, Dict[date, float]]) -> List[date]:
+    def unique_dates_profile(self, cash_flow_profile: Dict[str, Dict[date, float]]) -> List[date]:
         """
         Create a sorted list of dates at which there is a cash-flow event in any of the assets inside the portfolio.
 
@@ -585,7 +591,7 @@ class EquitySharePortfolio():
         ----------
         self: EquitySharePortfolio class instance
             The EquitySharePortfolio instance with populated portfolio.
-        :type cash_flow_profile: Dict[int, Dict[date, float]]
+        :type cash_flow_profile: Dict[str, Dict[date, float]]
             A dictionary keyed by asset_id, containing the date and size of each cash flow of that asset
 
         Returns
@@ -602,7 +608,7 @@ class EquitySharePortfolio():
 
         return sorted(unique_dates)
 
-    def cash_flow_profile_list_to_matrix(self, cash_flow_profile: Dict[int, Dict[date, float]]) -> Tuple[List[date], npt.NDArray[np.float64]]:
+    def cash_flow_profile_list_to_matrix(self, cash_flow_profile: Dict[str, Dict[date, float]]) -> Tuple[List[date], npt.NDArray[np.float64]]:
         """
         Convert the cash flows of each asset into a single matrix with one row per asset and one
         column per date.
@@ -610,7 +616,7 @@ class EquitySharePortfolio():
         Parameters
         ----------
         self: EquitySharePortfolio class instance
-        :type cash_flow_profile: Dict[int, Dict[date, float]]
+        :type cash_flow_profile: Dict[str, Dict[date, float]]
             Cash flow amounts by date for each asset_id
 
         Returns
@@ -652,7 +658,7 @@ class EquitySharePortfolio():
 
         market_price_tmp: List[float] = []
         growth_rate_tmp: List[float] = []
-        asset_id_tmp: List[int] = []
+        asset_id_tmp: List[str] = []
         units_tmp: List[float] = []
         for key in asset_keys:
             market_price_tmp.append(self.equity_share[key].market_price)
