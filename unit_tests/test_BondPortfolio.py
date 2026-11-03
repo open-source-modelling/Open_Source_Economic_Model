@@ -1,4 +1,4 @@
-from osem.BondClasses import CorpBond, CorpBondPortfolio
+from osem.BondClasses import CorpBond, BondPortfolio
 from osem.FrequencyClass import Frequency
 import pytest
 import datetime
@@ -85,26 +85,26 @@ def corp_bond_2() -> CorpBond:
 
 
 def test_is_empty():
-    corp_bond_portfolio = CorpBondPortfolio()
+    corp_bond_portfolio = BondPortfolio()
     assert corp_bond_portfolio.is_empty() is True
 
 
 def test_not_is_empty(corp_bond_1: CorpBond):
-    corp_bond_portfolio = CorpBondPortfolio({corp_bond_1.asset_id: corp_bond_1})
+    corp_bond_portfolio = BondPortfolio({corp_bond_1.asset_id: corp_bond_1})
     assert corp_bond_portfolio.is_empty() is False
 
 
 def test_add_to_empty_portfolio(corp_bond_1:CorpBond):
-    corporate_bond_portfolio = CorpBondPortfolio()
+    corporate_bond_portfolio = BondPortfolio()
     corporate_bond_portfolio.add(corp_bond_1)
     assert corporate_bond_portfolio.is_empty() is False
-    assert len(corporate_bond_portfolio.corporate_bonds) == 1
-    assert corporate_bond_portfolio.corporate_bonds[corp_bond_1.asset_id] == corp_bond_1
-    assert (corp_bond_1.asset_id in corporate_bond_portfolio.corporate_bonds)
+    assert len(corporate_bond_portfolio.bonds) == 1
+    assert corporate_bond_portfolio.bonds[corp_bond_1.asset_id] == corp_bond_1
+    assert (corp_bond_1.asset_id in corporate_bond_portfolio.bonds)
 
 
 def test_add_to_non_empty_portfolio(corp_bond_1: CorpBond, corp_bond_2: CorpBond):
-    corporate_bond_portfolio = CorpBondPortfolio()
+    corporate_bond_portfolio = BondPortfolio()
     corporate_bond_portfolio.add(corp_bond_1)
     corporate_bond_portfolio.add(corp_bond_2)
 
@@ -143,12 +143,12 @@ def test_add_to_non_empty_portfolio(corp_bond_1: CorpBond, corp_bond_2: CorpBond
         unit,
         market_price)
     corporate_bond_portfolio.add(corp_bond3)
-    assert len(corporate_bond_portfolio.corporate_bonds) == 3
-    assert (corp_bond3.asset_id in corporate_bond_portfolio.corporate_bonds)
+    assert len(corporate_bond_portfolio.bonds) == 3
+    assert (corp_bond3.asset_id in corporate_bond_portfolio.bonds)
 
 
 def test_create_coupon_dates_single_bond(corp_bond_1: CorpBond):
-    corporate_bond_portfolio = CorpBondPortfolio()
+    corporate_bond_portfolio = BondPortfolio()
     corporate_bond_portfolio.add(corp_bond_1)
     modelling_date = datetime.date(2015, 6, 1)
     end_date = datetime.date(2056, 6, 1)
@@ -164,7 +164,7 @@ def test_create_coupon_dates_single_bond(corp_bond_1: CorpBond):
 
 
 def test_create_coupon_dates_two_bonds(corp_bond_1: CorpBond, corp_bond_2: CorpBond):
-    corporate_bond_portfolio = CorpBondPortfolio()
+    corporate_bond_portfolio = BondPortfolio()
     corporate_bond_portfolio.add(corp_bond_1)
     corporate_bond_portfolio.add(corp_bond_2)
     modelling_date = datetime.date(2023, 6, 1)
@@ -177,7 +177,7 @@ def test_create_coupon_dates_two_bonds(corp_bond_1: CorpBond, corp_bond_2: CorpB
 
 
 def test_create_maturity_cashflow_single_bond(corp_bond_1: CorpBond):
-    corporate_bond_portfolio = CorpBondPortfolio()
+    corporate_bond_portfolio = BondPortfolio()
     corporate_bond_portfolio.add(corp_bond_1)
     modelling_date = datetime.date(2023, 6, 1)
     maturity_cashflow = corporate_bond_portfolio.create_maturity_cashflow(modelling_date)
@@ -186,7 +186,7 @@ def test_create_maturity_cashflow_single_bond(corp_bond_1: CorpBond):
 
 
 def test_create_maturity_cashflow_multiple_bonds(corp_bond_1: CorpBond, corp_bond_2: CorpBond):
-    corporate_bond_portfolio = CorpBondPortfolio()
+    corporate_bond_portfolio = BondPortfolio()
     corporate_bond_portfolio.add(corp_bond_1)
     corporate_bond_portfolio.add(corp_bond_2)
     modelling_date = datetime.date(2023, 6, 1)
@@ -198,7 +198,7 @@ def test_create_maturity_cashflow_multiple_bonds(corp_bond_1: CorpBond, corp_bon
 def test_create_maturity_cashflow_sums_notionals_on_same_date(corp_bond_1: CorpBond, corp_bond_2: CorpBond):
     same_maturity_bond = dataclasses.replace(corp_bond_2, asset_id=3, maturity_date=corp_bond_1.maturity_date, notional_amount=250)
 
-    corporate_bond_portfolio = CorpBondPortfolio()
+    corporate_bond_portfolio = BondPortfolio()
     corporate_bond_portfolio.add(corp_bond_1)
     corporate_bond_portfolio.add(corp_bond_2)
     corporate_bond_portfolio.add(same_maturity_bond)
@@ -215,7 +215,7 @@ def test_create_maturity_cashflow_from_dict(corp_bond_1: CorpBond, corp_bond_2: 
     corp_dict = {}
     corp_dict.update({corp_bond_1.asset_id: corp_bond_1})
     corp_dict.update({corp_bond_2.asset_id: corp_bond_2})
-    corporate_bond_portfolio = CorpBondPortfolio(corporate_bonds=corp_dict)
+    corporate_bond_portfolio = BondPortfolio(bonds=corp_dict)
     modelling_date = datetime.date(2023, 6, 1)
     maturity_cashflow = corporate_bond_portfolio.create_maturity_cashflow(modelling_date)
     assert len(maturity_cashflow) == 2

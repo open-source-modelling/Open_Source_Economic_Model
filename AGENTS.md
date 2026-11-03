@@ -34,7 +34,7 @@ All production code is an installable package under `src/osem/` (`import osem`, 
 
 Individual `EquityShare` / `CorpBond` instances hold metadata and pricing logic. All simulation state evolves in DataFrames. Do not write back to dataclass instances after import.
 
-Portfolio wrappers (`EquitySharePortfolio`, `CorpBondPortfolio`) are also static after setup.
+Portfolio wrappers (`EquitySharePortfolio`, `BondPortfolio`) are also static after setup.
 
 ### Dataflow
 
@@ -49,7 +49,7 @@ flowchart TB
         CSV --> liabObj[Liability]
         EIOPA[EIOPA files] --> curves[Curves]
         eqInput --> eqPtf[EquitySharePortfolio]
-        bdInput --> bdPtf[CorpBondPortfolio]
+        bdInput --> bdPtf[BondPortfolio]
     end
 
     subgraph preloop [Pre-Loop]
@@ -92,7 +92,7 @@ flowchart TB
 | `src/osem/MainLoop.py` | Cash-flow matrices, date schedules, expiry processing, portfolio valuation, trading |
 | `src/osem/CurvesClass.py` | EIOPA Smith-Wilson term structure (calibration, projection, discounting) |
 | `src/osem/EquityClasses.py` | Equity pricing, cash flows, portfolio wrapper |
-| `src/osem/BondClasses.py` | Bond pricing, z-spread calibration, portfolio wrapper |
+| `src/osem/BondClasses.py` | `FixedCouponBond` (bond cash flows, pricing, z-spread calibration), `CorpBond`, `BondPortfolio` wrapper |
 | `src/osem/LiabilityClasses.py` | Aggregated liability cash-flow profile (`cashflow` mode) |
 | `src/osem/UnitLinkedClasses.py` | Unit-linked policy/fund/portfolio classes (`unit_linked` mode) |
 | `src/osem/ImportData.py` | Load `ALM.ini`, CSV inputs, EIOPA curve files |
@@ -209,7 +209,7 @@ Follow these patterns when adding or changing code. Prefer the style in `MainLoo
   | `unique_dates_profile()` | Unique payment dates |
   | `init_*_portfolio_to_dataframe()` | Initial price / units / (growth or z-spread) matrices |
 
-- `EquitySharePortfolio` and `CorpBondPortfolio` always hold a dict: passing `None` or nothing gives an empty one. Do not add `None` checks on `equity_share` or `corporate_bonds`.
+- `EquitySharePortfolio` and `BondPortfolio` always hold a dict: passing `None` or nothing gives an empty one. Do not add `None` checks on `equity_share` or `bonds`.
 
 - Mirror this shape when adding a new asset class: dataclass for the instrument, portfolio wrapper for aggregation, `get_*` loader in `ImportData.py`.
 
@@ -287,18 +287,18 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 |---------|---------|
 | `*Class.py` files | `EquityClasses.py`, `BondClasses.py` |
 | Asset dataclass | `EquityShare`, `CorpBond` |
-| Portfolio wrapper | `EquitySharePortfolio`, `CorpBondPortfolio` |
+| Portfolio wrapper | `EquitySharePortfolio`, `BondPortfolio` |
 | Loop / orchestration | `MainLoop.py`, `main.py` |
 | Import loaders | `get_equity_share`, `import_SWEiopa` |
 
 ### Function and method naming
 
-**All functions and methods are `snake_case`, no exceptions.** This includes free functions, module-level helpers, and every method on every class (`Curves`, `CorpBondPortfolio`, `EquitySharePortfolio`, `UnitLinkedPortfolio`, etc.). Classes and dataclasses stay `PascalCase` — this rule governs callables only, not type names.
+**All functions and methods are `snake_case`, no exceptions.** This includes free functions, module-level helpers, and every method on every class (`Curves`, `BondPortfolio`, `EquitySharePortfolio`, `UnitLinkedPortfolio`, etc.). Classes and dataclasses stay `PascalCase` — this rule governs callables only, not type names.
 
 | Rule | Example |
 |------|---------|
 | Functions/methods: `snake_case` | `calc_fwd_rates`, `is_empty`, `price_bond_portfolio` |
-| Classes/dataclasses: `PascalCase` | `Curves`, `CorpBondPortfolio`, `EquityShare` |
+| Classes/dataclasses: `PascalCase` | `Curves`, `BondPortfolio`, `EquityShare` |
 | `ImportData.py` loaders: `get_<noun>()`, noun fully lowercase/underscored — never the returned class's own casing | `get_cash()` (returns `Cash`), `get_equity_share()` (returns `EquityShare`), `get_liability()` (returns `Liability`) |
 | Private/internal helpers: leading underscore optional but casing rule still applies | `calculate_expired_dates` |
 | Test functions: `test_<function_or_behaviour>`, mirroring the snake_case name of what they test | `test_calc_fwd_rates`, `test_is_empty` |
@@ -345,7 +345,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 
 - `CorpBond` is `@dataclass(frozen=True)` with range checks in `__post_init__`.
 - `EquityShare` is a mutable `@dataclass` with lighter validation.
-- New bond-like instruments should follow the stricter `CorpBond` pattern.
+- New bond-like instruments should follow the stricter `CorpBond` pattern: a frozen dataclass that inherits from `FixedCouponBond`, declares the attributes listed on it as its own fields, and calls `self._validate_bond_terms()` at the start of `__post_init__`. `FixedCouponBond` holds the shared cash-flow, pricing and calibration methods. Keep it a plain class: as a dataclass it would put its fields first and change the positional field order of `CorpBond`, which the tests rely on. All bond instruments go into one `BondPortfolio`, keyed by `asset_id`.
 
 ### Testing
 

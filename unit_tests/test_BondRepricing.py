@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from osem.BondClasses import CorpBond, CorpBondPortfolio
+from osem.BondClasses import CorpBond, BondPortfolio
 from osem.FrequencyClass import Frequency
 from osem.MainLoop import create_cashflow_dataframe, process_expired_cf
 
@@ -58,7 +58,7 @@ def par_bond() -> CorpBond:
 
 def _reprice_at_first_projection_date(bond: CorpBond, curve: RecordingFlatCurve) -> pd.DataFrame:
     """Run the main-loop steps for the bond up to repricing at T1 (projection year 1)."""
-    bd_ptf = CorpBondPortfolio({bond.asset_id: bond})
+    bd_ptf = BondPortfolio({bond.asset_id: bond})
     cpn_flows = bd_ptf.create_coupon_flows(modelling_date=T0, end_date=END_DATE)
     not_flows = bd_ptf.create_maturity_flows(terminal_date=END_DATE)
     unique_cpn_dates = bd_ptf.unique_dates_profile(cpn_flows)

@@ -12,32 +12,34 @@ from typing import List, Dict, Optional, Iterator, Tuple, cast
 
 logger = get_file_logger(__name__, "BondClass.log", level=logging.DEBUG)
 
-@dataclass(frozen=True)
-class CorpBond:
+class FixedCouponBond:
+    """
+    Cash flows, pricing and z-spread calibration shared by all fixed-coupon bonds that repay their
+    notional in one payment at maturity. A bond instrument inherits these methods and declares the
+    attributes below as fields of its own frozen dataclass.
+
+    This class is not a dataclass, so it adds no fields and does not change the field order of the
+    instruments that inherit from it. The annotations below only tell the type checker which
+    attributes the methods read.
+    """
     asset_id: int
-    nace: str
-    issuer: Optional[str]
     issue_date: date
     maturity_date: date
     coupon_rate: float  # Rate paid on each coupon date (per payment, not annualised); see coupon_amount
     notional_amount: float
-    spread_country: float
-    spread_sector: float
-    zspread: float
-    spread_stress: float
+    zspread: float  # Starting value only; calibrate_bond_portfolio replaces it at t0
     frequency: Frequency
-    recovery_rate: float
-    default_probability: float
     units: float
     market_price: float
 
-    def __post_init__(self):
+    def _validate_bond_terms(self) -> None:
         """
-        Check that the bond's input values are valid.
+        Check that the input values shared by all fixed-coupon bonds are valid. Called from the
+        __post_init__ of each bond instrument.
 
         Parameters
         ----------
-        self: CorpBond instance
+        self: FixedCouponBond instance
 
         Returns
         -------
@@ -46,9 +48,9 @@ class CorpBond:
         Raises
         ------
         ValueError
-            If asset_id, units or notional_amount is not greater than 0, coupon_rate,
-            recovery_rate or default_probability is outside [0, 1], market_price is negative,
-            frequency is not supported, or maturity_date is not after issue_date
+            If asset_id, units or notional_amount is not greater than 0, coupon_rate is outside
+            [0, 1], market_price is negative, frequency is not supported, or maturity_date is not
+            after issue_date
         """
         if self.asset_id<=0:
             raise ValueError("Asset ID must be greater than 0")
@@ -56,14 +58,6 @@ class CorpBond:
             raise ValueError("Coupon rate cannot be negative")
         if self.coupon_rate > 1:
             raise ValueError("Coupon rate cannot be greater than 1")
-        if self.recovery_rate < 0:
-            raise ValueError("Recovery rate cannot be negative")
-        if self.recovery_rate > 1:
-            raise ValueError("Recovery rate cannot be greater than 1")
-        if self.default_probability < 0:
-            raise ValueError("Default probability cannot be negative")
-        if self.default_probability > 1:
-            raise ValueError("Default probability cannot be greater than 1")
         if self.units <= 0:
             raise ValueError("Units must be greater than 0")
         if self.market_price < 0:
@@ -75,10 +69,9 @@ class CorpBond:
         if self.maturity_date <= self.issue_date:
             raise ValueError("Maturity date cannot be before issue date")
 
-
     def coupon_amount(self) -> float:
         """
-        Calculate the size of the coupon for a bond inside the CorpBond class.
+        Calculate the size of the coupon of the bond.
         The coupon amount is equal to the percentage of the notional value.
 
         coupon_rate is the rate paid on each coupon date, whatever the frequency. It is not an
@@ -88,7 +81,7 @@ class CorpBond:
 
         Parameters
         ----------
-        self: CorpBond class
+        self: FixedCouponBond instance
 
         Returns
         -------
@@ -105,7 +98,7 @@ class CorpBond:
 
         Parameters
         ----------
-        self: CorpBond class
+        self: FixedCouponBond instance
         modelling_date: datetime.date
             The earliest date considered.
         end_date: datetime.date
@@ -132,13 +125,13 @@ class CorpBond:
 
     def create_single_cash_flows(self, modelling_date: date, end_date: date) -> Dict[date, float]:
         """
-        Create a dictionary of coupon cash flows using information about a corporate bond. The
-        return dictionary has dates of the cash flows as keys and monetary amounts as values.
+        Create a dictionary of the bond's coupon cash flows. The return dictionary has dates of
+        the cash flows as keys and monetary amounts as values.
 
         Parameters
         ----------
-        self: CorpBond instance
-            The CorpBond instance with the bond position of interest.
+        self: FixedCouponBond instance
+            The bond position of interest.
         modelling_date: datetime.date
             The date from which the coupon dates are considered.
         end_date: datetime.date
@@ -160,7 +153,7 @@ class CorpBond:
                 coupon_size = self.coupon_amount()
                 coupons.update({coupon_date: coupon_size})
         return coupons
-    
+
 
     def create_single_maturity(self, end_date: date) -> Dict[date, float]:
         """
@@ -169,8 +162,8 @@ class CorpBond:
 
         Parameters
         ----------
-        self: CorpBond instance
-            The CorpBond instance with the bond position of interest.
+        self: FixedCouponBond instance
+            The bond position of interest.
         end_date: datetime.date
             The last date that the model considers (end of the modelling window).
 
@@ -180,12 +173,12 @@ class CorpBond:
             A single entry with the repayment date as the key and the notional amount per unit of
             the bond as the value.
         """
-        
+
         principals: Dict[date, float] = {}
         terminal_amount = self.notional_amount
         terminal_date = min(end_date, self.maturity_date)
         principals.update({terminal_date: terminal_amount})
-        return principals    
+        return principals
 
     def term_to_maturity(self, modelling_date: date)->int:
         """
@@ -210,7 +203,7 @@ class CorpBond:
 
         Parameters
         ----------
-        self: CorpBond instance
+        self: FixedCouponBond instance
 
         Returns
         -------
@@ -225,8 +218,8 @@ class CorpBond:
 
         Parameters
         ----------
-        self: CorpBond instance
-            The CorpBond instance with the bond position of interest.
+        self: FixedCouponBond instance
+            The bond position of interest.
         coupons: dict
             A dictionary with dates of coupon cashflows as keys and monetary amounts as values.
         notional: dict
@@ -250,7 +243,7 @@ class CorpBond:
 
         date_frac: List[float] = []
         cash_flow: List[float] = []
-        
+
         for key, value in coupons.items():
             date_tmp = (key-valuation_date).days/365.25
             date_frac.append(date_tmp)
@@ -260,7 +253,7 @@ class CorpBond:
             date_tmp = (key-valuation_date).days/365.25
             date_frac.append(date_tmp)
             cash_flow.append(value)
-        
+
         date_frac_df = pd.DataFrame(data=date_frac, columns=["Date Fraction"])  # No need for DataFrames. Kept for compatibility
         cash_flow_df = pd.DataFrame(data=cash_flow, columns=["Cash flow"])
 
@@ -278,8 +271,8 @@ class CorpBond:
 
         Parameters
         ----------
-        self: CorpBond instance
-            The CorpBond instance with the bond position of interest.
+        self: FixedCouponBond instance
+            The bond position of interest.
         x_start: float
             The lower bound of the spread. Ex. x_start = -0.2
         x_end: float
@@ -357,58 +350,106 @@ class CorpBond:
         raise TypeError("Spread calibration did not converge")
 
 
-class CorpBondPortfolio():
-    def __init__(self, corporate_bonds: Optional[Dict[int, CorpBond]] = None):
+@dataclass(frozen=True)
+class CorpBond(FixedCouponBond):
+    asset_id: int
+    nace: str
+    issuer: Optional[str]
+    issue_date: date
+    maturity_date: date
+    coupon_rate: float  # Rate paid on each coupon date (per payment, not annualised); see coupon_amount
+    notional_amount: float
+    spread_country: float
+    spread_sector: float
+    zspread: float
+    spread_stress: float
+    frequency: Frequency
+    recovery_rate: float
+    default_probability: float
+    units: float
+    market_price: float
+
+    def __post_init__(self):
         """
-        Initialize the CorpBondPortfolio instance with the given corporate bonds
+        Check that the bond's input values are valid.
 
         Parameters
         ----------
-        corporate_bonds: Optional[Dict[int, CorpBond]]
-            The CorpBond instances, keyed by asset_id. If None, the portfolio starts empty.
+        self: CorpBond instance
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If any of the checks in FixedCouponBond._validate_bond_terms fails, or recovery_rate
+            or default_probability is outside [0, 1]
+        """
+        self._validate_bond_terms()
+        if self.recovery_rate < 0:
+            raise ValueError("Recovery rate cannot be negative")
+        if self.recovery_rate > 1:
+            raise ValueError("Recovery rate cannot be greater than 1")
+        if self.default_probability < 0:
+            raise ValueError("Default probability cannot be negative")
+        if self.default_probability > 1:
+            raise ValueError("Default probability cannot be greater than 1")
+
+
+class BondPortfolio():
+    def __init__(self, bonds: Optional[Dict[int, FixedCouponBond]] = None):
+        """
+        Initialize the BondPortfolio instance with the given bonds
+
+        Parameters
+        ----------
+        bonds: Optional[Dict[int, FixedCouponBond]]
+            The bond instances, keyed by asset_id. If None, the portfolio starts empty.
 
         Returns
         -------
         None
         """
 
-        self.corporate_bonds: Dict[int, CorpBond] = corporate_bonds if corporate_bonds is not None else {}
+        self.bonds: Dict[int, FixedCouponBond] = bonds if bonds is not None else {}
 
     def is_empty(self)-> bool:
         """
-        Check whether the portfolio holds any corporate bonds.
+        Check whether the portfolio holds any bonds.
 
         Parameters
         ----------
-        self: CorpBondPortfolio instance
+        self: BondPortfolio instance
 
         Returns
         -------
         bool
-            True if the portfolio has no corporate bonds
+            True if the portfolio has no bonds
         """
-        return len(self.corporate_bonds) == 0
+        return len(self.bonds) == 0
 
-    def add(self, corp_bond: CorpBond) -> None:
+    def add(self, bond: FixedCouponBond) -> None:
         """
-        Add a CorpBond position to the portfolio.
+        Add a bond position to the portfolio.
 
         Parameters
         ----------
-        corp_bond : CorpBond
+        bond : FixedCouponBond
             The bond position to add, keyed by asset_id in the portfolio dict.
         """
-        self.corporate_bonds.update({corp_bond.asset_id: corp_bond})
+        self.bonds.update({bond.asset_id: bond})
 
     def create_aggregate_coupon_dates(self, modelling_date:date, end_date:date) -> Dict[date, float]:
         """
-        Add up the coupons of all corporate bonds in the portfolio on each payment date, for dates
+        Add up the coupons of all bonds in the portfolio on each payment date, for dates
         on or after the modelling date. The amounts are per unit: units held are not applied.
 
         Parameters
         ----------
-        self: CorpBondPortfolio instance
-            The CorpBondPortfolio instance with populated initial portfolio.
+        self: BondPortfolio instance
+            The BondPortfolio instance with populated initial portfolio.
         modelling_date: datetime.date
             The current assumed date inside the model
         end_date: datetime.date
@@ -421,27 +462,27 @@ class CorpBondPortfolio():
         """
 
         coupons: Dict[date, float] = {}
-        corp_bond: CorpBond
+        bond: FixedCouponBond
         coupon_date: date
-        for asset_id in self.corporate_bonds:
-            corp_bond = self.corporate_bonds[asset_id]
-            for coupon_date in corp_bond.generate_coupon_dates(modelling_date, end_date):
+        for asset_id in self.bonds:
+            bond = self.bonds[asset_id]
+            for coupon_date in bond.generate_coupon_dates(modelling_date, end_date):
                 if coupon_date in coupons:
-                    coupons[coupon_date] += corp_bond.coupon_amount()
+                    coupons[coupon_date] += bond.coupon_amount()
                 else:
-                    coupons.update({coupon_date:corp_bond.coupon_amount()})
+                    coupons.update({coupon_date:bond.coupon_amount()})
         return coupons
 
     def create_coupon_flows(self, modelling_date: date, end_date: date) -> Dict[int, Dict[date, float]]:
         """
         Create a dictionary with the dates at which the coupons are paid out and the amounts per
-        unit for each corporate bond in the portfolio, for dates on or after the modelling date
+        unit for each bond in the portfolio, for dates on or after the modelling date
         but not after the end date.
 
         Parameters
         ----------
-        self: CorpBondPortfolio instance
-            The CorpBondPortfolio instance with populated initial portfolio.
+        self: BondPortfolio instance
+            The BondPortfolio instance with populated initial portfolio.
         modelling_date: datetime.date
             The date from which the coupon dates are considered.
         end_date: datetime.date
@@ -454,12 +495,12 @@ class CorpBondPortfolio():
             keys and the coupon amounts per unit as values.
         """
         all_coupons: Dict[int, Dict[date, float]] = {}
-        corporate_bond: CorpBond
-        for asset_id in self.corporate_bonds:
-            corporate_bond = self.corporate_bonds[asset_id]  # Select one asset position
-            coupons = corporate_bond.create_single_cash_flows(modelling_date, end_date)
+        bond: FixedCouponBond
+        for asset_id in self.bonds:
+            bond = self.bonds[asset_id]  # Select one asset position
+            coupons = bond.create_single_cash_flows(modelling_date, end_date)
             all_coupons[asset_id] = coupons
-        return all_coupons 
+        return all_coupons
 
     def create_maturity_flows(self, terminal_date: date) -> Dict[int, Dict[date, float]]:
         """
@@ -469,8 +510,8 @@ class CorpBondPortfolio():
 
         Parameters
         ----------
-        self: CorpBondPortfolio instance
-            The CorpBondPortfolio instance with populated portfolio.
+        self: BondPortfolio instance
+            The BondPortfolio instance with populated portfolio.
         terminal_date: datetime.date
             The last date that the model considers (end of the modelling window).
 
@@ -483,14 +524,14 @@ class CorpBondPortfolio():
 
         all_maturity: Dict[int, Dict[date, float]] = {}
         principals: Dict[date, float] = {}
-        corp_bond: CorpBond
+        bond: FixedCouponBond
 
-        for asset_id in self.corporate_bonds:
-            corp_bond = self.corporate_bonds[asset_id]
-            principals = corp_bond.create_single_maturity(terminal_date)
+        for asset_id in self.bonds:
+            bond = self.bonds[asset_id]
+            principals = bond.create_single_maturity(terminal_date)
             all_maturity[asset_id]=principals
         return all_maturity
-    
+
 
     def unique_dates_profile(self, cash_flow_profile: Dict[int, Dict[date, float]]) -> List[date]:
         """
@@ -499,8 +540,8 @@ class CorpBondPortfolio():
 
         Parameters
         ----------
-        self: CorpBondPortfolio instance
-            The CorpBondPortfolio instance with populated portfolio.
+        self: BondPortfolio instance
+            The BondPortfolio instance with populated portfolio.
         cash_flow_profile: Dict[int, Dict[date, float]]
             A dictionary keyed by asset_id, containing the date and size of each cash flow of
             that asset
@@ -526,7 +567,7 @@ class CorpBondPortfolio():
 
         Parameters
         ----------
-        self: CorpBondPortfolio instance
+        self: BondPortfolio instance
         modelling_date: datetime.date
             The date used as the name of the single column in each DataFrame
 
@@ -537,7 +578,7 @@ class CorpBondPortfolio():
             values stored as floats.
         """
 
-        asset_keys = self.corporate_bonds.keys()
+        asset_keys = self.bonds.keys()
 
         market_price_tmp: List[float] = []
         zspread_tmp: List[float] = []
@@ -545,10 +586,10 @@ class CorpBondPortfolio():
         units_tmp: List[float] = []
 
         for key in asset_keys:
-            market_price_tmp.append(self.corporate_bonds[key].market_price)
-            zspread_tmp.append(self.corporate_bonds[key].zspread)
-            asset_id_tmp.append(self.corporate_bonds[key].asset_id)
-            units_tmp.append(self.corporate_bonds[key].units)
+            market_price_tmp.append(self.bonds[key].market_price)
+            zspread_tmp.append(self.bonds[key].zspread)
+            asset_id_tmp.append(self.bonds[key].asset_id)
+            units_tmp.append(self.bonds[key].units)
 
         # dtype=float explicitly: these frames are written back to with computed prices, spreads
         # and unit counts. A portfolio whose inputs happened to be whole numbers would otherwise
@@ -565,13 +606,13 @@ class CorpBondPortfolio():
 
     def create_maturity_cashflow(self, modelling_date: date) -> Dict[date, float]:
         """
-        Add up the notional amounts of all corporate bonds in the portfolio on each maturity date.
+        Add up the notional amounts of all bonds in the portfolio on each maturity date.
         The amounts are per unit: units held are not applied. Unlike create_maturity_flows, dates
         are not limited to the modelling window.
 
         Parameters
         ----------
-        self: CorpBondPortfolio instance
+        self: BondPortfolio instance
         modelling_date: date
             Not used in the calculation.
 
@@ -581,16 +622,16 @@ class CorpBondPortfolio():
             The maturity dates as keys and the summed notional amounts as values.
         """
         maturities: Dict[date, float] = {}
-        corp_bond: CorpBond
+        bond: FixedCouponBond
 
-        for asset_id in self.corporate_bonds:
-            corp_bond = self.corporate_bonds[asset_id]
-            if corp_bond.maturity_date in maturities:
-                maturities[corp_bond.maturity_date] += corp_bond.notional_amount
+        for asset_id in self.bonds:
+            bond = self.bonds[asset_id]
+            if bond.maturity_date in maturities:
+                maturities[bond.maturity_date] += bond.notional_amount
             else:
-                maturities.update({corp_bond.maturity_date:corp_bond.notional_amount})
+                maturities.update({bond.maturity_date:bond.notional_amount})
         return maturities
-    
+
     def price_bond_portfolio(self, coupon_df: pd.DataFrame, notional_df: pd.DataFrame, settings: Settings, proj_period: int, curves: Curves, bond_zspread_df: pd.DataFrame, bond_price_df: pd.DataFrame, date_of_interest: date) -> pd.DataFrame:
         """
         Price each bond in coupon_df on date_of_interest and store the prices in bond_price_df.
@@ -624,25 +665,25 @@ class CorpBondPortfolio():
             coupons = cast(Dict[date, float], coupon_df.loc[asset_id].to_dict())
             notional = cast(Dict[date, float], notional_df.loc[asset_id].to_dict())
             zspread = cast(float, bond_zspread_df.loc[asset_id].iloc[0])
-            price: float = self.corporate_bonds[asset_id].price_bond(coupons, notional, date_of_interest, proj_period, curves, zspread)
+            price: float = self.bonds[asset_id].price_bond(coupons, notional, date_of_interest, proj_period, curves, zspread)
             bond_price_df.loc[asset_id, date_of_interest] = price
 
         return bond_price_df
-    
+
     def calibrate_bond_portfolio(self, zspread_df: pd.DataFrame, settings: Settings, proj_period: int, curves: Curves) -> pd.DataFrame:
         """
-        Calibrate z-spreads for all corporate bonds in the portfolio using bisection.
+        Calibrate z-spreads for all bonds in the portfolio using bisection.
 
         Parameters
         ----------
-        self: CorpBondPortfolio instance
-        zspread_df: pd.DataFrame 
+        self: BondPortfolio instance
+        zspread_df: pd.DataFrame
             Initial z-spreads for each bond
-        settings: Settings 
+        settings: Settings
             Object with modelling dates and end date
         proj_period: int
             Projection period index for curve retrieval
-        curves: Curves 
+        curves: Curves
             Object with calibrated term structure
 
         Returns
@@ -651,7 +692,7 @@ class CorpBondPortfolio():
             Updated z-spread DataFrame with calibrated spreads
         """
         for asset_id in zspread_df.index:
-            calibrated_spread: float = self.corporate_bonds[asset_id].bisection_spread(
+            calibrated_spread: float = self.bonds[asset_id].bisection_spread(
                 x_start=-0.2,
                 x_end=0.2,
                 modelling_date=settings.modelling_date,

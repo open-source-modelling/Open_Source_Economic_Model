@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from osem.BondClasses import CorpBond, CorpBondPortfolio
+from osem.BondClasses import CorpBond, BondPortfolio
 from osem.FrequencyClass import Frequency
 from osem.MainLoop import (
     create_cashflow_dataframe,
@@ -70,7 +70,7 @@ def test_bond_maturity_is_not_reported_as_loss(maturing_bond: CorpBond):
     t1 = date(2024, 4, 29)
     end_date = date(2033, 4, 29)
 
-    bd_ptf = CorpBondPortfolio({maturing_bond.asset_id: maturing_bond})
+    bd_ptf = BondPortfolio({maturing_bond.asset_id: maturing_bond})
     cpn_flows = bd_ptf.create_coupon_flows(modelling_date=t0, end_date=end_date)
     not_flows = bd_ptf.create_maturity_flows(terminal_date=end_date)
     unique_cpn_dates = bd_ptf.unique_dates_profile(cpn_flows)

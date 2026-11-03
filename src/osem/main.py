@@ -7,7 +7,7 @@ from datetime import date
 from typing import Dict, List, Optional
 from osem.CurvesClass import Curves
 from osem.SocietyClass import Society
-from osem.BondClasses import CorpBondPortfolio
+from osem.BondClasses import BondPortfolio, FixedCouponBond
 from osem.ConfigurationClass import Configuration
 from osem.EquityClasses import EquitySharePortfolio
 from osem.UnitLinkedClasses import UnitLinkedPortfolio, UnitLinkedFund, UnitLinkedPolicy
@@ -172,13 +172,13 @@ def main() -> None:
 
     logger.info("Import corporate bonds")
     bond_input_generator = get_corporate_bonds(bond_portfolio_file)
-    bond_input = {corp_bond.asset_id: corp_bond for corp_bond in bond_input_generator}
+    bond_input: Dict[int, FixedCouponBond] = {corp_bond.asset_id: corp_bond for corp_bond in bond_input_generator}
 
     logger.info("Create equity portfolio")
     eq_ptf = EquitySharePortfolio(eq_input)
 
     logger.info("Create bond portfolio")
-    bd_ptf = CorpBondPortfolio(bond_input)
+    bd_ptf = BondPortfolio(bond_input)
     # GENERATE ALL SYNTHETIC EQUITIES HERE
     # synt_equity_portfolio
 
