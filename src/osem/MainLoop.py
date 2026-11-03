@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, cast
 from dateutil.relativedelta import relativedelta
 from osem.SocietyClass import Society
 from osem.LiabilityClasses import Liability
-from osem.UnitLinkedClasses import UnitLinkedFund, UnitLinkedPolicy
+from osem.UnitLinkedClasses import PolicyExit, UnitLinkedFund, UnitLinkedPolicy
 
 def sum_series(values: pd.Series) -> float:
     """
@@ -133,6 +133,26 @@ def create_liabilities_df(liabilities: Liability) -> pd.DataFrame:
     cash_flows.index = [liabilities.liability_id]
     return cash_flows
 
+def holdings_market_value(price: pd.DataFrame, units: pd.DataFrame, as_of: dt.date) -> float:
+    """
+    Calculate the market value of the holdings in the given tables at a given date.
+
+    Parameters
+    ----------
+    price : pd.DataFrame
+        Per-asset prices indexed by asset_id with date columns.
+    units : pd.DataFrame
+        Per-asset units indexed by asset_id with date columns.
+    as_of : dt.date
+        Valuation date (column name in the price and units DataFrames).
+
+    Returns
+    -------
+    float
+        Market value of the holdings at as_of.
+    """
+    return sum_series(units[as_of] * price[as_of])
+
 def portfolio_market_value(
     eq_price: pd.DataFrame,
     eq_units: pd.DataFrame,
@@ -161,7 +181,27 @@ def portfolio_market_value(
     float
         Combined market value of equities and bonds at as_of.
     """
-    return sum_series(eq_units[as_of] * eq_price[as_of]) + sum_series(bd_units[as_of] * bd_price[as_of])
+    return holdings_market_value(eq_price, eq_units, as_of) + holdings_market_value(bd_price, bd_units, as_of)
+
+def remaining_liability_payments(cash_flows: pd.DataFrame) -> float:
+    """
+    Add up the liability cash flows that have not expired yet, without discounting. Includes any
+    payment scheduled after the end of the modelling window.
+
+    Parameters
+    ----------
+    cash_flows : pd.DataFrame
+        The dataframe of aggregated liability cash flows (absolute amounts, not per unit)
+
+    Returns
+    -------
+    float
+        Total of the remaining liability cash flows
+    """
+    remaining = 0.0
+    for payment_date in cash_flows.columns:
+        remaining += sum_series(cash_flows[payment_date])
+    return remaining
 
 def portfolio_total_return(start_market_value: float, end_market_value: float, asset_income: float) -> float:
     """
@@ -571,6 +611,88 @@ def apply_lapse(
     return mv_df, gv_df, premium_df, surrender_total, len(lapse_ids)
 
 
+def find_policy_exits(
+    mv_before: pd.DataFrame,
+    mv_after: pd.DataFrame,
+    current_date: dt.date,
+    exit_type: str,
+) -> List[PolicyExit]:
+    """
+    Identify the policies removed by a mortality or lapse step and what each one was paid.
+
+    Parameters
+    ----------
+    mv_before: pd.DataFrame
+        Market-value state matrix before the step.
+    mv_after: pd.DataFrame
+        Market-value state matrix after the step.
+    current_date: date
+        Current modelling date column.
+    exit_type: str
+        How the policies left: "Death" or "Lapse".
+
+    Returns
+    -------
+    List[PolicyExit]
+        One entry per removed policy, ordered by policy_id.
+    """
+    exits: List[PolicyExit] = []
+    policy_id: int
+    for policy_id in sorted(mv_before.index):
+        if policy_id not in mv_after.index:
+            exits.append(PolicyExit(policy_id, exit_type, float(mv_before[current_date].loc[policy_id])))
+    return exits
+
+
+def record_policy_history(
+    current_date: dt.date,
+    mv_df: pd.DataFrame,
+    exits: List[PolicyExit],
+    policies: Dict[int, UnitLinkedPolicy],
+) -> List[Dict[str, object]]:
+    """
+    Build one history row per policy that was in force during the period. A policy that exits is
+    removed from mv_df, so this is the only record of its path once the run has finished.
+
+    Parameters
+    ----------
+    current_date: date
+        Modelling date of the rows.
+    mv_df: pd.DataFrame
+        Market-value state matrix after the period, holding only the policies still in force.
+    exits: List[PolicyExit]
+        Policies that left during the period.
+    policies: dict[int, UnitLinkedPolicy]
+        Static policy metadata including is_guaranteed.
+
+    Returns
+    -------
+    List[Dict[str, object]]
+        Rows with Date, Policy_ID, Is_Guaranteed, Closing_MV, Exit_Type and Amount_Paid.
+    """
+    rows: List[Dict[str, object]] = []
+    policy_id: int
+    for policy_id in sorted(mv_df.index):
+        rows.append({
+            "Date": current_date,
+            "Policy_ID": policy_id,
+            "Is_Guaranteed": policies[policy_id].is_guaranteed,
+            "Closing_MV": float(mv_df[current_date].loc[policy_id]),
+            "Exit_Type": "",
+            "Amount_Paid": 0.0,
+        })
+    for policy_exit in exits:
+        rows.append({
+            "Date": current_date,
+            "Policy_ID": policy_exit.policy_id,
+            "Is_Guaranteed": policies[policy_exit.policy_id].is_guaranteed,
+            "Closing_MV": 0.0,
+            "Exit_Type": policy_exit.exit_type,
+            "Amount_Paid": policy_exit.amount_paid,
+        })
+    return rows
+
+
 def process_unit_linked_period(
     current_date: dt.date,
     previous_date: dt.date,
@@ -585,7 +707,7 @@ def process_unit_linked_period(
     random_seed: int,
     proj_period: int,
     rng: Optional[random.Random] = None
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, float]]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, float], List[PolicyExit]]:
     """
     Run one unit-linked period: carry forward, capitalize, premiums, fees, mortality, lapse.
 
@@ -621,7 +743,8 @@ def process_unit_linked_period(
     Returns
     -------
     :rtype: tuple
-        Updated mv_df, gv_df, premium_df, and a cashflow dict with absolute amounts.
+        Updated mv_df, gv_df, premium_df, a cashflow dict with absolute amounts, and the list of
+        policies that left during the period.
     """
     mv_df[current_date] = mv_df[previous_date]
     gv_df[current_date] = gv_df[previous_date]
@@ -630,23 +753,32 @@ def process_unit_linked_period(
     if rng is None:
         rng = random.Random(random_seed + proj_period)
 
+    reserve_before_return = sum_series(mv_df[current_date])
     mv_df, gv_df = capitalize_policies(
         mv_df, gv_df, policies, current_date, portfolio_return
     )
+    return_credited = sum_series(mv_df[current_date]) - reserve_before_return
+
     mv_df, premium_df, gross_premium, entry_fee = apply_premiums(
         mv_df, premium_df, fund, current_date, time
     )
     mv_df, admin_fee = apply_admin_fees(mv_df, fund, current_date, time)
 
+    mv_before_mortality = mv_df
     mv_df, gv_df, premium_df, death, deaths = apply_mortality(
         mv_df, gv_df, premium_df, policies, society, current_date, time, rng
     )
+    exits = find_policy_exits(mv_before_mortality, mv_df, current_date, "Death")
+
+    mv_before_lapse = mv_df
     mv_df, gv_df, premium_df, surrender, lapses = apply_lapse(
         mv_df, gv_df, premium_df, fund, current_date, time, rng
     )
+    exits += find_policy_exits(mv_before_lapse, mv_df, current_date, "Lapse")
 
     in_force = int(mv_df.shape[0])
     cashflows: Dict[str, float] = {
+        "return_credited": float(return_credited),
         "gross_premium": float(gross_premium),
         "entry_fee": float(entry_fee),
         "admin_fee": float(admin_fee),
@@ -656,4 +788,4 @@ def process_unit_linked_period(
         "lapses": float(lapses),
         "in_force": float(in_force),
     }
-    return mv_df, gv_df, premium_df, cashflows
+    return mv_df, gv_df, premium_df, cashflows, exits

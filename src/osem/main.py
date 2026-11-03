@@ -34,9 +34,13 @@ from osem.MainLoop import (
     liquidate_positions,
     trade,
     portfolio_market_value,
+    holdings_market_value,
+    remaining_liability_payments,
     portfolio_total_return,
     process_unit_linked_period,
+    record_policy_history,
 )
+from osem.ReportClass import create_report
 from osem.logging_utils import get_file_logger
 
 logger = get_file_logger(__name__, "ALM.log", level=logging.DEBUG)
@@ -92,7 +96,8 @@ def main() -> None:
     5. Closes equity positions whose terminal value was paid out and matured bonds, then trades
        proportionally to drive the bank account toward zero
 
-    Results are written to Results.csv in the output folder set in ALM.ini.
+    Results are written to Results.csv in the output folder set in ALM.ini, along with
+    UL_Policy_History.csv in unit_linked mode and the Report.html run report.
 
     Parameters
     ----------
@@ -255,8 +260,10 @@ def main() -> None:
     )
 
     ul_reserve_t0 = None
+    policy_history: List[Dict[str, object]] = []
     if use_unit_linked and ul_ptf is not None:
         ul_reserve_t0 = ul_ptf.total_reserve(ul_mv_df, settings.modelling_date)
+        policy_history += record_policy_history(settings.modelling_date, ul_mv_df, [], ul_policies)
 
     ini_out: Dict[str, List[Optional[float]]] = {
         "Start cash": [None], 
@@ -282,6 +289,13 @@ def main() -> None:
         ],
         "UL deaths": [None],
         "UL lapses": [None],
+        "Equity market value": [holdings_market_value(eq_price_df, eq_units_df, settings.modelling_date)],
+        "Bond market value": [holdings_market_value(bd_price_df, bd_units_df, settings.modelling_date)],
+        "Cash before trade": [None],
+        "Remaining liability payments": [
+            None if use_unit_linked else remaining_liability_payments(liab_df)
+        ],
+        "UL return credited": [None],
         }
     
     summary_df = pd.DataFrame(data = ini_out, index=[settings.modelling_date]) 
@@ -363,6 +377,7 @@ def main() -> None:
             cash, liab_df, unique_liabilities_dates = process_expired_liab(unique_liabilities_dates, current_date, liab_df)
             
             summary_df.loc[current_date, "Liability cash flow"] = -float(cash)
+            summary_df.loc[current_date, "Remaining liability payments"] = remaining_liability_payments(liab_df)
             bank_account[current_date] -= cash
 
         # ------- CALCULATE GROWTH OF ASSET VALUE IN THIS PERIOD --------
@@ -399,7 +414,7 @@ def main() -> None:
         if use_unit_linked:
             assert ul_ptf is not None and ul_fund is not None and society is not None
             logger.info("Process unit-linked period (capitalize, premiums, fees, mortality, lapse)")
-            ul_mv_df, ul_gv_df, ul_premium_df, ul_cfs = process_unit_linked_period(
+            ul_mv_df, ul_gv_df, ul_premium_df, ul_cfs, ul_exits = process_unit_linked_period(
                 current_date=current_date,
                 previous_date=previous_date,
                 portfolio_return=portfolio_return,
@@ -417,6 +432,9 @@ def main() -> None:
             bank_account[current_date] -= ul_cfs["death"] + ul_cfs["surrender"]
             company_account[current_date] += ul_cfs["entry_fee"] + ul_cfs["admin_fee"]
 
+            policy_history += record_policy_history(current_date, ul_mv_df, ul_exits, ul_policies)
+
+            summary_df.loc[current_date, "UL return credited"] = ul_cfs["return_credited"]
             summary_df.loc[current_date, "UL gross premium cash flow"] = ul_cfs["gross_premium"]
             summary_df.loc[current_date, "UL entry fee cash flow"] = ul_cfs["entry_fee"]
             summary_df.loc[current_date, "UL admin fee cash flow"] = ul_cfs["admin_fee"]
@@ -443,6 +461,7 @@ def main() -> None:
         bd_units_df = liquidate_positions(units = bd_units_df, asset_ids = matured_bd_ids, current_date = current_date)
 
         logger.info("Trading of excess/deficit liquidity, rebalancing")
+        summary_df.loc[current_date, "Cash before trade"] = float(bank_account[current_date].iloc[0])
         # Proportional trading without factors
         eq_units_df, bd_units_df, bank_account = trade(
             current_date=current_date,
@@ -459,6 +478,8 @@ def main() -> None:
         summary_df.loc[current_date, "End market value"] = portfolio_market_value(
             eq_price_df, eq_units_df, bd_price_df, bd_units_df, current_date
         )
+        summary_df.loc[current_date, "Equity market value"] = holdings_market_value(eq_price_df, eq_units_df, current_date)
+        summary_df.loc[current_date, "Bond market value"] = holdings_market_value(bd_price_df, bd_units_df, current_date)
 
         previous_date = current_date
         prev_mkt_value = portfolio_market_value(
@@ -469,6 +490,15 @@ def main() -> None:
 
     logger.info("Main loop finished, saving results")
     summary_df.to_csv(os.path.join(conf.output_path, "Results.csv"))
+    if use_unit_linked:
+        # Listed so that the file keeps its header even when there are no policies
+        pd.DataFrame(
+            policy_history,
+            columns=["Date", "Policy_ID", "Is_Guaranteed", "Closing_MV", "Exit_Type", "Amount_Paid"],
+        ).to_csv(os.path.join(conf.output_path, "UL_Policy_History.csv"), index=False)
+    # After the csv files are saved, so a problem with the report cannot lose the results
+    logger.info("Create run report")
+    create_report(conf.output_path)
     logger.info("Run completed")
 
 if __name__ == "__main__":

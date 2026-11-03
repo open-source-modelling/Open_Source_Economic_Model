@@ -1,6 +1,8 @@
 /ALM.log
 /EquityClasses.log
 /BondClass.log
+/Output/Report.html
+/Output/UL_Policy_History.csv
 .ipynb_checkpoints/
 __pycache__/
 *.pyc

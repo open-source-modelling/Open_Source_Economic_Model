@@ -10,7 +10,7 @@ OSEM simulates, on an annual discrete timeline:
 2. Liability cash outflows
 3. Proportional rebalancing to absorb liquidity surpluses and deficits
 
-The entry point is `src/osem/main.py`. Configuration comes from `ALM.ini` and CSV files under `Input/`. Results are written to `Output/Results.csv`.
+The entry point is `src/osem/main.py`. Configuration comes from `ALM.ini` and CSV files under `Input/`. Results are written to `Output/Results.csv`, and summarised for readers in `Output/Report.html`.
 
 ## Architecture
 
@@ -81,6 +81,7 @@ flowchart TB
 
     setup --> preloop --> loop
     loop --> results[Output/Results.csv]
+    results --> report[Output/Report.html]
 ```
 
 ### Key files
@@ -100,6 +101,8 @@ flowchart TB
 | `src/osem/SocietyClass.py` | Mortality tables for unit-linked decrements |
 | `src/osem/TraceClass.py` | Optional call tracing (`tracer`); enabled via `ALM.ini` `[TRACE]` |
 | `src/osem/FrequencyClass.py` | Dividend/coupon frequency enums used by equity and bond classes |
+| `src/osem/ReportClass.py` | Builds and reconciles the run report from the saved csv files; no model logic |
+| `src/osem/report_template.html` / `src/osem/chart.umd.js` | Report page and the Chart.js copy built into it (both are package data in `pyproject.toml`) |
 | `pyproject.toml` | Package metadata, `src`-layout config, pytest `pythonpath` |
 | `ALM.ini` | Paths, logging, trace flags, intermediate output, input file names |
 | `Input/` | Portfolio CSVs, parameters, curves, liabilities, UL inputs |
@@ -145,7 +148,7 @@ Note: `Configuration` also stores paths for `input_curves`, `input_param_no_VA`,
 Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cashflow`):
 
 - **`cashflow`:** precomputed absolute cash flows from `Input/Liability_Cashflow.csv` (single aggregated row); expired via `process_expired_liab`
-- **`unit_linked`:** policy-level simulation from `Input/Unit_Linked_Policies.csv`, `Input/Unit_Linked_Fund.csv`, and `Input/mortality.csv` via `Society`; state in `ul_mv_df` / `ul_gv_df` / `ul_premium_df` (there is no separate active-flag matrix — a policy that dies or lapses simply has its row dropped from all three, see `apply_mortality` / `apply_lapse` in `MainLoop.py`); `process_unit_linked_period` after growth and before `trade()`; insurer fees go to `company_account` (not traded). See `Documentation/Unit_Linked_Methodology.md`
+- **`unit_linked`:** policy-level simulation from `Input/Unit_Linked_Policies.csv`, `Input/Unit_Linked_Fund.csv`, and `Input/mortality.csv` via `Society`; state in `ul_mv_df` / `ul_gv_df` / `ul_premium_df` (there is no separate active-flag matrix — a policy that dies or lapses simply has its row dropped from all three, see `apply_mortality` / `apply_lapse` in `MainLoop.py`, so `main.py` records each policy's path with `record_policy_history` as it goes); `process_unit_linked_period` after growth and before `trade()`; insurer fees go to `company_account` (not traded). See `Documentation/Unit_Linked_Methodology.md`
 
 ### Trading
 
@@ -161,12 +164,15 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
 | `set_dates_of_interest(modelling_date, end_date)` | Annual projection date schedule (anniversaries of the modelling date, last one = `end_date`) |
 | `sum_series(values)` | Add up a Series in order, keeping NaN visible in the total (`Series.sum` would skip it) |
 | `portfolio_market_value(eq_price, eq_units, bd_price, bd_units, as_of)` | Total invested assets MV at a date column |
+| `holdings_market_value(price, units, as_of)` | MV of the holdings in the given price and units tables at a date column; pass one asset class's tables to get that class's MV |
+| `remaining_liability_payments(cash_flows)` | Undiscounted total of liability flows not yet expired |
 | `portfolio_total_return(start_market_value, end_market_value, asset_income)` | Period total return including asset cash flows received; feeds UL capitalisation |
 | `process_expired_cf` / `process_expired_liab` | Expire cash flows, return cash amount and shrunk DataFrames |
 | `find_terminated_positions` / `liquidate_positions` | Identify equities whose terminal flow expired and bonds whose notional was repaid (call before `process_expired_cf`) and zero their units so the paid-out value is not also kept in MV |
 | `calculate_expired_dates` | Internal helper: dates on or before the deadline |
 | `trade` | Proportional buy/sell to balance `bank_account` toward zero |
 | `process_unit_linked_period` / `capitalize_policies` / `apply_premiums` / `apply_admin_fees` / `apply_mortality` / `apply_lapse` | Unit-linked period mechanics |
+| `find_policy_exits` / `record_policy_history` | Identify the policies a mortality or lapse step removed, and build the rows of `UL_Policy_History.csv` |
 
 ### Main loop steps (per `current_date`)
 
@@ -175,9 +181,11 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
    - Dividends (`div_df`), coupons (`cpn_df`), equity terminal (`ter_df`), bond notional (`not_df`) via `process_expired_cf`
    - Liabilities (`liab_df`) via `process_expired_liab` when `liability_mode=cashflow`
 3. Mark-to-market: apply equity growth using `eq_growth_df[modelling_date]` and `time_frac`; carry bond prices forward then reprice via `price_bond_portfolio`; record after-growth MV and the period total return (`portfolio_total_return`, which adds back the dividends, coupons and bond notionals credited in step 2; equity terminal flows are excluded because those equities are still in MV until liquidated in step 5 — matured bonds reprice to zero, so a price-only return would book their redemption as a loss)
-4. If `liability_mode=unit_linked`: `process_unit_linked_period` (capitalize, premiums, fees, mortality, lapse); update `bank_account` and `company_account`
-5. Liquidate equities whose terminal flow was paid and bonds that matured in step 2 (`liquidate_positions`), then proportional `trade()`
-6. Log period-end cash and end market value to `summary_df`; set `previous_date = current_date`; advance `proj_period`
+4. If `liability_mode=unit_linked`: `process_unit_linked_period` (capitalize, premiums, fees, mortality, lapse); update `bank_account` and `company_account`; record each policy's value and exit with `record_policy_history`
+5. Liquidate equities whose terminal flow was paid and bonds that matured in step 2 (`liquidate_positions`), record `Cash before trade`, then proportional `trade()`
+6. Log period-end cash, end market value and the equity and bond split to `summary_df`; set `previous_date = current_date`; advance `proj_period`
+
+After the loop, `main.py` saves `Results.csv` (and `UL_Policy_History.csv` in `unit_linked` mode), then calls `create_report`.
 
 ## Coding conventions
 
@@ -344,6 +352,14 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 - **pytest** with `@pytest.fixture` for instruments, curves, portfolios.
 - Tests named `test_<behaviour>`; fixtures build objects inline with realistic dates and `Frequency` enums.
 - Update `unit_tests/` when changing public behaviour.
+- `pytest` does not run the notebooks. When changing what a public function returns, also search `notebooks/` for its callers.
+
+### Run report
+
+- `ReportClass.py` only reads `Results.csv` and `UL_Policy_History.csv`, so a report can be rebuilt without running the model. Do not add model logic to it, or pass it live DataFrames from the main loop.
+- A value the report needs goes into `summary_df` first. Add new columns at the end, so existing columns keep their order.
+- `reconcile_results` checks that the displayed numbers add up. A failure logs a warning and shows a banner in the report; it does not stop the run. Add a check when adding a new balance.
+- The report must stay a single file that opens offline: no external scripts, stylesheets or fonts. To upgrade Chart.js, replace `src/osem/chart.umd.js` and keep its licence header.
 
 ### Checklist for new code
 
@@ -370,6 +386,8 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 | Unit-linked policies / fund | `Input/Unit_Linked_Policies.csv`, `Input/Unit_Linked_Fund.csv` (`unit_linked` mode) |
 | Mortality | `Input/mortality.csv` (used in `unit_linked` mode via `Society`) |
 | Output | `Output/Results.csv` (`summary_df`) |
+| Policy history | `Output/UL_Policy_History.csv` (`unit_linked` mode; one row per policy per date while in force, and one for its exit; not committed) |
+| Run report | `Output/Report.html` (single offline page built from the two files above; not committed) |
 
 `summary_df` columns written per modelling date:
 
@@ -384,6 +402,10 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 | `UL mortality cash flow` / `UL lapse cash flow` | Liquidation outflows (negative; UL mode) |
 | `UL reserve` / `Company account` | Active policy MV sum; insurer fee balance |
 | `UL policies in force` / `UL deaths` / `UL lapses` | Policy counts (UL mode) |
+| `Equity market value` / `Bond market value` | End-of-period MV by asset class; they add up to `End market value` |
+| `Cash before trade` | Bank account just before `trade()`; negative means assets are sold, positive means they are bought |
+| `Remaining liability payments` | Undiscounted liability flows not yet expired (cashflow mode) |
+| `UL return credited` | Portfolio return credited to policy accounts (UL mode) |
 
 ## Deeper documentation
 

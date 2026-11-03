@@ -13,6 +13,7 @@ from osem.MainLoop import (
     apply_mortality,
     apply_lapse,
     process_unit_linked_period,
+    record_policy_history,
 )
 
 
@@ -199,7 +200,7 @@ def test_dead_policy_not_resurrected_by_next_period_premium(policies, society, f
         def random(self):
             return 0.0
 
-    mv, gv, prem, cfs = process_unit_linked_period(
+    mv, gv, prem, cfs, _ = process_unit_linked_period(
         current_date=t1,
         previous_date=t0,
         portfolio_return=0.05,
@@ -222,7 +223,7 @@ def test_dead_policy_not_resurrected_by_next_period_premium(policies, society, f
         def random(self):
             return 0.99
 
-    mv, gv, prem, cfs2 = process_unit_linked_period(
+    mv, gv, prem, cfs2, _ = process_unit_linked_period(
         current_date=t2,
         previous_date=t1,
         portfolio_return=0.05,
@@ -254,7 +255,7 @@ def test_process_unit_linked_period_orchestrator(policies, fund, society):
         def random(self):
             return 0.99
 
-    mv, gv, prem, cfs = process_unit_linked_period(
+    mv, gv, prem, cfs, _ = process_unit_linked_period(
         current_date=current,
         previous_date=previous,
         portfolio_return=0.05,
@@ -285,7 +286,7 @@ def test_reproducibility_same_seed(policies, fund, society):
 
     def run_once(seed: int):
         mv, gv, prem = _state(previous, policies)
-        mv_out, _, _, cfs = process_unit_linked_period(
+        mv_out, _, _, cfs, _ = process_unit_linked_period(
             current_date=current,
             previous_date=previous,
             portfolio_return=0.05,
@@ -302,3 +303,73 @@ def test_reproducibility_same_seed(policies, fund, society):
         return cfs["deaths"], cfs["lapses"], list(mv_out.index)
 
     assert run_once(42) == run_once(42)
+
+
+class _FixedDraws:
+    """Returns the given draws in order, so a test can pick who dies and who lapses."""
+
+    def __init__(self, draws: list[float]):
+        self.draws = iter(draws)
+
+    def random(self) -> float:
+        return next(self.draws)
+
+
+def _run_period(policies, fund, society, draws: list[float]):
+    previous = date(2023, 4, 29)
+    current = date(2024, 4, 29)
+    mv, gv, prem = _state(previous, policies)
+    return (current, *process_unit_linked_period(
+        current_date=current,
+        previous_date=previous,
+        portfolio_return=0.05,
+        time=1.0,
+        mv_df=mv,
+        gv_df=gv,
+        premium_df=prem,
+        policies=policies,
+        fund=fund,
+        society=society,
+        random_seed=42,
+        proj_period=1,
+        rng=_FixedDraws(draws),
+    ))
+
+
+def test_return_credited_is_opening_reserve_times_return(policies, fund, society):
+    *_, cfs, _ = _run_period(policies, fund, society, [0.99, 0.99, 0.99, 0.99])
+    assert cfs["return_credited"] == pytest.approx(300000.0 * 0.05)
+
+
+def test_exits_record_each_death_and_lapse(policies, fund, society):
+    # Mortality draws for policies 1 and 2, then a lapse draw for the survivor, policy 2
+    _, _, _, _, cfs, exits = _run_period(policies, fund, society, [0.0, 0.99, 0.0])
+    assert [(e.policy_id, e.exit_type) for e in exits] == [(1, "Death"), (2, "Lapse")]
+    assert exits[0].amount_paid == pytest.approx(cfs["death"])
+    assert exits[1].amount_paid == pytest.approx(cfs["surrender"])
+
+
+def test_no_exits_when_all_survive(policies, fund, society):
+    *_, exits = _run_period(policies, fund, society, [0.99, 0.99, 0.99, 0.99])
+    assert exits == []
+
+
+def test_reserve_movement_adds_up(policies, fund, society):
+    current, mv, _, _, cfs, _ = _run_period(policies, fund, society, [0.0, 0.99, 0.99])
+    net_premium = cfs["gross_premium"] - cfs["entry_fee"]
+    closing = 300000.0 + cfs["return_credited"] + net_premium - cfs["admin_fee"] - cfs["death"] - cfs["surrender"]
+    assert closing == pytest.approx(float(mv[current].sum()))
+
+
+def test_record_policy_history_keeps_exited_policy(policies, fund, society):
+    current, mv, _, _, _, exits = _run_period(policies, fund, society, [0.0, 0.99, 0.99])
+    rows = record_policy_history(current, mv, exits, policies)
+    by_policy = {row["Policy_ID"]: row for row in rows}
+
+    assert set(by_policy) == {1, 2}
+    assert by_policy[1]["Exit_Type"] == "Death"
+    assert by_policy[1]["Closing_MV"] == 0.0
+    assert by_policy[1]["Amount_Paid"] == pytest.approx(exits[0].amount_paid)
+    assert by_policy[2]["Exit_Type"] == ""
+    assert by_policy[2]["Closing_MV"] == pytest.approx(float(mv[current].loc[2]))
+    assert by_policy[2]["Is_Guaranteed"] is True
