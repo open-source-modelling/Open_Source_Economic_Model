@@ -193,7 +193,7 @@ Follow these patterns when adding or changing code. Prefer the style in `MainLoo
 
 ### Portfolio and asset structure
 
-- Build portfolios as `dict[int, Asset]` keyed by `asset_id`, then pass to a portfolio wrapper:
+- Build portfolios as a dict keyed by `asset_id` (`dict[int, EquityShare]`, `dict[str, FixedCouponBond]`), then pass to a portfolio wrapper:
 
   ```python
   eq_input = {equity_share.asset_id: equity_share for equity_share in get_equity_share(filename)}
@@ -201,6 +201,8 @@ Follow these patterns when adding or changing code. Prefer the style in `MainLoo
   ```
 
   For bonds, build the dict with `bonds_by_asset_id(...)` instead of a comprehension. A comprehension keeps the last of two bonds with the same `asset_id` and drops the other without a warning; `bonds_by_asset_id` raises.
+
+- Bond asset ids are strings, so a bond portfolio is a `dict[str, FixedCouponBond]`. A corporate bond's id is its ISIN; the illustrative government bonds use `5001` to `5004`, read as text. Equity and cash ids stay `int`. `FixedCouponBond._validate_bond_terms` rejects an empty or non-string id. The `MainLoop.py` helpers that serve both asset classes (`create_cashflow_dataframe`, `find_terminated_positions`, `liquidate_positions`) take either, typed with `AssetId` / `AssetIdT`.
 
 - Portfolio wrappers expose a consistent API:
 
@@ -245,7 +247,7 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 
 - Single-object loaders: `get_configuration()`, `get_settings()`, `get_cash()`, `get_liability()`, `get_unit_linked_fund()`, `get_society()`.
 - Row iterators: `get_equity_share()`, `get_corporate_bonds()`, `get_government_bonds()`, `get_unit_linked_policies()` → `Iterator` (one instance per CSV row).
-- The bond loaders call `check_asset_type()` on every row and raise if its `Asset_Type` is not `Corporate_Bond` or `Government_Bond` respectively, so a row in the wrong file fails loudly.
+- The bond loaders call `check_asset_type()` on every row and raise if its `Asset_Type` is not `Corporate_Bond` or `Government_Bond` respectively, so a row in the wrong file fails loudly. They read `Asset_ID` as text (stripped of spaces), not `int`.
 - Use `encoding="utf-8-sig"`, `csv.DictReader`, dates as `'%d/%m/%Y'`.
 - CSV column names are `Pascal_Case` (`Asset_ID`, `Market_Price`, etc.).
 - Do not read CSVs inline in `main.py` — add a `get_*` function in `ImportData.py`.
@@ -383,8 +385,9 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 |------|--------|
 | Configuration | `ALM.ini` → `Configuration` |
 | Run parameters | `Input/Parameters.csv` → `Settings` |
-| Portfolios | `Input/Cash_Portfolio.csv`, `Input/Equity_Portfolio.csv`, `Input/Corporate_Bond_Portfolio.csv` |
-| Government bonds | `Input/Government_Bond_Portfolio.csv` (illustrative positions, not real securities; market prices set on the t0 curve so they calibrate to z-spreads of about +0.6% Slovenia, −0.5% Germany, +0.2% France and +1.3% Italy) |
+| Portfolios | `Input/Cash_Portfolio.csv`, `Input/Equity_Portfolio.csv` |
+| Corporate bonds | `Input/Corporate_Bond_Portfolio.csv`: 201 real euro fixed-coupon bullet bonds from the iShares Core € Corp Bond UCITS ETF holdings of 30 Oct 2026. They were picked from the bonds already issued at the modelling date, keeping the fund's sector mix with at most two bonds per issuer, and scaled to a market value of 330,400. Market prices are set on the t0 curve at each bond's z-spread observed on 30 Oct 2026 (against the EIOPA EUR curve of 30 Sep 2026), so the calibration recovers those spreads. `Z_Spread` holds the sector median as the starting value, `Default_Probability` is the risk-neutral rate z / (1 − `Recovery_Rate`), and `Issue_Date` is the start of the first coupon period. `Asset_ID` is the bond's ISIN. `Issuer` is for reference; the loader does not read it |
+| Government bonds | `Input/Government_Bond_Portfolio.csv` (illustrative positions, not real securities, with asset ids `5001` to `5004`; market prices set on the t0 curve so they calibrate to z-spreads of about +0.6% Slovenia, −0.5% Germany, +0.2% France and +1.3% Italy) |
 | EIOPA curves | `Input/Param_no_VA.csv`, `Input/Curves_no_VA.csv` (paths in `Settings`) |
 | Sector spreads | `Input/Sector_Spread.csv` (configured in `ALM.ini`; not yet used in main loop) |
 | Liabilities | `Input/Liability_Cashflow.csv` (`cashflow` mode) |

@@ -4,11 +4,16 @@ import pandas as pd
 import datetime
 import datetime as dt
 import random
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, Optional, TypeVar, Union, cast
 from dateutil.relativedelta import relativedelta
 from osem.SocietyClass import Society
 from osem.LiabilityClasses import Liability
 from osem.UnitLinkedClasses import PolicyExit, UnitLinkedFund, UnitLinkedPolicy
+
+# Equities are keyed by an int asset id and bonds by a str one (the ISIN for a real bond), so the
+# helpers that serve both asset classes accept either.
+AssetId = Union[int, str]
+AssetIdT = TypeVar("AssetIdT", int, str)
 
 def sum_series(values: pd.Series) -> float:
     """
@@ -27,14 +32,14 @@ def sum_series(values: pd.Series) -> float:
     """
     return float(sum(cast(List[float], values.tolist())))
 
-def create_cashflow_dataframe(cf_dict: dict[int, dict[datetime.date, float]], unique_dates: list[datetime.date]) -> pd.DataFrame:
+def create_cashflow_dataframe(cf_dict: dict[AssetIdT, dict[datetime.date, float]], unique_dates: list[datetime.date]) -> pd.DataFrame:
     """
     Create a dataframe with dates as columns and equity shares as rows. If a cell has a non zero value, that
     means that there is a cash flow from that particular share at that time.
 
     Parameters
     ----------
-    cf_dict: dict[int, dict[datetime.date, float]]
+    cf_dict: dict[AssetIdT, dict[datetime.date, float]]
         Dictionary of date/cash-flow pairs for each security
     unique_dates: list[datetime.date]
         List of all relevant dates for the modelling run
@@ -261,7 +266,7 @@ def process_expired_cf(unique_dates: list[datetime.date], expiration_date: dt.da
         unique_dates = [d for d in unique_dates if d not in expired_dates]
     return cash, cash_flows, unique_dates
 
-def find_terminated_positions(unique_dates: list[datetime.date], expiration_date: dt.date, cash_flows: pd.DataFrame) -> list[int]:
+def find_terminated_positions(unique_dates: list[datetime.date], expiration_date: dt.date, cash_flows: pd.DataFrame) -> list[AssetId]:
     """
     Find the assets whose terminal cash flow expires on or before the expiration date.
     Must be called before process_expired_cf, which drops the expired columns.
@@ -277,7 +282,7 @@ def find_terminated_positions(unique_dates: list[datetime.date], expiration_date
 
     Returns
     -------
-    list[int]
+    list[AssetId]
         Asset ids with a non-zero terminal cash flow in the expired window.
     """
 
@@ -288,7 +293,7 @@ def find_terminated_positions(unique_dates: list[datetime.date], expiration_date
     has_terminal: npt.NDArray[np.bool_] = np.any(np.asarray(cash_flows[expired_dates], dtype=np.float64) != 0, axis=1)
     return list(cash_flows.index[has_terminal])
 
-def liquidate_positions(units: pd.DataFrame, asset_ids: list[int], current_date: dt.date) -> pd.DataFrame:
+def liquidate_positions(units: pd.DataFrame, asset_ids: list[AssetId], current_date: dt.date) -> pd.DataFrame:
     """
     Set the units of the given assets to zero at the current date. Used after a terminal
     cash flow has been credited to the bank account, so the position is not also kept in
@@ -298,7 +303,7 @@ def liquidate_positions(units: pd.DataFrame, asset_ids: list[int], current_date:
     ----------
     units : pd.DataFrame
         Holdings per asset_id with date columns.
-    asset_ids : list[int]
+    asset_ids : list[AssetId]
         Assets whose positions are sold.
     current_date : dt.date
         Modelling date column to update.

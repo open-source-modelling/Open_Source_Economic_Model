@@ -33,7 +33,7 @@ def maturing_bond() -> CorpBond:
     # Annual 3% bond at par that pays its last coupon and notional on 1/3/2024,
     # inside the first projection year (29/4/2023 -> 29/4/2024).
     return CorpBond(
-        asset_id=7,
+        asset_id="XS0000000007",
         nace="A1.4.5",
         issuer="Test Issuer",
         issue_date=date(2020, 3, 1),
@@ -106,7 +106,7 @@ def test_bond_maturity_is_not_reported_as_loss(maturing_bond: CorpBond):
     end_market_value = portfolio_market_value(eq_price_df, eq_units_df, bd_price_df, bd_units_df, t1)
 
     # The mechanism behind the bug: no flows left, so the bond reprices to zero
-    assert bd_price_df.loc[7, t1] == pytest.approx(0.0)
+    assert bd_price_df.loc["XS0000000007", t1] == pytest.approx(0.0)
     assert end_market_value == pytest.approx(0.0)
     assert end_market_value / start_market_value - 1 == pytest.approx(-1.0)
 
@@ -115,7 +115,7 @@ def test_bond_maturity_is_not_reported_as_loss(maturing_bond: CorpBond):
     assert portfolio_total_return(start_market_value, end_market_value, asset_income) == pytest.approx(0.03)
 
     # The matured position is closed rather than left with units at a zero price
-    assert matured_bd_ids == [7]
+    assert matured_bd_ids == ["XS0000000007"]
     bd_units_df = liquidate_positions(units=bd_units_df, asset_ids=matured_bd_ids, current_date=t1)
-    assert bd_units_df.loc[7, t1] == 0.0
-    assert bd_units_df.loc[7, t0] == 10
+    assert bd_units_df.loc["XS0000000007", t1] == 0.0
+    assert bd_units_df.loc["XS0000000007", t0] == 10

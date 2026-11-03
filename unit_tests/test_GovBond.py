@@ -31,7 +31,7 @@ END_DATE = date(2073, 4, 29)
 def gov_bond() -> GovBond:
     # Annual 1% coupon paid every 30 June until 2030
     return GovBond(
-        asset_id=5001,
+        asset_id="5001",
         issuer_country="Slovenia",
         issue_date=date(2020, 6, 30),
         maturity_date=date(2030, 6, 30),
@@ -48,7 +48,7 @@ def gov_bond() -> GovBond:
 def corp_bond() -> CorpBond:
     # Annual 3% coupon paid every 28 April until 2030, priced at par
     return CorpBond(
-        asset_id=1234,
+        asset_id="XS0000001234",
         nace="A1.4.5",
         issuer="Test Issuer",
         issue_date=date(2020, 4, 28),
@@ -93,7 +93,7 @@ def _calibrate(bond: FixedCouponBond, curve: FlatCurve) -> float:
 
 def test_construct(gov_bond: GovBond):
     assert isinstance(gov_bond, FixedCouponBond)
-    assert gov_bond.asset_id == 5001
+    assert gov_bond.asset_id == "5001"
     assert gov_bond.issuer_country == "Slovenia"
     assert gov_bond.issue_date == date(2020, 6, 30)
     assert gov_bond.maturity_date == date(2030, 6, 30)
@@ -113,7 +113,9 @@ def test_is_frozen(gov_bond: GovBond):
 @pytest.mark.parametrize(
     "changes, message",
     [
-        ({"asset_id": 0}, "Asset ID must be greater than 0"),
+        ({"asset_id": ""}, "Asset ID must be a non-empty string"),
+        ({"asset_id": "   "}, "Asset ID must be a non-empty string"),
+        ({"asset_id": 5001}, "Asset ID must be a non-empty string"),  # Bond ids were integers before ISINs
         ({"coupon_rate": -0.01}, "Coupon rate cannot be negative"),
         ({"coupon_rate": 1.5}, "Coupon rate cannot be greater than 1"),
         ({"units": 0}, "Units must be greater than 0"),
@@ -211,11 +213,11 @@ def test_asset_ids_of_selects_one_bond_type(gov_bond: GovBond, corp_bond: CorpBo
 def test_bonds_by_asset_id_rejects_an_id_used_by_a_corporate_and_a_government_bond(gov_bond: GovBond, corp_bond: CorpBond):
     clash = replace(gov_bond, asset_id=corp_bond.asset_id)
 
-    with pytest.raises(ValueError, match="Asset ID 1234 is used by two bonds \\(CorpBond and GovBond\\)"):
+    with pytest.raises(ValueError, match="Asset ID XS0000001234 is used by two bonds \\(CorpBond and GovBond\\)"):
         bonds_by_asset_id([corp_bond, clash])
 
 
 def test_bonds_by_asset_id_rejects_a_repeated_id_in_one_file(corp_bond: CorpBond):
     # A dict comprehension would keep the second bond and drop the first without a warning
-    with pytest.raises(ValueError, match="Asset ID 1234"):
+    with pytest.raises(ValueError, match="Asset ID XS0000001234"):
         bonds_by_asset_id([corp_bond, replace(corp_bond, units=1)])

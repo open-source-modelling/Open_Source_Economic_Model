@@ -37,7 +37,7 @@ END_DATE = date(2033, 4, 29)
 def par_bond() -> CorpBond:
     # Annual 3% coupon paid every 28 April until 2030; at par on a flat 3% curve with no spread.
     return CorpBond(
-        asset_id=11,
+        asset_id="XS0000000011",
         nace="A1.4.5",
         issuer="Test Issuer",
         issue_date=date(2020, 4, 28),
@@ -93,7 +93,7 @@ def test_par_bond_stays_at_par_after_one_year(par_bond: CorpBond):
 
     # Coupon dates (28 April) fall a day before the valuation anniversaries and year fractions
     # use 365.25 days, which leaves a tiny residual, hence the tolerance
-    assert bd_price_df.loc[11, T1] == pytest.approx(100.0, abs=0.05)
+    assert bd_price_df.loc["XS0000000011", T1] == pytest.approx(100.0, abs=0.05)
 
 
 def test_repricing_discounts_from_valuation_date(par_bond: CorpBond):

@@ -6,7 +6,7 @@ import dataclasses
 
 @pytest.fixture
 def corp_bond_1() -> CorpBond:
-    asset_id = 1
+    asset_id = "XS0000000001"
     nace = "AB.2"
     issuer = "Test Issuer"
     issue_date = datetime.date(2015, 12, 1)
@@ -46,7 +46,7 @@ def corp_bond_1() -> CorpBond:
 
 @pytest.fixture()
 def corp_bond_2() -> CorpBond:
-    asset_id = 2
+    asset_id = "XS0000000002"
     nace = "AB.3"
     issue_date = datetime.date(2016, 7, 1)
     issuer = "Test Issuer"
@@ -108,7 +108,7 @@ def test_add_to_non_empty_portfolio(corp_bond_1: CorpBond, corp_bond_2: CorpBond
     corporate_bond_portfolio.add(corp_bond_1)
     corporate_bond_portfolio.add(corp_bond_2)
 
-    asset_id = 3
+    asset_id = "XS0000000003"
     nace = "AB.4"
     issue_date = datetime.date(2012, 2, 1)
     issuer = "Test Issuer"
@@ -196,7 +196,7 @@ def test_create_maturity_cashflow_multiple_bonds(corp_bond_1: CorpBond, corp_bon
 
 
 def test_create_maturity_cashflow_sums_notionals_on_same_date(corp_bond_1: CorpBond, corp_bond_2: CorpBond):
-    same_maturity_bond = dataclasses.replace(corp_bond_2, asset_id=3, maturity_date=corp_bond_1.maturity_date, notional_amount=250)
+    same_maturity_bond = dataclasses.replace(corp_bond_2, asset_id="XS0000000003", maturity_date=corp_bond_1.maturity_date, notional_amount=250)
 
     corporate_bond_portfolio = BondPortfolio()
     corporate_bond_portfolio.add(corp_bond_1)

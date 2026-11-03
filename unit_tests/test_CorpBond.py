@@ -6,7 +6,7 @@ import pytest
 
 @pytest.fixture
 def corp_bond() -> CorpBond:
-    asset_id = 1
+    asset_id = "XS0000000001"
     nace = "AB.2"
     issuer = "Test Issuer"
     issue_date = datetime.date(2015, 12, 1)

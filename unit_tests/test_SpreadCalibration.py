@@ -42,7 +42,7 @@ def curve() -> FlatCurve:
 def bond() -> CorpBond:
     # Annual 3% coupon paid every 28 April until 2030, priced at par.
     return CorpBond(
-        asset_id=11,
+        asset_id="XS0000000011",
         nace="A1.4.5",
         issuer="Test Issuer",
         issue_date=date(2020, 4, 28),

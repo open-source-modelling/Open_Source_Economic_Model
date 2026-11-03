@@ -22,7 +22,7 @@ class FixedCouponBond:
     instruments that inherit from it. The annotations below only tell the type checker which
     attributes the methods read.
     """
-    asset_id: int
+    asset_id: str  # The ISIN for a real bond; any unique text for an illustrative one
     issue_date: date
     maturity_date: date
     coupon_rate: float  # Rate paid on each coupon date (per payment, not annualised); see coupon_amount
@@ -48,12 +48,15 @@ class FixedCouponBond:
         Raises
         ------
         ValueError
-            If asset_id, units or notional_amount is not greater than 0, coupon_rate is outside
-            [0, 1], market_price is negative, frequency is not supported, or maturity_date is not
-            after issue_date
+            If asset_id is not a non-empty string, units or notional_amount is not greater than
+            0, coupon_rate is outside [0, 1], market_price is negative, frequency is not
+            supported, or maturity_date is not after issue_date
         """
-        if self.asset_id<=0:
-            raise ValueError("Asset ID must be greater than 0")
+        # Read as object so the type check below is not dismissed as redundant: callers written
+        # when bond ids were integers may still pass one.
+        asset_id: object = self.asset_id
+        if not isinstance(asset_id, str) or not asset_id.strip():
+            raise ValueError(f"Asset ID must be a non-empty string, such as the bond's ISIN, not {asset_id!r}")
         if self.coupon_rate < 0:
             raise ValueError("Coupon rate cannot be negative")
         if self.coupon_rate > 1:
@@ -357,7 +360,7 @@ class CorpBond(FixedCouponBond):
     probability are read from the input file but not used in pricing yet: like a GovBond, it is
     priced on the risk free curve plus the z-spread calibrated to its market price.
     """
-    asset_id: int
+    asset_id: str
     nace: str
     issuer: Optional[str]
     issue_date: date
@@ -412,7 +415,7 @@ class GovBond(FixedCouponBond):
     probability. A CorpBond is priced the same way: it holds those fields, but its pricing does not
     use them yet. The bond is assumed to be in the currency of the run's risk free curve.
     """
-    asset_id: int
+    asset_id: str
     issuer_country: str
     issue_date: date
     maturity_date: date
@@ -446,7 +449,7 @@ class GovBond(FixedCouponBond):
             raise ValueError("Issuer country cannot be empty")
 
 
-def bonds_by_asset_id(bonds: Iterable[FixedCouponBond]) -> Dict[int, FixedCouponBond]:
+def bonds_by_asset_id(bonds: Iterable[FixedCouponBond]) -> Dict[str, FixedCouponBond]:
     """
     Key bond positions by asset_id, ready for BondPortfolio. Corporate and government bonds share
     the bond DataFrames, which are indexed by asset_id, so an id can be used only once, within an
@@ -460,7 +463,7 @@ def bonds_by_asset_id(bonds: Iterable[FixedCouponBond]) -> Dict[int, FixedCoupon
 
     Returns
     -------
-    Dict[int, FixedCouponBond]
+    Dict[str, FixedCouponBond]
         The bonds keyed by asset_id, in the order given
 
     Raises
@@ -468,7 +471,7 @@ def bonds_by_asset_id(bonds: Iterable[FixedCouponBond]) -> Dict[int, FixedCoupon
     ValueError
         If two bonds have the same asset_id
     """
-    by_id: Dict[int, FixedCouponBond] = {}
+    by_id: Dict[str, FixedCouponBond] = {}
     for bond in bonds:
         if bond.asset_id in by_id:
             raise ValueError(
@@ -481,13 +484,13 @@ def bonds_by_asset_id(bonds: Iterable[FixedCouponBond]) -> Dict[int, FixedCoupon
 
 
 class BondPortfolio():
-    def __init__(self, bonds: Optional[Dict[int, FixedCouponBond]] = None):
+    def __init__(self, bonds: Optional[Dict[str, FixedCouponBond]] = None):
         """
         Initialize the BondPortfolio instance with the given bonds
 
         Parameters
         ----------
-        bonds: Optional[Dict[int, FixedCouponBond]]
+        bonds: Optional[Dict[str, FixedCouponBond]]
             The bond instances, keyed by asset_id. If None, the portfolio starts empty.
 
         Returns
@@ -495,7 +498,7 @@ class BondPortfolio():
         None
         """
 
-        self.bonds: Dict[int, FixedCouponBond] = bonds if bonds is not None else {}
+        self.bonds: Dict[str, FixedCouponBond] = bonds if bonds is not None else {}
 
     def is_empty(self)-> bool:
         """
@@ -523,7 +526,7 @@ class BondPortfolio():
         """
         self.bonds.update({bond.asset_id: bond})
 
-    def asset_ids_of(self, bond_type: Type[FixedCouponBond]) -> List[int]:
+    def asset_ids_of(self, bond_type: Type[FixedCouponBond]) -> List[str]:
         """
         List the asset ids of the bonds of one type. All bond types share the bond DataFrames, so
         these ids select the rows of that type in them.
@@ -536,7 +539,7 @@ class BondPortfolio():
 
         Returns
         -------
-        List[int]
+        List[str]
             The asset ids of the bonds of that type, in portfolio order
         """
         return [asset_id for asset_id, bond in self.bonds.items() if isinstance(bond, bond_type)]
@@ -573,7 +576,7 @@ class BondPortfolio():
                     coupons.update({coupon_date:bond.coupon_amount()})
         return coupons
 
-    def create_coupon_flows(self, modelling_date: date, end_date: date) -> Dict[int, Dict[date, float]]:
+    def create_coupon_flows(self, modelling_date: date, end_date: date) -> Dict[str, Dict[date, float]]:
         """
         Create a dictionary with the dates at which the coupons are paid out and the amounts per
         unit for each bond in the portfolio, for dates on or after the modelling date
@@ -590,11 +593,11 @@ class BondPortfolio():
 
         Returns
         -------
-        all_coupons: Dict[int, Dict[date, float]]
+        all_coupons: Dict[str, Dict[date, float]]
             A dictionary keyed by asset_id. Each value is a dictionary with the coupon dates as
             keys and the coupon amounts per unit as values.
         """
-        all_coupons: Dict[int, Dict[date, float]] = {}
+        all_coupons: Dict[str, Dict[date, float]] = {}
         bond: FixedCouponBond
         for asset_id in self.bonds:
             bond = self.bonds[asset_id]  # Select one asset position
@@ -602,7 +605,7 @@ class BondPortfolio():
             all_coupons[asset_id] = coupons
         return all_coupons
 
-    def create_maturity_flows(self, terminal_date: date) -> Dict[int, Dict[date, float]]:
+    def create_maturity_flows(self, terminal_date: date) -> Dict[str, Dict[date, float]]:
         """
         Create a dictionary with the date at which each bond repays its notional and the amount
         per unit. If the maturity is after the end of the modelling window, the bond repays the
@@ -617,12 +620,12 @@ class BondPortfolio():
 
         Returns
         -------
-        all_maturity: Dict[int, Dict[date, float]]
+        all_maturity: Dict[str, Dict[date, float]]
             A dictionary keyed by asset_id. Each value is a dictionary with the repayment date as
             the key and the notional amount per unit as the value.
         """
 
-        all_maturity: Dict[int, Dict[date, float]] = {}
+        all_maturity: Dict[str, Dict[date, float]] = {}
         principals: Dict[date, float] = {}
         bond: FixedCouponBond
 
@@ -633,7 +636,7 @@ class BondPortfolio():
         return all_maturity
 
 
-    def unique_dates_profile(self, cash_flow_profile: Dict[int, Dict[date, float]]) -> List[date]:
+    def unique_dates_profile(self, cash_flow_profile: Dict[str, Dict[date, float]]) -> List[date]:
         """
         Create a sorted list of dates at which there is a cash-flow event in any of the assets
         inside the portfolio.
@@ -642,7 +645,7 @@ class BondPortfolio():
         ----------
         self: BondPortfolio instance
             The BondPortfolio instance with populated portfolio.
-        cash_flow_profile: Dict[int, Dict[date, float]]
+        cash_flow_profile: Dict[str, Dict[date, float]]
             A dictionary keyed by asset_id, containing the date and size of each cash flow of
             that asset
 
@@ -682,7 +685,7 @@ class BondPortfolio():
 
         market_price_tmp: List[float] = []
         zspread_tmp: List[float] = []
-        asset_id_tmp: List[int] = []
+        asset_id_tmp: List[str] = []
         units_tmp: List[float] = []
 
         for key in asset_keys:
@@ -760,7 +763,7 @@ class BondPortfolio():
         pd.DataFrame
             bond_price_df with the prices for date_of_interest.
         """
-        asset_id: int
+        asset_id: str
         for asset_id in coupon_df.index:
             coupons = cast(Dict[date, float], coupon_df.loc[asset_id].to_dict())
             notional = cast(Dict[date, float], notional_df.loc[asset_id].to_dict())

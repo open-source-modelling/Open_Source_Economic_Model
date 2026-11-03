@@ -175,7 +175,8 @@ def check_asset_type(row: Dict[str, str], expected: str, filename: str) -> None:
 
 def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
     """
-    Load the corporate bond input file into a CorpBond generator.
+    Load the corporate bond input file into a CorpBond generator. Asset_ID is read as text, as it
+    holds the bond's ISIN.
 
     Parameters
     ----------
@@ -197,7 +198,7 @@ def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
         reader = csv.DictReader(csv_file)
         for row in reader:
             check_asset_type(row, "Corporate_Bond", filename)
-            corp_bond = CorpBond(asset_id=int(row["Asset_ID"]),
+            corp_bond = CorpBond(asset_id=row["Asset_ID"].strip(),
                                  nace=row["NACE"],
                                  issuer=None,
                                  issue_date=datetime.strptime(row["Issue_Date"], "%d/%m/%Y").date(),
@@ -218,7 +219,8 @@ def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
 
 def get_government_bonds(filename: str) -> Iterator[GovBond]:
     """
-    Load the government bond input file into a GovBond generator.
+    Load the government bond input file into a GovBond generator. Asset_ID is read as text, like
+    the corporate bond ids, because both bond types share the bond DataFrames.
 
     Parameters
     ----------
@@ -240,7 +242,7 @@ def get_government_bonds(filename: str) -> Iterator[GovBond]:
         reader = csv.DictReader(csv_file)
         for row in reader:
             check_asset_type(row, "Government_Bond", filename)
-            gov_bond = GovBond(asset_id=int(row["Asset_ID"]),
+            gov_bond = GovBond(asset_id=row["Asset_ID"].strip(),
                                issuer_country=row["Issuer_Country"],
                                issue_date=datetime.strptime(row["Issue_Date"], "%d/%m/%Y").date(),
                                maturity_date=datetime.strptime(row["Maturity_Date"], "%d/%m/%Y").date(),

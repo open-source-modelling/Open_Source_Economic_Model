@@ -16,7 +16,7 @@ GOV_HEADER = (
     "Asset_ID,Asset_Type,Issuer_Country,Issue_Date,Maturity_Date,Notional_Amount,Coupon_Rate,Z_Spread,"
     "Frequency,Units,Market_Price\n"
 )
-CORP_ROW = "1234,{asset_type},A1.4.5,3/12/2021,12/12/2026,100,0.03,0,0,0.01,0,1,0.4,0.03,100,94\n"
+CORP_ROW = "XS0000001234,{asset_type},A1.4.5,3/12/2021,12/12/2026,100,0.03,0,0,0.01,0,1,0.4,0.03,100,94\n"
 GOV_ROW = "5004,{asset_type},Italy,01/09/2020,01/09/2030,100,0.0075,0,2,120,83.78\n"
 
 # Every [INPUT] key that get_configuration requires, without government_bonds
@@ -86,7 +86,7 @@ def test_get_corporate_bonds(tmp_path):
 
     assert len(bonds) == 1
     assert isinstance(bonds[0], CorpBond)
-    assert bonds[0].asset_id == 1234
+    assert bonds[0].asset_id == "XS0000001234"
     assert bonds[0].maturity_date == date(2026, 12, 12)
 
 
@@ -99,7 +99,7 @@ def test_get_government_bonds(tmp_path):
     assert len(bonds) == 1
     bond = bonds[0]
     assert isinstance(bond, GovBond)
-    assert bond.asset_id == 5004
+    assert bond.asset_id == "5004"
     assert bond.issuer_country == "Italy"
     assert bond.issue_date == date(2020, 9, 1)
     assert bond.maturity_date == date(2030, 9, 1)
@@ -123,7 +123,7 @@ def test_get_corporate_bonds_rejects_a_government_row(tmp_path):
     bond_file = tmp_path / "Corporate_Bond_Portfolio.csv"
     bond_file.write_text(CORP_HEADER + CORP_ROW.format(asset_type="Government_Bond"))
 
-    with pytest.raises(ValueError, match="Asset 1234 .* has Asset_Type Government_Bond"):
+    with pytest.raises(ValueError, match="Asset XS0000001234 .* has Asset_Type Government_Bond"):
         list(get_corporate_bonds(str(bond_file)))
 
 
