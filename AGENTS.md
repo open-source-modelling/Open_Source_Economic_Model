@@ -126,10 +126,10 @@ flowchart TB
 | `[TRACE]` | `Configuration.trace_enabled` → `tracer.enabled` in `main.py` |
 | `[LOGGING]` | `logging_level`: the level of every log file in `Logs/` and of the console, applied by `main.py` with `set_log_level`. An older `ALM.ini` may still set `file_name`; it is ignored, as the log file names are set in code |
 | `[INTERMEDIATE]` | Optional intermediate CSV output paths (`intermediate_enabled`, `intermediate_path`) |
-| `[INPUT]` | Input/output folder paths and file names (`input_*`, `output_path`). `corporate_bonds` names the corporate bond file (`input_corporate_bond_portfolio`); an older `ALM.ini` that calls it `bonds` still loads. `government_bonds` is optional: without it `input_government_bond_portfolio` stays empty |
+| `[INPUT]` | Input/output folder paths and file names (`input_*`, `output_path`). `corporate_bonds` names the corporate bond file (`input_corporate_bond_portfolio`); an older `ALM.ini` that calls it `bonds` still loads. `government_bonds` is optional: without it `input_government_bond_portfolio` stays empty. There is no `curves` key: the curve file is named in `Parameters.csv`, and an older `ALM.ini` that still has one loads and ignores it |
 | `[BASE]` (optional) | Override `base_folder`; defaults to current working directory |
 
-Note: `Configuration` also stores paths for `input_curves`, `input_param_no_VA`, and `input_spread`, but the main run loads EIOPA files via paths in `Settings` (`Parameters.csv`), not those `Configuration` fields directly.
+Note: `Configuration` also stores paths for `input_param_no_VA` and `input_spread`, but the main run loads EIOPA files via paths in `Settings` (`Parameters.csv`), not those `Configuration` fields directly.
 
 ## Methodology principles
 

@@ -23,7 +23,7 @@ GOV_ROW = "5004,{asset_type},Italy,01/09/2020,01/09/2030,100,0.0075,0,2,120,83.7
 INPUT_SECTION = (
     "[BASE]\nbase_folder = base\n"
     "[INPUT]\nfile_path = Input\ncorporate_bonds = Corporate_Bond_Portfolio.csv\ncash = Cash_Portfolio.csv\n"
-    "curves = Curves_no_VA.csv\nequities = Equity_Portfolio.csv\nparam_no_VA = Param_no_VA.csv\n"
+    "equities = Equity_Portfolio.csv\nparam_no_VA = Param_no_VA.csv\n"
     "sector_spread = Sector_Spread.csv\nparameters = Parameters.csv\nliability = Liability_Cashflow.csv\n"
     "mortality = mortality.csv\noutput_path = Output\n"
 )
@@ -57,6 +57,18 @@ def test_get_configuration_ignores_the_old_logging_file_name(tmp_path):
 
     assert configuration.logging_level == "WARNING"
     assert not hasattr(configuration, "logging_file_name")
+
+
+def test_get_configuration_ignores_the_old_curves_file(tmp_path):
+    # ALM.ini used to name the curve file in [INPUT], which was never read (the run takes it from
+    # Parameters.csv); an old file must still load
+    ini_file = tmp_path / "ALM.ini"
+    ini_file.write_text(INPUT_SECTION + "curves = Curves_no VA.csv\n")
+
+    configuration = get_configuration(str(ini_file), os)
+
+    assert configuration.input_cash_portfolio == os.path.join("base", "Input", "Cash_Portfolio.csv")
+    assert not hasattr(configuration, "input_curves")
 
 
 def test_get_configuration_reads_the_government_bond_file(tmp_path):

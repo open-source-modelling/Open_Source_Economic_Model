@@ -10,7 +10,6 @@ class Configuration:
     intermediate_equity_portfolio_file: str
     input_path: str
     input_cash_portfolio: str
-    input_curves: str
     input_equity_portfolio: str
     input_corporate_bond_portfolio: str
     input_government_bond_portfolio: str
@@ -34,7 +33,6 @@ class Configuration:
         self.intermediate_equity_portfolio_file: str = ""
         self.input_path: str = ""
         self.input_cash_portfolio: str = ""
-        self.input_curves: str = ""
         self.input_equity_portfolio: str = ""
         self.input_corporate_bond_portfolio: str = ""
         self.input_government_bond_portfolio: str = ""  # Stays empty if ALM.ini names no government bond file

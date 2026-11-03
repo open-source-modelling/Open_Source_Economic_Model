@@ -85,7 +85,8 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
                 input_path, inp["government_bonds"]
             )
         configuration.input_cash_portfolio = op_sys.path.join(input_path, inp["cash"])
-        configuration.input_curves = op_sys.path.join(input_path, inp["curves"])
+        # An older ALM.ini may still name a curves file here; it is ignored, as the run reads
+        # the curve file named by EIOPA_curves_file in Parameters.csv
         configuration.input_equity_portfolio = op_sys.path.join(input_path, inp["equities"])
         configuration.input_param_no_VA = op_sys.path.join(input_path, inp["param_no_VA"])
         configuration.input_spread = op_sys.path.join(input_path, inp["sector_spread"])
