@@ -66,8 +66,6 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
                                                                      intermediate["cash_portfolio_file"])
         configuration.intermediate_equity_portfolio_file = op_sys.path.join(intermediate_path,
                                                                             intermediate["equity_portfolio_file"])
-        configuration.intermediate_bond_portfolio_file = op_sys.path.join(intermediate_path,
-                                                                            intermediate["bond_portfolio_file"])
 
 
     else:
@@ -77,7 +75,9 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
         inp = config_parser["INPUT"]
         input_path = op_sys.path.join(configuration.base_folder, inp["file_path"])
         configuration.input_path = input_path
-        configuration.input_bond_portfolio = op_sys.path.join(input_path, inp["bonds"])
+        # An ALM.ini written before government bonds were added names the corporate file "bonds"
+        corporate_bonds_key = "corporate_bonds" if "corporate_bonds" in inp else "bonds"
+        configuration.input_corporate_bond_portfolio = op_sys.path.join(input_path, inp[corporate_bonds_key])
         # Optional, so that an ALM.ini written before government bonds were added still runs
         if "government_bonds" in inp:
             configuration.input_government_bond_portfolio = op_sys.path.join(
@@ -175,7 +175,7 @@ def check_asset_type(row: Dict[str, str], expected: str, filename: str) -> None:
 
 def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
     """
-    Load the bond input file into a CorpBond generator.
+    Load the corporate bond input file into a CorpBond generator.
 
     Parameters
     ----------

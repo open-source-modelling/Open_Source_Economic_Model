@@ -1,7 +1,6 @@
 
 class Configuration:
     base_folder: str
-    bond_portfolio: str
     trace_enabled: bool
     logging_level: str
     logging_file_name: str
@@ -10,12 +9,11 @@ class Configuration:
     intermediate_cash_portfolio: str
     intermediate_equity_portfolio: str
     intermediate_equity_portfolio_file: str
-    intermediate_bond_portfolio_file: str
     input_path: str
     input_cash_portfolio: str
     input_curves: str
     input_equity_portfolio: str
-    input_bond_portfolio: str
+    input_corporate_bond_portfolio: str
     input_government_bond_portfolio: str
     input_param_no_VA: str
     input_spread: str
@@ -28,7 +26,6 @@ class Configuration:
 
     def __init__(self) -> None:
         self.base_folder: str = ""
-        self.bond_portfolio: str = ""
         self.trace_enabled: bool = False
         self.logging_level: str = ""
         self.logging_file_name: str = ""
@@ -37,12 +34,11 @@ class Configuration:
         self.intermediate_cash_portfolio: str = ""
         self.intermediate_equity_portfolio: str = ""
         self.intermediate_equity_portfolio_file: str = ""
-        self.intermediate_bond_portfolio_file: str = ""
         self.input_path: str = ""
         self.input_cash_portfolio: str = ""
         self.input_curves: str = ""
         self.input_equity_portfolio: str = ""
-        self.input_bond_portfolio: str = ""
+        self.input_corporate_bond_portfolio: str = ""
         self.input_government_bond_portfolio: str = ""  # Stays empty if ALM.ini names no government bond file
         self.input_param_no_VA: str = ""
         self.input_spread: str = ""

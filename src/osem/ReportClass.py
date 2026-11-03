@@ -16,6 +16,7 @@ REPORT_FILE = "Report.html"
 TEMPLATE_FILE = "report_template.html"
 CHART_LIBRARY_FILE = "chart.umd.js"
 GOVERNMENT_BOND_COLUMN = "Government bond market value"
+CORPORATE_BOND_COLUMN = "Corporate bond market value"
 
 # Largest error allowed in a reconciliation, relative to the size of the balance being checked.
 # Float64 noise over a 50 year run stays around 1e-13.
@@ -75,6 +76,27 @@ def _government_bond_value(results: pd.DataFrame) -> pd.Series:
     if GOVERNMENT_BOND_COLUMN in results.columns:
         return results[GOVERNMENT_BOND_COLUMN]
     return pd.Series(0.0, index=results.index)
+
+
+def _corporate_bond_value(results: pd.DataFrame) -> pd.Series:
+    """
+    Get the market value of the corporate bonds at the end of each period. They are part of Bond
+    market value. A Results.csv saved before this column was added held only corporate and
+    government bonds, so its value is bond market value less government bonds.
+
+    Parameters
+    ----------
+    results: pd.DataFrame
+        The contents of Results.csv
+
+    Returns
+    -------
+    pd.Series
+        Corporate bond market value per date
+    """
+    if CORPORATE_BOND_COLUMN in results.columns:
+        return results[CORPORATE_BOND_COLUMN]
+    return results["Bond market value"] - _government_bond_value(results)
 
 
 def _price_change(results: pd.DataFrame) -> pd.Series:
@@ -269,6 +291,7 @@ def reconcile_results(results: pd.DataFrame, history: pd.DataFrame) -> List[Dict
     total = _total_assets(results)
     closing = total.iloc[1:]
     government = _government_bond_value(results)
+    corporate = _corporate_bond_value(results)
 
     flows = sum(flow.iloc[1:] for flow in _asset_flows(results, unit_linked).values())
     checks = [
@@ -278,8 +301,13 @@ def reconcile_results(results: pd.DataFrame, history: pd.DataFrame) -> List[Dict
             results["Equity market value"] + results["Bond market value"] - results["End market value"],
             results["End market value"],
         ),
-        # The report shows corporate bonds as bond market value less government bonds, so a
-        # government value outside [0, bond market value] would draw a negative corporate holding
+        _check(
+            "Corporate and government bonds add up to bond market value",
+            corporate + government - results["Bond market value"],
+            results["Bond market value"],
+        ),
+        # With the check above, a government value outside [0, bond market value] means a
+        # negative corporate holding, which the chart would draw below zero
         _check(
             "Government bonds are part of bond market value",
             (government - results["Bond market value"]).clip(lower=0.0) + (-government).clip(lower=0.0),
@@ -328,7 +356,6 @@ def build_report_data(results: pd.DataFrame, history: pd.DataFrame) -> Dict[str,
     unit_linked = _is_unit_linked(results)
     total = _total_assets(results)
     flows = _asset_flows(results, unit_linked)
-    government = _government_bond_value(results)
 
     if unit_linked:
         payouts = (results["UL mortality cash flow"].fillna(0.0) + results["UL lapse cash flow"].fillna(0.0))
@@ -349,8 +376,8 @@ def build_report_data(results: pd.DataFrame, history: pd.DataFrame) -> Dict[str,
         "largest_payment_index": int(np.argmin(np.asarray(payouts, dtype=np.float64))) if paid_positions else last_index,
         "last_payment_index": paid_positions[-1] if paid_positions else last_index,
         "equity": _values(results["Equity market value"]),
-        "corporate_bond": _values(results["Bond market value"] - government),
-        "government_bond": _values(government),
+        "corporate_bond": _values(_corporate_bond_value(results)),
+        "government_bond": _values(_government_bond_value(results)),
         "cash": _values(results["End cash"]),
         "total": _values(total),
         "cash_before_trade": _values(results["Cash before trade"]),

@@ -22,7 +22,7 @@ GOV_ROW = "5004,{asset_type},Italy,01/09/2020,01/09/2030,100,0.0075,0,2,120,83.7
 # Every [INPUT] key that get_configuration requires, without government_bonds
 INPUT_SECTION = (
     "[BASE]\nbase_folder = base\n"
-    "[INPUT]\nfile_path = Input\nbonds = Bond_Portfolio.csv\ncash = Cash_Portfolio.csv\n"
+    "[INPUT]\nfile_path = Input\ncorporate_bonds = Corporate_Bond_Portfolio.csv\ncash = Cash_Portfolio.csv\n"
     "curves = Curves_no_VA.csv\nequities = Equity_Portfolio.csv\nparam_no_VA = Param_no_VA.csv\n"
     "sector_spread = Sector_Spread.csv\nparameters = Parameters.csv\nliability = Liability_Cashflow.csv\n"
     "mortality = mortality.csv\noutput_path = Output\n"
@@ -65,11 +65,21 @@ def test_get_configuration_without_government_bond_file_leaves_it_empty(tmp_path
     configuration = get_configuration(str(ini_file), os)
 
     assert configuration.input_government_bond_portfolio == ""
-    assert configuration.input_bond_portfolio == os.path.join("base", "Input", "Bond_Portfolio.csv")
+    assert configuration.input_corporate_bond_portfolio == os.path.join("base", "Input", "Corporate_Bond_Portfolio.csv")
+
+
+def test_get_configuration_reads_the_old_bonds_key_as_the_corporate_bond_file(tmp_path):
+    # An ALM.ini written before government bonds were added names the corporate file "bonds"
+    ini_file = tmp_path / "ALM.ini"
+    ini_file.write_text(INPUT_SECTION.replace("corporate_bonds = Corporate_Bond_Portfolio.csv", "bonds = Bond_Portfolio.csv"))
+
+    configuration = get_configuration(str(ini_file), os)
+
+    assert configuration.input_corporate_bond_portfolio == os.path.join("base", "Input", "Bond_Portfolio.csv")
 
 
 def test_get_corporate_bonds(tmp_path):
-    bond_file = tmp_path / "Bond_Portfolio.csv"
+    bond_file = tmp_path / "Corporate_Bond_Portfolio.csv"
     bond_file.write_text(CORP_HEADER + CORP_ROW.format(asset_type="Corporate_Bond"))
 
     bonds = list(get_corporate_bonds(str(bond_file)))
@@ -110,7 +120,7 @@ def test_get_government_bonds_rejects_a_corporate_row(tmp_path):
 
 
 def test_get_corporate_bonds_rejects_a_government_row(tmp_path):
-    bond_file = tmp_path / "Bond_Portfolio.csv"
+    bond_file = tmp_path / "Corporate_Bond_Portfolio.csv"
     bond_file.write_text(CORP_HEADER + CORP_ROW.format(asset_type="Government_Bond"))
 
     with pytest.raises(ValueError, match="Asset 1234 .* has Asset_Type Government_Bond"):

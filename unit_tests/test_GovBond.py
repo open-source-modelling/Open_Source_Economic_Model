@@ -199,6 +199,15 @@ def test_bonds_by_asset_id_keeps_both_types_in_order(gov_bond: GovBond, corp_bon
     assert by_id[gov_bond.asset_id] is gov_bond
 
 
+def test_asset_ids_of_selects_one_bond_type(gov_bond: GovBond, corp_bond: CorpBond):
+    portfolio = BondPortfolio(bonds_by_asset_id([corp_bond, gov_bond]))
+
+    assert portfolio.asset_ids_of(CorpBond) == [corp_bond.asset_id]
+    assert portfolio.asset_ids_of(GovBond) == [gov_bond.asset_id]
+    assert portfolio.asset_ids_of(FixedCouponBond) == [corp_bond.asset_id, gov_bond.asset_id]
+    assert BondPortfolio().asset_ids_of(GovBond) == []
+
+
 def test_bonds_by_asset_id_rejects_an_id_used_by_a_corporate_and_a_government_bond(gov_bond: GovBond, corp_bond: CorpBond):
     clash = replace(gov_bond, asset_id=corp_bond.asset_id)
 

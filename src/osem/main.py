@@ -7,7 +7,7 @@ from datetime import date
 from typing import Dict, List, Optional
 from osem.CurvesClass import Curves
 from osem.SocietyClass import Society
-from osem.BondClasses import BondPortfolio, FixedCouponBond, bonds_by_asset_id
+from osem.BondClasses import BondPortfolio, CorpBond, FixedCouponBond, GovBond, bonds_by_asset_id
 from osem.ConfigurationClass import Configuration
 from osem.EquityClasses import EquitySharePortfolio
 from osem.UnitLinkedClasses import UnitLinkedPortfolio, UnitLinkedFund, UnitLinkedPolicy
@@ -134,7 +134,7 @@ def main() -> None:
     cash_portfolio_file = conf.input_cash_portfolio
     equity_portfolio_file = conf.input_equity_portfolio
     liability_cashflow_file = conf.input_liability_cashflow
-    bond_portfolio_file = conf.input_bond_portfolio
+    corporate_bond_portfolio_file = conf.input_corporate_bond_portfolio
     government_bond_portfolio_file = conf.input_government_bond_portfolio  # Empty if ALM.ini names none
 
     # Import run parameters
@@ -173,14 +173,10 @@ def main() -> None:
     eq_input = {equity_share.asset_id: equity_share for equity_share in equity_input_generator}
 
     logger.info("Import corporate bonds")
-    bonds: List[FixedCouponBond] = list(get_corporate_bonds(bond_portfolio_file))
-    # Rows of the government bonds in the bond DataFrames, for their share of bond market value
-    gov_ids: List[int] = []
+    bonds: List[FixedCouponBond] = list(get_corporate_bonds(corporate_bond_portfolio_file))
     if government_bond_portfolio_file:
         logger.info("Import government bonds")
-        gov_bonds = list(get_government_bonds(government_bond_portfolio_file))
-        gov_ids = [gov_bond.asset_id for gov_bond in gov_bonds]
-        bonds += gov_bonds
+        bonds += get_government_bonds(government_bond_portfolio_file)
     # Both bond types share the bond DataFrames, so this raises if an asset id is used twice
     bond_input = bonds_by_asset_id(bonds)
 
@@ -189,6 +185,9 @@ def main() -> None:
 
     logger.info("Create bond portfolio")
     bd_ptf = BondPortfolio(bond_input)
+    # Rows of each bond type in the bond DataFrames, for the market value of each type
+    corp_ids = bd_ptf.asset_ids_of(CorpBond)
+    gov_ids = bd_ptf.asset_ids_of(GovBond)
     # GENERATE ALL SYNTHETIC EQUITIES HERE
     # synt_equity_portfolio
 
@@ -308,6 +307,9 @@ def main() -> None:
         "UL return credited": [None],
         "Government bond market value": [
             holdings_market_value(bd_price_df.loc[gov_ids], bd_units_df.loc[gov_ids], settings.modelling_date)
+        ],
+        "Corporate bond market value": [
+            holdings_market_value(bd_price_df.loc[corp_ids], bd_units_df.loc[corp_ids], settings.modelling_date)
         ],
         }
     
@@ -495,6 +497,9 @@ def main() -> None:
         summary_df.loc[current_date, "Bond market value"] = holdings_market_value(bd_price_df, bd_units_df, current_date)
         summary_df.loc[current_date, "Government bond market value"] = holdings_market_value(
             bd_price_df.loc[gov_ids], bd_units_df.loc[gov_ids], current_date
+        )
+        summary_df.loc[current_date, "Corporate bond market value"] = holdings_market_value(
+            bd_price_df.loc[corp_ids], bd_units_df.loc[corp_ids], current_date
         )
 
         previous_date = current_date

@@ -1,4 +1,4 @@
-"""Tests for the z-spread bisection in CorpBond.bisection_spread.
+"""Tests for the z-spread bisection in FixedCouponBond.bisection_spread, run on a CorpBond.
 
 The bond price falls monotonically in the spread, so the bisection only has a root to find when
 the market price lies between the prices at the two ends of the bracket. Before the bracket check

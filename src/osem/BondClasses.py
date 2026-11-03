@@ -8,7 +8,7 @@ from osem.FrequencyClass import Frequency
 from osem.SettingsClasses import Settings
 from osem.logging_utils import get_file_logger
 from dateutil.relativedelta import relativedelta
-from typing import List, Dict, Optional, Iterable, Iterator, Tuple, cast
+from typing import List, Dict, Optional, Iterable, Iterator, Tuple, Type, cast
 
 logger = get_file_logger(__name__, "BondClass.log", level=logging.DEBUG)
 
@@ -352,6 +352,11 @@ class FixedCouponBond:
 
 @dataclass(frozen=True)
 class CorpBond(FixedCouponBond):
+    """
+    A corporate bond position. The country, sector and stress spreads, recovery rate and default
+    probability are read from the input file but not used in pricing yet: like a GovBond, it is
+    priced on the risk free curve plus the z-spread calibrated to its market price.
+    """
     asset_id: int
     nace: str
     issuer: Optional[str]
@@ -404,7 +409,8 @@ class GovBond(FixedCouponBond):
     A government bond position. Its cash flows, pricing and z-spread calibration are the same as
     for a CorpBond. The sovereign's credit and liquidity risk enter only through the z-spread
     calibrated to its market price, so it has no sector spread, recovery rate or default
-    probability. The bond is assumed to be in the currency of the run's risk free curve.
+    probability. A CorpBond is priced the same way: it holds those fields, but its pricing does not
+    use them yet. The bond is assumed to be in the currency of the run's risk free curve.
     """
     asset_id: int
     issuer_country: str
@@ -516,6 +522,24 @@ class BondPortfolio():
             The bond position to add, keyed by asset_id in the portfolio dict.
         """
         self.bonds.update({bond.asset_id: bond})
+
+    def asset_ids_of(self, bond_type: Type[FixedCouponBond]) -> List[int]:
+        """
+        List the asset ids of the bonds of one type. All bond types share the bond DataFrames, so
+        these ids select the rows of that type in them.
+
+        Parameters
+        ----------
+        self: BondPortfolio instance
+        bond_type: Type[FixedCouponBond]
+            The bond class to select. Ex. bond_type = GovBond
+
+        Returns
+        -------
+        List[int]
+            The asset ids of the bonds of that type, in portfolio order
+        """
+        return [asset_id for asset_id, bond in self.bonds.items() if isinstance(bond, bond_type)]
 
     def create_aggregate_coupon_dates(self, modelling_date:date, end_date:date) -> Dict[date, float]:
         """

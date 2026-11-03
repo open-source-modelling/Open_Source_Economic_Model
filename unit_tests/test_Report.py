@@ -36,6 +36,7 @@ def cashflow_results() -> pd.DataFrame:
         "Equity market value": [400.0, 450.0, 1000.0],
         "Bond market value": [500.0, 570.0, 70.0],
         "Government bond market value": [200.0, 300.0, 70.0],
+        "Corporate bond market value": [300.0, 270.0, 0.0],
         "Cash before trade": [NO_VALUE, 100.0, 70.0],
         "Liability cash flow": [NO_VALUE, -15.0, 0.0],
         "Remaining liability payments": [15.0, 0.0, 0.0],
@@ -53,6 +54,7 @@ def unit_linked_results() -> pd.DataFrame:
         "Equity market value": [400.0, 430.0, 700.0],
         "Bond market value": [500.0, 565.0, 69.5],
         "Government bond market value": [100.0, 200.0, 0.0],
+        "Corporate bond market value": [400.0, 365.0, 69.5],
         "Cash before trade": [NO_VALUE, 75.0, -205.5],
         "Liability cash flow": [NO_VALUE] * 3,
         "Remaining liability payments": [NO_VALUE] * 3,
@@ -106,11 +108,19 @@ def test_bonds_are_split_into_corporate_and_government(cashflow_results):
 
 
 def test_results_saved_before_government_bonds_still_build_a_report(cashflow_results):
-    # Older Results.csv files have no government bond column; they held only corporate bonds
-    older = cashflow_results.drop(columns="Government bond market value")
+    # Older Results.csv files have no government or corporate bond column; they held only corporate bonds
+    older = cashflow_results.drop(columns=["Government bond market value", "Corporate bond market value"])
     data = build_report_data(older, pd.DataFrame())
     assert data["government_bond"] == [0.0, 0.0, 0.0]
     assert data["corporate_bond"] == [500.0, 570.0, 70.0]
+    assert all(check["passed"] for check in data["checks"])
+
+
+def test_results_saved_before_the_corporate_bond_column_still_build_a_report(cashflow_results):
+    # Results.csv files saved between the two columns have only the government bond column
+    older = cashflow_results.drop(columns="Corporate bond market value")
+    data = build_report_data(older, pd.DataFrame())
+    assert data["corporate_bond"] == [300.0, 270.0, 0.0]
     assert all(check["passed"] for check in data["checks"])
 
 
@@ -168,8 +178,15 @@ def test_policies_keep_their_path_after_exit(unit_linked_results, policy_history
 def test_reconciliation_passes_on_consistent_results(cashflow_results, unit_linked_results, policy_history):
     assert all(check["passed"] for check in reconcile_results(cashflow_results, pd.DataFrame()))
     checks = reconcile_results(unit_linked_results, policy_history)
-    assert len(checks) == 6
+    assert len(checks) == 7
     assert all(check["passed"] for check in checks)
+
+
+def test_reconciliation_catches_bond_types_not_adding_up(cashflow_results):
+    cashflow_results.loc[DATES[1], "Corporate bond market value"] = 280.0
+    checks = _checks_by_name(reconcile_results(cashflow_results, pd.DataFrame()))
+    assert not checks["Corporate and government bonds add up to bond market value"]["passed"]
+    assert checks["Government bonds are part of bond market value"]["passed"]
 
 
 @pytest.mark.parametrize("value", [600.0, -1.0])
@@ -287,6 +304,7 @@ def test_main_writes_report(tmp_path, monkeypatch, mode):
     results = pd.read_csv(tmp_path / "Output" / "Results.csv", index_col=0)
     assert results["Equity market value"].notna().all()
     assert results["Bond market value"].notna().all()
+    assert results.columns[-1] == "Corporate bond market value"
 
 
 def test_main_writes_report_without_policies(tmp_path, monkeypatch):
