@@ -54,8 +54,9 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
         configuration.trace_enabled = False
 
     if "LOGGING" in config_parser:
+        # An older ALM.ini may still set file_name here; it is ignored, as the log file names
+        # are set in code (see logging_utils.py)
         configuration.logging_level = config_parser["LOGGING"]["level"]
-        configuration.logging_file_name = config_parser["LOGGING"]["file_name"]
 
     if "INTERMEDIATE" in config_parser:
         intermediate = config_parser["INTERMEDIATE"]

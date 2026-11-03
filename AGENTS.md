@@ -16,7 +16,7 @@ The entry point is `src/osem/main.py`. Configuration comes from `ALM.ini` and CS
 
 ### Project layout
 
-All production code is an installable package under `src/osem/` (`import osem`, `pyproject.toml` uses a `src`-layout with `[tool.setuptools.packages.find] where = ["src"]`). `unit_tests/`, `notebooks/`, `Documentation/`, `Input/`, `Output/`, `Intermediate/`, and `ALM.ini` stay at the repository root — only the `.py` modules moved.
+All production code is an installable package under `src/osem/` (`import osem`, `pyproject.toml` uses a `src`-layout with `[tool.setuptools.packages.find] where = ["src"]`). `unit_tests/`, `notebooks/`, `Documentation/`, `Input/`, `Output/`, `Intermediate/`, `Logs/`, and `ALM.ini` stay at the repository root — only the `.py` modules moved.
 
 - **Elsewhere in this file**, a bare filename like `MainLoop.py` or `CurvesClass.py` means `src/osem/MainLoop.py` / `src/osem/CurvesClass.py` unless stated otherwise.
 - **Setup:** `pip install -e .` (registers the `osem` package in editable mode; also installs `numpy`/`pandas`/`python-dateutil`).
@@ -100,6 +100,7 @@ flowchart TB
 | `src/osem/CashClass.py` | Initial cash balance |
 | `src/osem/SocietyClass.py` | Mortality tables for unit-linked decrements |
 | `src/osem/TraceClass.py` | Optional call tracing (`tracer`); enabled via `ALM.ini` `[TRACE]` |
+| `src/osem/logging_utils.py` | `get_file_logger` (per-module log file in the `Logs` folder) and `set_log_level` (one level for all of them, through the `osem` package logger) |
 | `src/osem/FrequencyClass.py` | Dividend/coupon frequency enums used by equity and bond classes |
 | `src/osem/ReportClass.py` | Builds and reconciles the run report from the saved csv files; no model logic |
 | `src/osem/report_template.html` / `src/osem/chart.umd.js` | Report page and the Chart.js copy built into it (both are package data in `pyproject.toml`) |
@@ -123,7 +124,7 @@ flowchart TB
 | Section | Maps to |
 |---------|---------|
 | `[TRACE]` | `Configuration.trace_enabled` → `tracer.enabled` in `main.py` |
-| `[LOGGING]` | `logging_level`, `logging_file_name` |
+| `[LOGGING]` | `logging_level`: the level of every log file in `Logs/` and of the console, applied by `main.py` with `set_log_level`. An older `ALM.ini` may still set `file_name`; it is ignored, as the log file names are set in code |
 | `[INTERMEDIATE]` | Optional intermediate CSV output paths (`intermediate_enabled`, `intermediate_path`) |
 | `[INPUT]` | Input/output folder paths and file names (`input_*`, `output_path`). `corporate_bonds` names the corporate bond file (`input_corporate_bond_portfolio`); an older `ALM.ini` that calls it `bonds` still loads. `government_bonds` is optional: without it `input_government_bond_portfolio` stays empty |
 | `[BASE]` (optional) | Override `base_folder`; defaults to current working directory |
@@ -346,7 +347,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 
 - Every function: short description, then `Parameters` and `Returns` sections.
 - Use the hybrid Sphinx style already in the codebase (`:type param: type` under `Parameters`).
-- Many modules set up a module-level `logger` with a dedicated log file (e.g. `EquityClasses.log`, `BondClass.log`, `ALM.log`).
+- Many modules set up a module-level `logger` with `get_file_logger` (`logging_utils.py`), each with a dedicated log file (e.g. `EquityClasses.log`, `BondClass.log`, `ALM.log`). The files go in the `Logs` folder of the working directory, created if missing; pass only a file name, not a path. The logger name must be inside the `osem` package: `__name__` in a package module, and `"osem.main"` in `main.py`, whose `__name__` is `"__main__"` when run with `-m`. Do not give a module logger a level of its own: it takes the `[LOGGING]` level through the `osem` package logger.
 
 ### Validation and immutability
 
@@ -398,6 +399,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 | Output | `Output/Results.csv` (`summary_df`) |
 | Policy history | `Output/UL_Policy_History.csv` (`unit_linked` mode; one row per policy per date while in force, and one for its exit; not committed) |
 | Run report | `Output/Report.html` (single offline page built from the two files above; not committed) |
+| Logs | `Logs/ALM.log` (`main.py`, `ReportClass.py`), `Logs/EquityClasses.log`, `Logs/BondClass.log` (appended to on every run; only `Logs/.gitkeep` is committed) |
 
 `summary_df` columns written per modelling date:
 

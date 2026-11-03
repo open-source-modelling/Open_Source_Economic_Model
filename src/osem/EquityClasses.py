@@ -1,4 +1,3 @@
-import logging
 import numpy as np
 import pandas as pd
 import numpy.typing as npt
@@ -10,7 +9,7 @@ from osem.CurvesClass import Curves
 from osem.FrequencyClass import Frequency
 from osem.logging_utils import get_file_logger
 
-logger = get_file_logger(__name__, "EquityClasses.log", level=logging.INFO)
+logger = get_file_logger(__name__, "EquityClasses.log")
 
 @dataclass
 class EquityShare:

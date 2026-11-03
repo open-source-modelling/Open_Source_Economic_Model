@@ -1,6 +1,5 @@
-/ALM.log
-/EquityClasses.log
-/BondClass.log
+Logs/*
+!/Logs/.gitkeep
 /Output/Report.html
 /Output/UL_Policy_History.csv
 .ipynb_checkpoints/

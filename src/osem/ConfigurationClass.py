@@ -3,7 +3,6 @@ class Configuration:
     base_folder: str
     trace_enabled: bool
     logging_level: str
-    logging_file_name: str
     intermediate_path: str
     intermediate_enabled: bool
     intermediate_cash_portfolio: str
@@ -28,7 +27,6 @@ class Configuration:
         self.base_folder: str = ""
         self.trace_enabled: bool = False
         self.logging_level: str = ""
-        self.logging_file_name: str = ""
         self.intermediate_path: str = ""
         self.intermediate_enabled: bool = False
         self.intermediate_cash_portfolio: str = ""

@@ -43,9 +43,11 @@ from osem.MainLoop import (
     record_policy_history,
 )
 from osem.ReportClass import create_report
-from osem.logging_utils import get_file_logger
+from osem.logging_utils import get_file_logger, set_log_level
 
-logger = get_file_logger(__name__, "ALM.log", level=logging.DEBUG)
+# Named explicitly: run as `python -m osem.main`, __name__ is "__main__", which is outside the osem
+# package logger that set_log_level reaches
+logger = get_file_logger("osem.main", "ALM.log")
 
 def get_logging_level(logging_level: str) -> int:
     """
@@ -128,7 +130,7 @@ def main() -> None:
             format="%(levelname)s:%(name)s:(%(asctime)s):%(message)s (Line: %(lineno)d [%(filename)s])",
             level=logging_level,
         )
-    logger.setLevel(logging_level)
+    set_log_level(logging_level)  # Every module's log file, and the console
     logger.info("Configuration loaded")
 
     parameters_file = conf.input_parameters

@@ -1,4 +1,3 @@
-import logging
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
@@ -10,7 +9,7 @@ from osem.logging_utils import get_file_logger
 from dateutil.relativedelta import relativedelta
 from typing import List, Dict, Optional, Iterable, Iterator, Tuple, Type, cast
 
-logger = get_file_logger(__name__, "BondClass.log", level=logging.DEBUG)
+logger = get_file_logger(__name__, "BondClass.log")
 
 class FixedCouponBond:
     """

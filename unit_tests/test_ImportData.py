@@ -48,6 +48,17 @@ def test_get_configuration_falls_back_to_op_sys_getcwd(tmp_path):
     assert configuration.base_folder == "C:/fake/cwd"
 
 
+def test_get_configuration_ignores_the_old_logging_file_name(tmp_path):
+    # ALM.ini used to set [LOGGING] file_name, which was never used; an old file must still load
+    ini_file = tmp_path / "ALM.ini"
+    ini_file.write_text(INPUT_SECTION + "[LOGGING]\nlevel = WARNING\nfile_name = ALM.log\n")
+
+    configuration = get_configuration(str(ini_file), os)
+
+    assert configuration.logging_level == "WARNING"
+    assert not hasattr(configuration, "logging_file_name")
+
+
 def test_get_configuration_reads_the_government_bond_file(tmp_path):
     ini_file = tmp_path / "ALM.ini"
     ini_file.write_text(INPUT_SECTION + "government_bonds = Government_Bond_Portfolio.csv\n")

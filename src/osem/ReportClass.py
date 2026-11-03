@@ -1,5 +1,4 @@
 import json
-import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -8,7 +7,7 @@ import pandas as pd
 
 from osem.logging_utils import get_file_logger
 
-logger = get_file_logger(__name__, "ALM.log", level=logging.DEBUG)
+logger = get_file_logger(__name__, "ALM.log")
 
 RESULTS_FILE = "Results.csv"
 POLICY_HISTORY_FILE = "UL_Policy_History.csv"
