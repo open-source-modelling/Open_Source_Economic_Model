@@ -2,11 +2,11 @@ import os
 import pandas as pd
 import csv
 import configparser
-from typing import Any, Iterator, Optional
+from typing import Any, Dict, Iterator, Optional
 from datetime import date, datetime
 from osem.CashClass import Cash
 from osem.SocietyClass import Society
-from osem.BondClasses import CorpBond
+from osem.BondClasses import CorpBond, GovBond
 from osem.FrequencyClass import Frequency
 from osem.SettingsClasses import Settings
 from osem.EquityClasses import EquityShare
@@ -78,6 +78,11 @@ def get_configuration(ini_file: str, op_sys: Any = os, config_parser: Optional[c
         input_path = op_sys.path.join(configuration.base_folder, inp["file_path"])
         configuration.input_path = input_path
         configuration.input_bond_portfolio = op_sys.path.join(input_path, inp["bonds"])
+        # Optional, so that an ALM.ini written before government bonds were added still runs
+        if "government_bonds" in inp:
+            configuration.input_government_bond_portfolio = op_sys.path.join(
+                input_path, inp["government_bonds"]
+            )
         configuration.input_cash_portfolio = op_sys.path.join(input_path, inp["cash"])
         configuration.input_curves = op_sys.path.join(input_path, inp["curves"])
         configuration.input_equity_portfolio = op_sys.path.join(input_path, inp["equities"])
@@ -135,6 +140,39 @@ def import_SWEiopa(param_file: str, curves_file: str, country: str) -> tuple[pd.
     return maturities_country, curve_country, extra_param, Qb
 
 
+def check_asset_type(row: Dict[str, str], expected: str, filename: str) -> None:
+    """
+    Check that a row of an asset input file holds the asset type that its loader builds, so that
+    a row placed in the wrong file is reported instead of being read with the wrong columns.
+
+    Parameters
+    ----------
+    row: Dict[str, str]
+        One row of the input file, as read by csv.DictReader
+    expected: str
+        The Asset_Type value the loader accepts. Ex. expected = "Government_Bond"
+    filename: str
+        Path to the input file, used in the error message
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If the row has no Asset_Type column or its Asset_Type is not expected
+    """
+    asset_type = row.get("Asset_Type")
+    if asset_type is None:
+        raise ValueError(f"{filename} has no Asset_Type column; every row must have Asset_Type {expected}")
+    if asset_type != expected:
+        raise ValueError(
+            f"Asset {row.get('Asset_ID')} in {filename} has Asset_Type {asset_type}, "
+            f"but this file can only hold {expected} rows"
+        )
+
+
 def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
     """
     Load the bond input file into a CorpBond generator.
@@ -148,11 +186,17 @@ def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
     -------
     generator
         Generator yielding one CorpBond instance per CSV row
+
+    Raises
+    ------
+    ValueError
+        If a row's Asset_Type is not Corporate_Bond
     """
 
     with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
         reader = csv.DictReader(csv_file)
         for row in reader:
+            check_asset_type(row, "Corporate_Bond", filename)
             corp_bond = CorpBond(asset_id=int(row["Asset_ID"]),
                                  nace=row["NACE"],
                                  issuer=None,
@@ -170,6 +214,43 @@ def get_corporate_bonds(filename: str) -> Iterator[CorpBond]:
                                  units=float(row["Units"]),
                                  market_price=float(row["Market_Price"]))
             yield corp_bond
+
+
+def get_government_bonds(filename: str) -> Iterator[GovBond]:
+    """
+    Load the government bond input file into a GovBond generator.
+
+    Parameters
+    ----------
+    filename: string
+        Relative path to the government bond input file
+
+    Returns
+    -------
+    generator
+        Generator yielding one GovBond instance per CSV row
+
+    Raises
+    ------
+    ValueError
+        If a row's Asset_Type is not Government_Bond
+    """
+
+    with open(filename, mode="r", encoding="utf-8-sig") as csv_file:
+        reader = csv.DictReader(csv_file)
+        for row in reader:
+            check_asset_type(row, "Government_Bond", filename)
+            gov_bond = GovBond(asset_id=int(row["Asset_ID"]),
+                               issuer_country=row["Issuer_Country"],
+                               issue_date=datetime.strptime(row["Issue_Date"], "%d/%m/%Y").date(),
+                               maturity_date=datetime.strptime(row["Maturity_Date"], "%d/%m/%Y").date(),
+                               coupon_rate=float(row["Coupon_Rate"]),
+                               notional_amount=float(row["Notional_Amount"]),
+                               zspread=float(row["Z_Spread"]),
+                               frequency=Frequency(int(row["Frequency"])),
+                               units=float(row["Units"]),
+                               market_price=float(row["Market_Price"]))
+            yield gov_bond
 
 
 def get_equity_share(filename: str) -> Iterator[EquityShare]:

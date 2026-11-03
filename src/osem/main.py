@@ -7,7 +7,7 @@ from datetime import date
 from typing import Dict, List, Optional
 from osem.CurvesClass import Curves
 from osem.SocietyClass import Society
-from osem.BondClasses import BondPortfolio, FixedCouponBond
+from osem.BondClasses import BondPortfolio, FixedCouponBond, bonds_by_asset_id
 from osem.ConfigurationClass import Configuration
 from osem.EquityClasses import EquitySharePortfolio
 from osem.UnitLinkedClasses import UnitLinkedPortfolio, UnitLinkedFund, UnitLinkedPolicy
@@ -18,6 +18,7 @@ from osem.ImportData import (
     get_cash,
     get_equity_share,
     get_corporate_bonds,
+    get_government_bonds,
     get_liability,
     get_unit_linked_policies,
     get_unit_linked_fund,
@@ -134,6 +135,7 @@ def main() -> None:
     equity_portfolio_file = conf.input_equity_portfolio
     liability_cashflow_file = conf.input_liability_cashflow
     bond_portfolio_file = conf.input_bond_portfolio
+    government_bond_portfolio_file = conf.input_government_bond_portfolio  # Empty if ALM.ini names none
 
     # Import run parameters
     logger.info("Importing run parameters")
@@ -171,8 +173,16 @@ def main() -> None:
     eq_input = {equity_share.asset_id: equity_share for equity_share in equity_input_generator}
 
     logger.info("Import corporate bonds")
-    bond_input_generator = get_corporate_bonds(bond_portfolio_file)
-    bond_input: Dict[int, FixedCouponBond] = {corp_bond.asset_id: corp_bond for corp_bond in bond_input_generator}
+    bonds: List[FixedCouponBond] = list(get_corporate_bonds(bond_portfolio_file))
+    # Rows of the government bonds in the bond DataFrames, for their share of bond market value
+    gov_ids: List[int] = []
+    if government_bond_portfolio_file:
+        logger.info("Import government bonds")
+        gov_bonds = list(get_government_bonds(government_bond_portfolio_file))
+        gov_ids = [gov_bond.asset_id for gov_bond in gov_bonds]
+        bonds += gov_bonds
+    # Both bond types share the bond DataFrames, so this raises if an asset id is used twice
+    bond_input = bonds_by_asset_id(bonds)
 
     logger.info("Create equity portfolio")
     eq_ptf = EquitySharePortfolio(eq_input)
@@ -187,7 +197,7 @@ def main() -> None:
     ter_dict = eq_ptf.create_terminal_flows(modelling_date=settings.modelling_date,
                                                             terminal_date=settings.end_date)
 
-    logger.info("Create dictionary of cash flows and dates for corporate bonds")
+    logger.info("Create dictionary of cash flows and dates for corporate and government bonds")
     cpn_flows = bd_ptf.create_coupon_flows(modelling_date=settings.modelling_date, end_date=settings.end_date)
     not_flows = bd_ptf.create_maturity_flows(terminal_date=settings.end_date)
 
@@ -195,7 +205,7 @@ def main() -> None:
     unique_div_dates = eq_ptf.unique_dates_profile(div_dict)
     unique_ter_dates = eq_ptf.unique_dates_profile(ter_dict)
 
-    logger.info("Find all asset cash flow dates for corporate bonds")
+    logger.info("Find all asset cash flow dates for corporate and government bonds")
     unique_cpn_dates = bd_ptf.unique_dates_profile(cpn_flows)
     unique_not_dates = bd_ptf.unique_dates_profile(not_flows)
 
@@ -296,6 +306,9 @@ def main() -> None:
             None if use_unit_linked else remaining_liability_payments(liab_df)
         ],
         "UL return credited": [None],
+        "Government bond market value": [
+            holdings_market_value(bd_price_df.loc[gov_ids], bd_units_df.loc[gov_ids], settings.modelling_date)
+        ],
         }
     
     summary_df = pd.DataFrame(data = ini_out, index=[settings.modelling_date]) 
@@ -316,7 +329,7 @@ def main() -> None:
 
     proj_period = 0
 
-    logger.info("Calibrate corporate bond z-spread")
+    logger.info("Calibrate corporate and government bond z-spreads")
     bd_zspread_df=bd_ptf.calibrate_bond_portfolio(zspread_df=bd_zspread_df, settings=settings, proj_period=proj_period, curves=curves)
 
     # --------- START MAIN LOOP THAT MOVES FORWARD IN TIME --------
@@ -480,6 +493,9 @@ def main() -> None:
         )
         summary_df.loc[current_date, "Equity market value"] = holdings_market_value(eq_price_df, eq_units_df, current_date)
         summary_df.loc[current_date, "Bond market value"] = holdings_market_value(bd_price_df, bd_units_df, current_date)
+        summary_df.loc[current_date, "Government bond market value"] = holdings_market_value(
+            bd_price_df.loc[gov_ids], bd_units_df.loc[gov_ids], current_date
+        )
 
         previous_date = current_date
         prev_mkt_value = portfolio_market_value(

@@ -16,6 +16,7 @@ class Configuration:
     input_curves: str
     input_equity_portfolio: str
     input_bond_portfolio: str
+    input_government_bond_portfolio: str
     input_param_no_VA: str
     input_spread: str
     input_parameters: str
@@ -42,6 +43,7 @@ class Configuration:
         self.input_curves: str = ""
         self.input_equity_portfolio: str = ""
         self.input_bond_portfolio: str = ""
+        self.input_government_bond_portfolio: str = ""  # Stays empty if ALM.ini names no government bond file
         self.input_param_no_VA: str = ""
         self.input_spread: str = ""
         self.input_parameters: str = ""

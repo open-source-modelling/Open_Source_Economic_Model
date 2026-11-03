@@ -8,7 +8,7 @@ from osem.FrequencyClass import Frequency
 from osem.SettingsClasses import Settings
 from osem.logging_utils import get_file_logger
 from dateutil.relativedelta import relativedelta
-from typing import List, Dict, Optional, Iterator, Tuple, cast
+from typing import List, Dict, Optional, Iterable, Iterator, Tuple, cast
 
 logger = get_file_logger(__name__, "BondClass.log", level=logging.DEBUG)
 
@@ -396,6 +396,82 @@ class CorpBond(FixedCouponBond):
             raise ValueError("Default probability cannot be negative")
         if self.default_probability > 1:
             raise ValueError("Default probability cannot be greater than 1")
+
+
+@dataclass(frozen=True)
+class GovBond(FixedCouponBond):
+    """
+    A government bond position. Its cash flows, pricing and z-spread calibration are the same as
+    for a CorpBond. The sovereign's credit and liquidity risk enter only through the z-spread
+    calibrated to its market price, so it has no sector spread, recovery rate or default
+    probability. The bond is assumed to be in the currency of the run's risk free curve.
+    """
+    asset_id: int
+    issuer_country: str
+    issue_date: date
+    maturity_date: date
+    coupon_rate: float  # Rate paid on each coupon date (per payment, not annualised); see coupon_amount
+    notional_amount: float
+    zspread: float
+    frequency: Frequency
+    units: float
+    market_price: float
+
+    def __post_init__(self):
+        """
+        Check that the bond's input values are valid.
+
+        Parameters
+        ----------
+        self: GovBond instance
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If any of the checks in FixedCouponBond._validate_bond_terms fails, or issuer_country
+            is empty
+        """
+        self._validate_bond_terms()
+        if not self.issuer_country.strip():
+            raise ValueError("Issuer country cannot be empty")
+
+
+def bonds_by_asset_id(bonds: Iterable[FixedCouponBond]) -> Dict[int, FixedCouponBond]:
+    """
+    Key bond positions by asset_id, ready for BondPortfolio. Corporate and government bonds share
+    the bond DataFrames, which are indexed by asset_id, so an id can be used only once, within an
+    input file and across the corporate and government files. A plain dict comprehension would
+    keep the last bond with a repeated id and silently drop the others.
+
+    Parameters
+    ----------
+    bonds: Iterable[FixedCouponBond]
+        The bond positions. Ex. the output of get_corporate_bonds followed by get_government_bonds
+
+    Returns
+    -------
+    Dict[int, FixedCouponBond]
+        The bonds keyed by asset_id, in the order given
+
+    Raises
+    ------
+    ValueError
+        If two bonds have the same asset_id
+    """
+    by_id: Dict[int, FixedCouponBond] = {}
+    for bond in bonds:
+        if bond.asset_id in by_id:
+            raise ValueError(
+                f"Asset ID {bond.asset_id} is used by two bonds ({type(by_id[bond.asset_id]).__name__} "
+                f"and {type(bond).__name__}). Bond asset IDs must be unique across the corporate and "
+                f"government bond input files."
+            )
+        by_id[bond.asset_id] = bond
+    return by_id
 
 
 class BondPortfolio():

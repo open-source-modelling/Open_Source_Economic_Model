@@ -29,7 +29,7 @@ All production code is an installable package under `src/osem/` (`import osem`, 
 
 | Layer | Contents | Mutated during the main loop? |
 |-------|----------|-------------------------------|
-| Static dataclasses | `EquityShare`, `CorpBond`, `Cash`, `Liability`, `UnitLinkedPolicy`, `UnitLinkedFund`, `Society` — loaded once from CSV | No |
+| Static dataclasses | `EquityShare`, `CorpBond`, `GovBond`, `Cash`, `Liability`, `UnitLinkedPolicy`, `UnitLinkedFund`, `Society` — loaded once from CSV | No |
 | pandas DataFrames | Prices, units, spreads, bank account, company account, cash-flow matrices, UL policy state, summary | Yes |
 
 Individual `EquityShare` / `CorpBond` instances hold metadata and pricing logic. All simulation state evolves in DataFrames. Do not write back to dataclass instances after import.
@@ -45,7 +45,7 @@ flowchart TB
         CSV[Input CSVs] --> settings[Settings]
         CSV --> cashObj[Cash]
         CSV --> eqInput[EquityShare dict]
-        CSV --> bdInput[CorpBond dict]
+        CSV --> bdInput[CorpBond + GovBond dict]
         CSV --> liabObj[Liability]
         EIOPA[EIOPA files] --> curves[Curves]
         eqInput --> eqPtf[EquitySharePortfolio]
@@ -92,7 +92,7 @@ flowchart TB
 | `src/osem/MainLoop.py` | Cash-flow matrices, date schedules, expiry processing, portfolio valuation, trading |
 | `src/osem/CurvesClass.py` | EIOPA Smith-Wilson term structure (calibration, projection, discounting) |
 | `src/osem/EquityClasses.py` | Equity pricing, cash flows, portfolio wrapper |
-| `src/osem/BondClasses.py` | `FixedCouponBond` (bond cash flows, pricing, z-spread calibration), `CorpBond`, `BondPortfolio` wrapper |
+| `src/osem/BondClasses.py` | `FixedCouponBond` (bond cash flows, pricing, z-spread calibration), `CorpBond`, `GovBond`, `bonds_by_asset_id` (keys bonds by id, rejecting repeats), `BondPortfolio` wrapper |
 | `src/osem/LiabilityClasses.py` | Aggregated liability cash-flow profile (`cashflow` mode) |
 | `src/osem/UnitLinkedClasses.py` | Unit-linked policy/fund/portfolio classes (`unit_linked` mode) |
 | `src/osem/ImportData.py` | Load `ALM.ini`, CSV inputs, EIOPA curve files |
@@ -125,7 +125,7 @@ flowchart TB
 | `[TRACE]` | `Configuration.trace_enabled` → `tracer.enabled` in `main.py` |
 | `[LOGGING]` | `logging_level`, `logging_file_name` |
 | `[INTERMEDIATE]` | Optional intermediate CSV output paths (`intermediate_enabled`, `intermediate_path`) |
-| `[INPUT]` | Input/output folder paths and file names (`input_*`, `output_path`) |
+| `[INPUT]` | Input/output folder paths and file names (`input_*`, `output_path`). `government_bonds` is optional: without it `input_government_bond_portfolio` stays empty, so an older `ALM.ini` still loads |
 | `[BASE]` (optional) | Override `base_folder`; defaults to current working directory |
 
 Note: `Configuration` also stores paths for `input_curves`, `input_param_no_VA`, and `input_spread`, but the main run loads EIOPA files via paths in `Settings` (`Parameters.csv`), not those `Configuration` fields directly.
@@ -141,7 +141,7 @@ Note: `Configuration` also stores paths for `input_curves`, `input_param_no_VA`,
 ### Assets
 
 - **Equities:** deterministic growth each period using the fixed per-asset `eq_growth_df[modelling_date]` column; not re-priced via DCF in the loop. Growth is scaled by `time_frac = (current_date - previous_date).days / 365.25`
-- **Bonds:** carry forward `bd_price_df[previous_date]` into the new column, then DCF repricing each period via `price_bond_portfolio` (remaining flows discounted to `current_date` on the year `proj_period + 1` curve); z-spread calibrated once at t0 via `calibrate_bond_portfolio` (stored in `bd_zspread_df`, not on `CorpBond` instances)
+- **Bonds:** carry forward `bd_price_df[previous_date]` into the new column, then DCF repricing each period via `price_bond_portfolio` (remaining flows discounted to `current_date` on the year `proj_period + 1` curve); z-spread calibrated once at t0 via `calibrate_bond_portfolio` (stored in `bd_zspread_df`, not on `CorpBond` instances). Corporate and government bonds go through all of this together: `main.py` loads both files into one `BondPortfolio`, so they share `cpn_df`, `not_df` and the `bd_*` tables, and their asset ids must not overlap
 
 ### Liabilities
 
@@ -183,7 +183,7 @@ Selected by `Settings.liability_mode` from `Input/Parameters.csv` (default `cash
 3. Mark-to-market: apply equity growth using `eq_growth_df[modelling_date]` and `time_frac`; carry bond prices forward then reprice via `price_bond_portfolio`; record after-growth MV and the period total return (`portfolio_total_return`, which adds back the dividends, coupons and bond notionals credited in step 2; equity terminal flows are excluded because those equities are still in MV until liquidated in step 5 — matured bonds reprice to zero, so a price-only return would book their redemption as a loss)
 4. If `liability_mode=unit_linked`: `process_unit_linked_period` (capitalize, premiums, fees, mortality, lapse); update `bank_account` and `company_account`; record each policy's value and exit with `record_policy_history`
 5. Liquidate equities whose terminal flow was paid and bonds that matured in step 2 (`liquidate_positions`), record `Cash before trade`, then proportional `trade()`
-6. Log period-end cash, end market value and the equity and bond split to `summary_df`; set `previous_date = current_date`; advance `proj_period`
+6. Log period-end cash, end market value, the equity and bond split, and the government bonds' share of bond market value to `summary_df`; set `previous_date = current_date`; advance `proj_period`
 
 After the loop, `main.py` saves `Results.csv` (and `UL_Policy_History.csv` in `unit_linked` mode), then calls `create_report`.
 
@@ -199,6 +199,8 @@ Follow these patterns when adding or changing code. Prefer the style in `MainLoo
   eq_input = {equity_share.asset_id: equity_share for equity_share in get_equity_share(filename)}
   eq_ptf = EquitySharePortfolio(eq_input)
   ```
+
+  For bonds, build the dict with `bonds_by_asset_id(...)` instead of a comprehension. A comprehension keeps the last of two bonds with the same `asset_id` and drops the other without a warning; `bonds_by_asset_id` raises.
 
 - Portfolio wrappers expose a consistent API:
 
@@ -242,7 +244,8 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 ### CSV import (`ImportData.py`)
 
 - Single-object loaders: `get_configuration()`, `get_settings()`, `get_cash()`, `get_liability()`, `get_unit_linked_fund()`, `get_society()`.
-- Row iterators: `get_equity_share()`, `get_corporate_bonds()`, `get_unit_linked_policies()` → `Iterator` (one instance per CSV row).
+- Row iterators: `get_equity_share()`, `get_corporate_bonds()`, `get_government_bonds()`, `get_unit_linked_policies()` → `Iterator` (one instance per CSV row).
+- The bond loaders call `check_asset_type()` on every row and raise if its `Asset_Type` is not `Corporate_Bond` or `Government_Bond` respectively, so a row in the wrong file fails loudly.
 - Use `encoding="utf-8-sig"`, `csv.DictReader`, dates as `'%d/%m/%Y'`.
 - CSV column names are `Pascal_Case` (`Asset_ID`, `Market_Price`, etc.).
 - Do not read CSVs inline in `main.py` — add a `get_*` function in `ImportData.py`.
@@ -286,7 +289,7 @@ When adding a new date column in the loop, carry forward from `previous_date`, t
 | Pattern | Example |
 |---------|---------|
 | `*Class.py` files | `EquityClasses.py`, `BondClasses.py` |
-| Asset dataclass | `EquityShare`, `CorpBond` |
+| Asset dataclass | `EquityShare`, `CorpBond`, `GovBond` |
 | Portfolio wrapper | `EquitySharePortfolio`, `BondPortfolio` |
 | Loop / orchestration | `MainLoop.py`, `main.py` |
 | Import loaders | `get_equity_share`, `import_SWEiopa` |
@@ -345,7 +348,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 
 - `CorpBond` is `@dataclass(frozen=True)` with range checks in `__post_init__`.
 - `EquityShare` is a mutable `@dataclass` with lighter validation.
-- New bond-like instruments should follow the stricter `CorpBond` pattern: a frozen dataclass that inherits from `FixedCouponBond`, declares the attributes listed on it as its own fields, and calls `self._validate_bond_terms()` at the start of `__post_init__`. `FixedCouponBond` holds the shared cash-flow, pricing and calibration methods. Keep it a plain class: as a dataclass it would put its fields first and change the positional field order of `CorpBond`, which the tests rely on. All bond instruments go into one `BondPortfolio`, keyed by `asset_id`.
+- New bond-like instruments should follow the stricter `CorpBond` pattern: a frozen dataclass that inherits from `FixedCouponBond`, declares the attributes listed on it as its own fields, and calls `self._validate_bond_terms()` at the start of `__post_init__`. `FixedCouponBond` holds the shared cash-flow, pricing and calibration methods. Keep it a plain class: as a dataclass it would put its fields first and change the positional field order of `CorpBond`, which the tests rely on. All bond instruments go into one `BondPortfolio`, keyed by `asset_id`. `GovBond` follows this pattern with the shared fields plus `issuer_country`, and no credit-risk fields: the sovereign's risk enters only through the calibrated z-spread.
 
 ### Testing
 
@@ -359,6 +362,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 - `ReportClass.py` only reads `Results.csv` and `UL_Policy_History.csv`, so a report can be rebuilt without running the model. Do not add model logic to it, or pass it live DataFrames from the main loop.
 - A value the report needs goes into `summary_df` first. Add new columns at the end, so existing columns keep their order.
 - `reconcile_results` checks that the displayed numbers add up. A failure logs a warning and shows a banner in the report; it does not stop the run. Add a check when adding a new balance.
+- The report shows bonds as corporate (`Bond market value` less `Government bond market value`) and government. A `Results.csv` saved before that column existed is read as holding no government bonds. In the assets chart, government bonds sit at the bottom of the stack because their yellow is too close to the corporate orange to sit next to it (run the dataviz palette validator before reordering or recolouring the series).
 - The report must stay a single file that opens offline: no external scripts, stylesheets or fonts. To upgrade Chart.js, replace `src/osem/chart.umd.js` and keep its licence header.
 
 ### Checklist for new code
@@ -380,6 +384,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 | Configuration | `ALM.ini` → `Configuration` |
 | Run parameters | `Input/Parameters.csv` → `Settings` |
 | Portfolios | `Input/Cash_Portfolio.csv`, `Input/Equity_Portfolio.csv`, `Input/Bond_Portfolio.csv` |
+| Government bonds | `Input/Government_Bond_Portfolio.csv` (illustrative positions, not real securities; market prices set on the t0 curve so they calibrate to z-spreads of about +0.6% Slovenia, −0.5% Germany, +0.2% France and +1.3% Italy) |
 | EIOPA curves | `Input/Param_no_VA.csv`, `Input/Curves_no_VA.csv` (paths in `Settings`) |
 | Sector spreads | `Input/Sector_Spread.csv` (configured in `ALM.ini`; not yet used in main loop) |
 | Liabilities | `Input/Liability_Cashflow.csv` (`cashflow` mode) |
@@ -396,16 +401,17 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 | `Start cash` / `End cash` | Bank account at period start/end |
 | `Start market value` / `After growth market value` / `End market value` | Portfolio MV before flows, after growth, after trading |
 | `Portfolio return` | Total return: (after-growth MV + dividends + coupons + bond notionals received in the period) / previous end MV − 1, via `portfolio_total_return` |
-| `Dividend cash flow` / `Coupon cash flow` / `Terminal cash flow` / `Notional cash flow` | Expired asset cash flows credited to bank account |
+| `Dividend cash flow` / `Coupon cash flow` / `Terminal cash flow` / `Notional cash flow` | Expired asset cash flows credited to bank account; coupons and notionals include corporate and government bonds |
 | `Liability cash flow` | Expired liability outflow (cashflow mode; stored as negative of cash debited) |
 | `UL gross premium cash flow` / `UL entry fee cash flow` / `UL admin fee cash flow` | Unit-linked premium and fee flows (UL mode) |
 | `UL mortality cash flow` / `UL lapse cash flow` | Liquidation outflows (negative; UL mode) |
 | `UL reserve` / `Company account` | Active policy MV sum; insurer fee balance |
 | `UL policies in force` / `UL deaths` / `UL lapses` | Policy counts (UL mode) |
-| `Equity market value` / `Bond market value` | End-of-period MV by asset class; they add up to `End market value` |
+| `Equity market value` / `Bond market value` | End-of-period MV by asset class; they add up to `End market value`. `Bond market value` covers corporate and government bonds together |
 | `Cash before trade` | Bank account just before `trade()`; negative means assets are sold, positive means they are bought |
 | `Remaining liability payments` | Undiscounted liability flows not yet expired (cashflow mode) |
 | `UL return credited` | Portfolio return credited to policy accounts (UL mode) |
+| `Government bond market value` | End-of-period MV of the government bonds, which is part of `Bond market value`; zero when `ALM.ini` names no government bond file |
 
 ## Deeper documentation
 

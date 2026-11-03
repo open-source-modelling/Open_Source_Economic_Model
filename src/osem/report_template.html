@@ -93,12 +93,13 @@ th:first-child, td:first-child { text-align: left; }
 <h2>Assets and what they must cover</h2>
 <p class="note">Investments and cash at the end of each year. Click a year to see what happened in it.</p>
 <div class="legend">
+<span><span class="swatch" id="s-government_bond"></span>Government bonds</span>
 <span><span class="swatch" id="s-equity"></span>Equities</span>
-<span><span class="swatch" id="s-bond"></span>Bonds</span>
+<span><span class="swatch" id="s-corporate_bond"></span>Corporate bonds</span>
 <span><span class="swatch" id="s-cash"></span>Cash</span>
 <span><span class="dash"></span><span id="obligation-label"></span></span>
 </div>
-<div class="chart" style="height:270px"><canvas id="assets-chart" role="img" aria-label="Stacked area of equities, bonds and cash by year, with a dashed line for the obligation">Yearly values are in the table at the end of this page.</canvas></div>
+<div class="chart" style="height:270px"><canvas id="assets-chart" role="img" aria-label="Stacked area of government bonds, equities, corporate bonds and cash by year, with a dashed line for the obligation">Yearly values are in the table at the end of this page.</canvas></div>
 
 <div class="year">
 <label for="year-slider" class="sub">Year</label>
@@ -145,9 +146,9 @@ const D = __REPORT_DATA__;
 const darkQuery = matchMedia('(prefers-color-scheme: dark)');
 darkQuery.addEventListener('change', () => location.reload());
 const COLORS = darkQuery.matches
-  ? { equity: '#3987e5', bond: '#d95926', cash: '#199e70', up: '#3987e5', down: '#e66767', grid: '#2c2c2a', tick: '#9a988f', ink: '#f0efec', page: '#141413', lane: '57,135,229',
+  ? { equity: '#3987e5', corporate_bond: '#d95926', government_bond: '#c98500', cash: '#199e70', up: '#3987e5', down: '#e66767', grid: '#2c2c2a', tick: '#9a988f', ink: '#f0efec', page: '#141413', lane: '57,135,229',
       return_credited: '#008300', net_premiums: '#d55181', admin_fees: '#c98500', lapses: '#9085e9', deaths: '#e66767' }
-  : { equity: '#2a78d6', bond: '#eb6834', cash: '#1baf7a', up: '#2a78d6', down: '#e34948', grid: '#e1e0d9', tick: '#6f6d67', ink: '#0b0b0b', page: '#ffffff', lane: '42,120,214',
+  : { equity: '#2a78d6', corporate_bond: '#eb6834', government_bond: '#eda100', cash: '#1baf7a', up: '#2a78d6', down: '#e34948', grid: '#e1e0d9', tick: '#6f6d67', ink: '#0b0b0b', page: '#ffffff', lane: '42,120,214',
       return_credited: '#008300', net_premiums: '#e87ba4', admin_fees: '#eda100', lapses: '#6250d6', deaths: '#e34948' };
 const RESERVE_LABELS = { return_credited: 'Return credited', net_premiums: 'Net premiums', admin_fees: 'Admin fees', lapses: 'Lapses', deaths: 'Deaths' };
 const EXIT_LABELS = { Death: 'Died', Lapse: 'Lapsed' };
@@ -199,8 +200,11 @@ const obligationLabel = UNIT_LINKED ? 'Policy reserve' : 'Remaining liability pa
 const assetsChart = new Chart(el('assets-chart'), {
   type: 'line',
   plugins: [marker],
+  // Government bonds sit at the bottom of the stack: yellow next to the orange of corporate
+  // bonds is too hard to tell apart, for colour-blind readers and in dark mode for everyone
   data: { labels: [], datasets: [
-    areaSeries('Equities', COLORS.equity), areaSeries('Bonds', COLORS.bond), areaSeries('Cash', COLORS.cash),
+    areaSeries('Government bonds', COLORS.government_bond), areaSeries('Equities', COLORS.equity),
+    areaSeries('Corporate bonds', COLORS.corporate_bond), areaSeries('Cash', COLORS.cash),
     { label: UNIT_LINKED ? 'Policy reserve' : 'Remaining payments', data: [], borderColor: COLORS.ink, borderWidth: 2, borderDash: [5, 4], pointRadius: 0, fill: false, tension: 0, stack: 'obligation', order: 0 }
   ] },
   options: chartOptions({ callbacks: tooltipLabel })
@@ -268,7 +272,7 @@ function render() {
   el('year-out').textContent = D.years[selected];
 
   assetsChart.data.labels = D.years.slice(0, count);
-  [D.equity, D.bond, D.cash, D.obligation].forEach((series, j) => { assetsChart.data.datasets[j].data = series.slice(0, count); });
+  [D.government_bond, D.equity, D.corporate_bond, D.cash, D.obligation].forEach((series, j) => { assetsChart.data.datasets[j].data = series.slice(0, count); });
   assetsChart.update('none');
 
   el('asset-bridge').textContent = fmt(D.total[selected - 1]) + ' → ' + fmt(D.total[selected]);
@@ -288,8 +292,8 @@ function render() {
 }
 
 function yearTable() {
-  const head = ['Year', 'Equities', 'Bonds', 'Cash', 'Total', UNIT_LINKED ? 'Reserve' : 'Remaining payments'];
-  const rows = D.years.map((year, i) => '<tr><td>' + year + '</td>' + [D.equity[i], D.bond[i], D.cash[i], D.total[i], D.obligation[i]].map(v => '<td class="num">' + fmt(v) + '</td>').join('') + '</tr>');
+  const head = ['Year', 'Government bonds', 'Equities', 'Corporate bonds', 'Cash', 'Total', UNIT_LINKED ? 'Reserve' : 'Remaining payments'];
+  const rows = D.years.map((year, i) => '<tr><td>' + year + '</td>' + [D.government_bond[i], D.equity[i], D.corporate_bond[i], D.cash[i], D.total[i], D.obligation[i]].map(v => '<td class="num">' + fmt(v) + '</td>').join('') + '</tr>');
   return '<thead><tr>' + head.map(h => '<th scope="col">' + h + '</th>').join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody>';
 }
 
@@ -300,7 +304,7 @@ el('paid-label').textContent = UNIT_LINKED ? 'Paid to policyholders' : 'Liabilit
 el('paid').textContent = fmt(D.paid_out);
 el('return').textContent = D.annualised_return === null ? 'n/a' : (D.annualised_return * 100).toFixed(1) + '%';
 el('obligation-label').textContent = obligationLabel;
-['equity', 'bond', 'cash'].forEach(k => { el('s-' + k).style.background = COLORS[k]; });
+['government_bond', 'equity', 'corporate_bond', 'cash'].forEach(k => { el('s-' + k).style.background = COLORS[k]; });
 
 const failed = D.checks.filter(c => !c.passed);
 if (failed.length) {
