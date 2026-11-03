@@ -82,7 +82,6 @@ For coding agents, see [AGENTS.md](AGENTS.md) at the repository root. It describ
 
 ## Ask to the community
 Send us an email at gregor@osmodelling.com with feedback, comments, ideas on what we could do better etc. Do you want to help us on this open source project?
-Check our wiki page also on [GitHub Wiki]
 
 [GitHub Wiki]: https://github.com/open-source-modelling/Open_Source_Economic_Model/wiki/Introduction
 [Documentation]:https://github.com/open-source-modelling/Open_Source_Economic_Model/tree/main/Documentation
