@@ -111,12 +111,6 @@ flowchart TB
 | `Documentation/Unit_Linked_Methodology.md` | Unit-linked methodology (MVP) |
 | `Liability_Dev/Unit_Linked_Methodology.html` | Visual UL methodology guide |
 
-**Stub / not wired into `main.py` yet:**
-
-| File | Role |
-|------|------|
-| `src/osem/PropertyClasses.py` | Real-estate asset prototype; not used in the POC run |
-
 ### `ALM.ini` sections
 
 | Section | Maps to |
