@@ -117,7 +117,6 @@ flowchart TB
 |------|------|
 | `src/osem/PropertyClasses.py` | Real-estate asset prototype; not used in the POC run |
 | `src/osem/ExportData.py` | CSV export helper; not used in the POC run |
-| `src/osem/PathsClasses.py` | Path helper for tests only |
 
 ### `ALM.ini` sections
 

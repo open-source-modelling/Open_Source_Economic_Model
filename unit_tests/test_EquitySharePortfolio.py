@@ -3,7 +3,6 @@ from osem.FrequencyClass import Frequency
 import pytest
 import datetime
 import pandas as pd
-from osem.PathsClasses import Paths
 
 
 @pytest.fixture
@@ -55,12 +54,6 @@ def equity_share_2() -> EquityShare:
                                  , spread_stress=0.0
                                  )
     return equity_share_2
-
-
-@pytest.fixture
-def paths() -> Paths:
-    paths = Paths(base_folder="Test folder/")
-    return paths
 
 
 def test_is_empty():
@@ -258,32 +251,6 @@ def test_unique_dates_profile_two_equities_terminal(equity_share_1: EquityShare,
                                                                   datetime.date(2023 + 50, 6, 1))
     unique_terminal_list = equity_share_portfolio.unique_dates_profile(terminal_array)
     assert len(unique_terminal_list) == len(list(terminal_array["XXEQ00000014"].keys()))
-
-# save_equity_matrices_to_csv() was discontinued
-#def test_save_equity_matrices_to_csv(equity_share_1, equity_share_2, paths):
-#    
-#    ufr = 0.05
-#    equity_share_portfolio = EquitySharePortfolio()
-#    equity_share_portfolio.add(equity_share_1)
-#    equity_share_portfolio.add(equity_share_2)
-#    dividend_array = equity_share_portfolio.create_dividend_dates(datetime.date(2023, 6, 12),
-#                                                                  datetime.date(2023 + 50, 6, 1))
-#    unique_list_dividends = equity_share_portfolio.unique_dates_profile(dividend_array)
-#    terminal_array = equity_share_portfolio.create_terminal_dates(datetime.date(2023, 6, 12),
-#                                                                  datetime.date(2023 + 50, 6, 1), ufr)
-#    unique_terminal_list = equity_share_portfolio.unique_dates_profile(terminal_array)
-#    equity_share_portfolio.save_equity_matrices_to_csv(unique_dividend=unique_list_dividends,
-#                                                       unique_terminal=unique_terminal_list,
-#                                                       dividend_matrix=dividend_array, terminal_matrix=terminal_array,
-#                                                       paths=paths)
-#    file_1 = pd.read_csv(paths.intermediate + 'unique_dividend_dates.csv')
-#    file_2 = pd.read_csv(paths.intermediate + 'unique_terminal_dates.csv')
-#    file_3 = pd.read_csv(paths.intermediate + 'cashflow_dividend_matrix.csv')
-#    file_4 = pd.read_csv(paths.intermediate + 'cashflow_terminal_matrix.csv')
-#    assert file_1.size > 1
-#    assert file_2.size > 1
-#    assert file_3.size > 1
-#    assert file_4.size > 1
 
 
 def test_init_equity_portfolio_to_dataframe(equity_share_1, equity_share_2):
