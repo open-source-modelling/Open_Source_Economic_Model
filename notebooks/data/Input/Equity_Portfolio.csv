@@ -1,0 +1,6 @@
+Asset_ID,Asset_Type,NACE,Issue_Date,Dividend_Yield,Frequency,Units,Market_Price, Terminal,Default_Probability,Growth_Rate,Spread_Base,Spread_Individual,Spread_Country,Spread_Sector,Spread_Stress
+XXEQ00011250,Equity_Share,A1.4.5,3/12/2021,0.03,1,100,123.01,1,0.03,0.01,0,0,0,0,0
+XXEQ00021234,Equity_Share,B5.2.0,3/12/2021,0.05,1,100,12.12,1,0.03,0.02,0,0,0,0,0
+XXEQ00032322,Equity_Share,B8.9.3,3/12/2019,0.04,1,100,56.54,1,0.03,0.04,0,0,0,0,0
+XXEQ00000014,Equity_Share,A1.4.5,3/12/2021,0.03,1,100,77,1,0.03,0.01,0,0,0,0,0
+XXEQ00000022,Equity_Share,B5.2.0,3/12/2021,0.05,1,100,78,1,0.03,0.02,0,0,0,0,0

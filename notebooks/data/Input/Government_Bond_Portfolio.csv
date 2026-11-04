@@ -1,0 +1,5 @@
+Asset_ID,Asset_Type,Issuer_Country,Issue_Date,Maturity_Date,Notional_Amount,Coupon_Rate,Z_Spread,Frequency,Units,Market_Price
+DE0001102580,Government_Bond,Germany,15/02/2021,15/02/2032,100,0,0,1,100,73.5773
+FR0010171975,Government_Bond,France,25/04/2004,25/04/2055,100,0.04,0,1,100,108.9074
+IT0005398406,Government_Bond,Italy,1/9/2019,1/9/2050,100,0.01225,0,2,100,81.7821
+SI0002104121,Government_Bond,Slovenia,3/3/2020,3/3/2081,100,0.006875,0,1,100,34.593

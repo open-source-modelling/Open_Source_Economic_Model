@@ -23,7 +23,7 @@ All production code is an installable package under `src/osem/` (`import osem`, 
 - **Run:** `python -m osem.main`, or the `osem` console-script installed by the editable install, from the repository root (so `ALM.ini`/`Input/`/`Output/` resolve via `os.getcwd()` as before — this did not change).
 - **Import inside the package:** modules import siblings as `from osem.CurvesClass import Curves`, never flat (`from CurvesClass import Curves`). Production code never imports from `unit_tests`: the tests import `osem`, so this creates a circular import that stops the model from loading. Check for stray editor auto-imports.
 - **Tests:** `unit_tests/*.py` import the same way (`from osem.CurvesClass import Curves`). `pyproject.toml` sets `pythonpath = ["src"]` under `[tool.pytest.ini_options]`, so `pytest` resolves `osem` without requiring the editable install.
-- **Notebooks:** each notebook locates the repo root by walking up for `ALM.ini`, then does `sys.path.insert(0, str(base_folder / "src"))` before importing `osem.*` — keep this bootstrap cell first if you add a new notebook that imports production code.
+- **Notebooks:** each notebook locates the repo root by walking up for `ALM.ini`, then does `sys.path.insert(0, str(base_folder / "src"))` before importing `osem.*` — keep this bootstrap cell first if you add a new notebook that imports production code. Notebooks never read the live `Input/` or `Output/` folders: they load `notebooks/data/notebooks.ini`, which has the keys of `ALM.ini` and names a small, fixed input set in `notebooks/data/Input`, and `summary_charts.ipynb` reads `notebooks/data/Output/Results.csv`, which `python notebooks/data/make_results.py` regenerates.
 
 ### Two-layer design
 
@@ -361,6 +361,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 - Tests named `test_<behaviour>`; fixtures build objects inline with realistic dates and `Frequency` enums.
 - Update `unit_tests/` when changing public behaviour.
 - `pytest` does not run the notebooks. When changing what a public function returns, also search `notebooks/` for its callers.
+- A change to the live `Input/` files does not reach the notebooks. A change to an input format, such as a new column, does: make it in `notebooks/data/Input` too, then rerun `make_results.py` and the notebooks.
 
 ### Run report
 
@@ -389,7 +390,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 | Configuration | `ALM.ini` → `Configuration` |
 | Run parameters | `Input/Parameters.csv` → `Settings` |
 | Portfolios | `Input/Cash_Portfolio.csv`, `Input/Equity_Portfolio.csv` (illustrative positions with dummy asset ids `XXCA…` and `XXEQ…`) |
-| Corporate bonds | `Input/Corporate_Bond_Portfolio.csv`: 201 real euro fixed-coupon bullet bonds from the iShares Core € Corp Bond UCITS ETF holdings of 30 Oct 2026. They were picked from the bonds already issued at the modelling date, keeping the fund's sector mix with at most two bonds per issuer, and scaled to a market value of 330,400. Market prices are set on the t0 curve at each bond's z-spread observed on 30 Oct 2026 (against the EIOPA EUR curve of 30 Sep 2026), so the calibration recovers those spreads. `Z_Spread` holds the sector median as the starting value, `Default_Probability` is the risk-neutral rate z / (1 − `Recovery_Rate`), and `Issue_Date` is the start of the first coupon period. `Asset_ID` is the bond's ISIN. `Issuer` is for reference; the loader does not read it |
+| Corporate bonds | `Input/Corporate_Bond_Portfolio.csv`: 201 real euro fixed-coupon bullet bonds from the iShares Core € Corp Bond UCITS ETF holdings of 30 Oct 2026. They were picked from the bonds already issued at the modelling date, keeping the fund's sector mix with at most two bonds per issuer. Market prices are set on the t0 curve, the EIOPA EUR curve of 30 Sep 2026 in `Curves_no_VA.csv`, at each bond's z-spread observed on 30 Oct 2026 against that curve, so the calibration recovers those spreads (−39 bp to +164 bp); the market value is 31,706,531. The prices belong to that curve: after replacing the curve file, reprice the bonds at their observed spreads, or the calibration returns different ones. `Z_Spread` holds the sector median as the starting value, `Default_Probability` is the risk-neutral rate z / (1 − `Recovery_Rate`), floored at 0 (it is 0 for the seven bonds with a negative spread), and `Issue_Date` is the start of the first coupon period. `Asset_ID` is the bond's ISIN. `Issuer` is for reference; the loader does not read it |
 | Government bonds | `Input/Government_Bond_Portfolio.csv`: 376 real euro fixed-coupon bullet bonds of 17 euro-area governments, from the ECB list of eligible marketable assets of 3 Nov 2026. The file holds every nominal bond of those governments issued by the modelling date and still outstanding. OpenFIGI tickers were used to leave out strips, inflation-linked, retail and EMTN issues, Greek PSI bonds and Portuguese perpetuals, as well as Malta and the domestic Croatian, Bulgarian, Lithuanian and Latvian lines, whose coupon frequency those sources do not give. Italian BTPs pay twice a year, so their `Coupon_Rate` is half the annual coupon; the others pay once a year. `Issue_Date` is the last coupon date on or before the first issue, so the coupon schedule lands on the maturity date. `Z_Spread` is 0 and `Market_Price` is the price on the t0 curve at a zero z-spread, so the calibration recovers spreads of 0. Each bond has the same market value, 790,401 in total. `Asset_ID` is the bond's ISIN |
 | EIOPA curves | `Input/Param_no_VA.csv`, `Input/Curves_no_VA.csv` (paths in `Settings`) |
 | Sector spreads | `Input/Sector_Spread.csv` (configured in `ALM.ini`; not yet used in main loop) |
@@ -399,6 +400,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 | Output | `Output/Results.csv` (`summary_df`) |
 | Policy history | `Output/UL_Policy_History.csv` (`unit_linked` mode; one row per policy per date while in force, and one for its exit; not committed) |
 | Run report | `Output/Report.html` (single offline page built from the two files above; not committed) |
+| Notebook inputs | `notebooks/data/notebooks.ini`, `notebooks/data/Input/` (small, fixed input set the notebooks read instead of `Input/`) and `notebooks/data/Output/Results.csv` (a `cashflow` run on it); see `notebooks/README.md` |
 | Logs | `Logs/ALM.log` (`main.py`, `ReportClass.py`), `Logs/EquityClasses.log`, `Logs/BondClass.log` (appended to on every run; only `Logs/.gitkeep` is committed) |
 
 `summary_df` columns written per modelling date:
