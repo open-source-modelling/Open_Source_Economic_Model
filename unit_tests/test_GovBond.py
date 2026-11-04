@@ -187,7 +187,7 @@ def test_portfolio_prices_corporate_and_government_bonds_together(gov_bond: GovB
     zspread_df = portfolio.calibrate_bond_portfolio(zspread_df, settings, 0, curve)
     cpn_df = create_cashflow_dataframe(coupons, portfolio.unique_dates_profile(coupons))
     not_df = create_cashflow_dataframe(notionals, portfolio.unique_dates_profile(notionals))
-    price_df = portfolio.price_bond_portfolio(cpn_df, not_df, settings, 0, curve, zspread_df, price_df, T0)
+    price_df = portfolio.price_bond_portfolio(cpn_df, not_df, 0, curve, zspread_df, price_df, T0)
 
     for bond in (corp_bond, gov_bond):
         assert price_df[T0].loc[bond.asset_id] == pytest.approx(bond.market_price, abs=1e-5)

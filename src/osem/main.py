@@ -410,7 +410,6 @@ def main() -> None:
         # The projected curve for that year has maturities measured from current_date.
         bd_price_df = bd_ptf.price_bond_portfolio(coupon_df = cpn_df,
                                                   notional_df = not_df,
-                                                  settings = settings,
                                                   proj_period = proj_period + 1,
                                                   curves = curves, 
                                                   bond_zspread_df = bd_zspread_df, 

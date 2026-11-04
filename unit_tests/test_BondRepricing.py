@@ -1,5 +1,4 @@
 from datetime import date
-from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -75,7 +74,6 @@ def _reprice_at_first_projection_date(bond: CorpBond, curve: RecordingFlatCurve)
     return bd_ptf.price_bond_portfolio(
         coupon_df=cpn_df,
         notional_df=not_df,
-        settings=SimpleNamespace(modelling_date=T0),
         proj_period=1,
         curves=curve,
         bond_zspread_df=bd_zspread_df,

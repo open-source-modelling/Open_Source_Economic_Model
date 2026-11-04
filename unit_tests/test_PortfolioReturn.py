@@ -1,5 +1,4 @@
 from datetime import date
-from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -134,7 +133,6 @@ def test_bond_maturity_is_not_reported_as_loss(maturing_bond: CorpBond):
     bd_price_df = bd_ptf.price_bond_portfolio(
         coupon_df=cpn_df,
         notional_df=not_df,
-        settings=SimpleNamespace(modelling_date=t0),
         proj_period=1,
         curves=FlatCurve(0.03),
         bond_zspread_df=bd_zspread_df,

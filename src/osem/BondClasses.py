@@ -722,7 +722,7 @@ class BondPortfolio():
                 maturities.update({bond.maturity_date:bond.notional_amount})
         return maturities
 
-    def price_bond_portfolio(self, coupon_df: pd.DataFrame, notional_df: pd.DataFrame, settings: Settings, proj_period: int, curves: Curves, bond_zspread_df: pd.DataFrame, bond_price_df: pd.DataFrame, date_of_interest: date) -> pd.DataFrame:
+    def price_bond_portfolio(self, coupon_df: pd.DataFrame, notional_df: pd.DataFrame, proj_period: int, curves: Curves, bond_zspread_df: pd.DataFrame, bond_price_df: pd.DataFrame, date_of_interest: date) -> pd.DataFrame:
         """
         Price each bond in coupon_df on date_of_interest and store the prices in bond_price_df.
 
@@ -732,8 +732,6 @@ class BondPortfolio():
             Remaining coupon amounts per unit (rows = asset_id, columns = dates).
         notional_df: pd.DataFrame
             Remaining notional repayments per unit (rows = asset_id, columns = dates).
-        settings: Settings
-            Settings object. Not used for pricing; kept for interface compatibility.
         proj_period: int
             Projection year of date_of_interest (0 at the modelling date); selects the projected curve.
         curves: Curves
