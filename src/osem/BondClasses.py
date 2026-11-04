@@ -262,7 +262,9 @@ class FixedCouponBond:
         #discount = curves.retrieve_rates(proj_period, date_frac_df.iloc[:, 0].to_numpy(), "Discount", spread)
         discount = curves.retrieve_rates(proj_period, np.asarray(date_frac_df.iloc[:, 0], dtype=np.float64), "Discount", spread)
 
-        nodisc_value = cash_flow_df.values * discount
+        # Plain arrays, as in EquityShare: retrieve_rates returns a DataFrame, and np.sum of a
+        # DataFrame gives one total per column (a 1-element Series) in pandas 2, not a number.
+        nodisc_value = np.asarray(cash_flow_df, dtype=np.float64) * np.asarray(discount, dtype=np.float64)
         disc_value: float = float(np.sum(nodisc_value))
         return disc_value
 
