@@ -361,7 +361,8 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 - Tests named `test_<behaviour>`; fixtures build objects inline with realistic dates and `Frequency` enums.
 - Update `unit_tests/` when changing public behaviour.
 - `pytest` does not run the notebooks. When changing what a public function returns, also search `notebooks/` for its callers.
-- A change to the live `Input/` files does not reach the notebooks. A change to an input format, such as a new column, does: make it in `notebooks/data/Input` too, then rerun `make_results.py` and the notebooks.
+- Tests read the small fixture in `unit_tests/fixed_settings` (its `ALM.ini` and `Input` folder), never the project's `Input/` folder, so they do not change when the live inputs are retuned. The end-to-end runs in `test_Report.py` copy it into a temporary folder and take a few seconds each. Its 5 policies hold 720,000 and its assets about 817,000, so a unit-linked run lasts the 10 test years; keep them in that balance when editing either.
+- A change to the live `Input/` files does not reach the notebooks or the tests. A change to an input format, such as a new column, does: make it in `notebooks/data/Input` and `unit_tests/fixed_settings/Input` too, then rerun `make_results.py` and the notebooks.
 
 ### Run report
 
@@ -369,6 +370,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 - A value the report needs goes into `summary_df` first. Add new columns at the end, so existing columns keep their order.
 - `reconcile_results` checks that the displayed numbers add up. A failure logs a warning and shows a banner in the report; it does not stop the run. Add a check when adding a new balance.
 - The report shows bonds as corporate (`Corporate bond market value`) and government (`Government bond market value`), and checks that the two add up to `Bond market value`. A `Results.csv` saved before those columns existed is read as holding no government bonds, and as holding `Bond market value` less government bonds in corporate bonds. In the assets chart, government bonds sit at the bottom of the stack because their yellow is too close to the corporate orange to sit next to it (run the dataviz palette validator before reordering or recolouring the series).
+- In `unit_linked` mode the report draws a lane for at most `POLICY_LANES` (50) policies, the largest at the modelling date, and says how many there are in all; only those policies' paths go into the page. The reconciliation still uses every policy, from `UL_Policy_History.csv`. The year slider redraws on every tick, so keep that work small: never spread a whole data array into one call such as `Math.max(...values)`, which also fails outright beyond about 125,000 values.
 - The report must stay a single file that opens offline: no external scripts, stylesheets or fonts. To upgrade Chart.js, replace `src/osem/chart.umd.js` and keep its licence header.
 
 ### Checklist for new code

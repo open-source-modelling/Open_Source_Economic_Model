@@ -29,7 +29,7 @@ def test_get_unit_linked_fund() -> None:
 
 def test_get_society() -> None:
     base = os.getcwd()
-    conf = get_configuration(os.path.join(base, "ALM.ini"), os)
+    conf = get_configuration(os.path.join(base, "unit_tests", "fixed_settings", "ALM.ini"), os)
     society = get_society(conf.input_mortality)
     assert society.mortality_rate(0, is_female=False) > 0
     assert society.mortality_rate(50, is_female=True) > 0

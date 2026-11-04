@@ -53,7 +53,9 @@ code { font-size: 13px; }
 .axis { position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1px solid var(--line-2); }
 .bar { position: absolute; top: 3px; bottom: 3px; }
 .foot { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 10px; font-size: 14px; }
-.lane { display: grid; grid-template-columns: 64px minmax(0, 1fr) 132px; gap: 8px; align-items: center; font-size: 13px; height: 26px; }
+.lane { display: grid; grid-template-columns: 84px minmax(0, 1fr) 132px; gap: 8px; align-items: center; font-size: 13px; height: 26px; }
+/* One line per lane: a wrapped label would spill into the next lane, which has a fixed height */
+.lane > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .strip { position: relative; height: 18px; display: flex; background: var(--card); border-radius: 2px; overflow: hidden; }
 .strip > div { flex: 1; }
 .strip .now { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--ink); }
@@ -70,7 +72,7 @@ th:first-child, td:first-child { text-align: left; }
 #horizon { display: flex; gap: 8px; margin-top: 18px; }
 @media (max-width: 480px) {
   .flow { grid-template-columns: 92px minmax(0, 1fr) 78px; }
-  .lane { grid-template-columns: 52px minmax(0, 1fr) 112px; }
+  .lane { grid-template-columns: 76px minmax(0, 1fr) 132px; }
 }
 </style>
 </head>
@@ -130,6 +132,7 @@ th:first-child, td:first-child { text-align: left; }
 
 <h2>Each policy's value</h2>
 <p class="note">Stronger colour means a higher value, and a solid line marks the year a policy ended. Deaths and lapses are one random draw, so another seed gives different years. G marks a guaranteed policy; this version pays out at market value.</p>
+<p class="note" id="lanes-note" hidden></p>
 <div id="lanes"></div>
 </section>
 
@@ -155,6 +158,9 @@ const EXIT_LABELS = { Death: 'Died', Lapse: 'Lapsed' };
 const MINUS = '−';
 const LAST = D.years.length - 1;
 const UNIT_LINKED = D.mode === 'unit_linked';
+// Largest value of any policy shown, which sets the colour scale of the lanes. Worked out once,
+// with a loop: a single Math.max call cannot take every value of a large portfolio as arguments.
+const LANE_LARGEST = UNIT_LINKED ? D.policies.reduce((m, p) => p.values.reduce((a, v) => Math.max(a, v), m), 1) : 1;
 
 const el = id => document.getElementById(id);
 const fmt = v => {
@@ -243,12 +249,11 @@ function tradeText(i) {
 
 function policyLanes() {
   const count = horizon + 1;
-  const largest = Math.max(1, ...D.policies.flatMap(p => p.values));
   const left = ((selected + 0.5) / count * 100).toFixed(2);
   const lanes = D.policies.map(p => {
     let cells = '';
     for (let i = 0; i < count; i++) {
-      const alpha = p.values[i] > 0 ? (0.2 + 0.8 * p.values[i] / largest).toFixed(2) : 0;
+      const alpha = p.values[i] > 0 ? (0.2 + 0.8 * p.values[i] / LANE_LARGEST).toFixed(2) : 0;
       const ended = p.exit && p.exit.index === i;
       cells += '<div style="background:' + (alpha ? 'rgba(' + COLORS.lane + ',' + alpha + ')' : 'transparent') + ';' + (ended ? 'border-left:2px solid ' + COLORS.ink : '') + '"></div>';
     }
@@ -318,6 +323,11 @@ if (D.last_payment_index === LAST) el('horizon').hidden = true;
 if (UNIT_LINKED) {
   el('unit-linked').hidden = false;
   el('reserve-legend').innerHTML = RESERVE_KEYS.map(k => '<span><span class="swatch" style="background:' + COLORS[k] + '"></span>' + RESERVE_LABELS[k] + '</span>').join('');
+  if (D.policies_total > D.policies.length) {
+    el('lanes-note').hidden = false;
+    el('lanes-note').textContent = 'Showing the ' + D.policies.length + ' largest of ' + D.policies_total.toLocaleString('en-US') +
+      ' policies, by value at the start of the run, largest first.';
+  }
 }
 el('year-table').innerHTML = yearTable();
 

@@ -21,6 +21,10 @@ CORPORATE_BOND_COLUMN = "Corporate bond market value"
 # Float64 noise over a 50 year run stays around 1e-13.
 RECONCILIATION_TOLERANCE = 1e-9
 
+# Most policies the report draws a lane for. A portfolio can hold tens of thousands, and a lane
+# for each makes the page unreadable and its year slider unusably slow.
+POLICY_LANES = 50
+
 
 def _values(column: pd.Series) -> List[Optional[float]]:
     """
@@ -208,9 +212,10 @@ def _annualised_return(results: pd.DataFrame) -> Optional[float]:
     return float(np.prod(growth) ** (1.0 / len(growth)) - 1.0)
 
 
-def _build_policies(results: pd.DataFrame, history: pd.DataFrame) -> List[Dict[str, Any]]:
+def _build_policies(results: pd.DataFrame, history: pd.DataFrame, limit: int) -> List[Dict[str, Any]]:
     """
-    Arrange the policy history as one entry per policy with a value for every date.
+    Arrange the history of the policies with the largest value at the modelling date as one entry
+    per policy with a value for every date, largest first. Equal values are ordered by policy id.
 
     Parameters
     ----------
@@ -218,15 +223,24 @@ def _build_policies(results: pd.DataFrame, history: pd.DataFrame) -> List[Dict[s
         The contents of Results.csv, whose index gives the dates
     history: pd.DataFrame
         The contents of UL_Policy_History.csv
+    limit: int
+        The most policies to return. Ex. limit = POLICY_LANES
 
     Returns
     -------
     List[Dict[str, Any]]
         For each policy: id, guaranteed flag, value per date, and its exit if it left
     """
+    if history.empty:
+        return []
+    # Every policy in force at the modelling date has a row on it, so this ranks all of them
+    opening = history[history["Date"].astype(str) == str(results.index[0])]
+    largest = opening.sort_values(["Closing_MV", "Policy_ID"], ascending=[False, True])["Policy_ID"].head(limit)
+    rank = {int(policy_id): position for position, policy_id in enumerate(largest)}
+
     positions = {date: position for position, date in enumerate(results.index.tolist())}
     policies: Dict[int, Dict[str, Any]] = {}
-    for row in history.to_dict("records"):
+    for row in history[history["Policy_ID"].isin(list(rank))].to_dict("records"):
         policy = policies.setdefault(int(row["Policy_ID"]), {
             "id": int(row["Policy_ID"]),
             "guaranteed": bool(row["Is_Guaranteed"]),
@@ -241,7 +255,7 @@ def _build_policies(results: pd.DataFrame, history: pd.DataFrame) -> List[Dict[s
                 "type": str(row["Exit_Type"]),
                 "amount": round(float(row["Amount_Paid"]), 2),
             }
-    return [policies[policy_id] for policy_id in sorted(policies)]
+    return sorted(policies.values(), key=lambda policy: rank[policy["id"]])
 
 
 def _check(name: str, errors: pd.Series, scale: pd.Series) -> Dict[str, Any]:
@@ -388,7 +402,8 @@ def build_report_data(results: pd.DataFrame, history: pd.DataFrame) -> Dict[str,
         data["reserve_movements"] = {name: _values(movement) for name, movement in _reserve_movements(results).items()}
         data["company_account"] = _values(results["Company account"])
         data["policies_in_force"] = _values(results["UL policies in force"])
-        data["policies"] = _build_policies(results, history)
+        data["policies"] = _build_policies(results, history, POLICY_LANES)
+        data["policies_total"] = int(history["Policy_ID"].nunique()) if not history.empty else 0
 
     data["checks"] = reconcile_results(results, history)
     return data

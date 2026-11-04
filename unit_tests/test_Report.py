@@ -7,10 +7,12 @@ import pandas as pd
 import pytest
 
 import osem.main
+import osem.ReportClass
 from osem.ReportClass import build_report_data, create_report, reconcile_results, render_report
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+FIXTURE = Path(__file__).resolve().parent / "fixed_settings"
+FIXTURE_INPUT = Path("unit_tests", "fixed_settings", "Input")  # As the fixture ALM.ini names it
 DATES = ["2023-04-29", "2024-04-29", "2025-04-29"]
 NO_VALUE = float("nan")
 
@@ -175,6 +177,21 @@ def test_policies_keep_their_path_after_exit(unit_linked_results, policy_history
     assert policies[1]["exit"] == {"index": 1, "type": "Lapse", "amount": 50.0}
 
 
+def test_report_draws_only_the_largest_policies(unit_linked_results, policy_history, monkeypatch):
+    monkeypatch.setattr(osem.ReportClass, "POLICY_LANES", 2)
+    # A third policy as large as policy 1 at the modelling date: equal values go by policy id
+    extra = pd.DataFrame([
+        {"Date": DATES[0], "Policy_ID": 3, "Is_Guaranteed": False, "Closing_MV": 250.0, "Exit_Type": "", "Amount_Paid": 0.0},
+        {"Date": DATES[1], "Policy_ID": 3, "Is_Guaranteed": False, "Closing_MV": 260.0, "Exit_Type": "", "Amount_Paid": 0.0},
+        {"Date": DATES[2], "Policy_ID": 3, "Is_Guaranteed": False, "Closing_MV": 270.0, "Exit_Type": "", "Amount_Paid": 0.0},
+    ])
+    data = build_report_data(unit_linked_results, pd.concat([policy_history, extra], ignore_index=True))
+
+    assert [policy["id"] for policy in data["policies"]] == [1, 3]
+    assert data["policies"][1]["values"] == [250.0, 260.0, 270.0]
+    assert data["policies_total"] == 3
+
+
 def test_reconciliation_passes_on_consistent_results(cashflow_results, unit_linked_results, policy_history):
     assert all(check["passed"] for check in reconcile_results(cashflow_results, pd.DataFrame()))
     checks = reconcile_results(unit_linked_results, policy_history)
@@ -278,11 +295,14 @@ def test_create_report_flags_failed_check_in_report(tmp_path, cashflow_results):
 
 
 def _set_up_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str) -> None:
-    shutil.copy(REPO_ROOT / "ALM.ini", tmp_path / "ALM.ini")
-    shutil.copytree(REPO_ROOT / "Input", tmp_path / "Input")
+    # The small fixture inputs, not the project's Input folder, so the runs take seconds and do not
+    # change when the production inputs are retuned. The fixture ALM.ini names its input folder
+    # relative to the working directory, so the run gets the same layout under tmp_path.
+    shutil.copy(FIXTURE / "ALM.ini", tmp_path / "ALM.ini")
+    shutil.copytree(FIXTURE / "Input", tmp_path / FIXTURE_INPUT)
     (tmp_path / "Output").mkdir()
     # A short horizon keeps the test quick and confirms the report does not assume 50 years
-    parameters = tmp_path / "Input" / "Parameters.csv"
+    parameters = tmp_path / FIXTURE_INPUT / "Parameters.csv"
     text = parameters.read_text(encoding="utf-8-sig")
     text = re.sub(r"n_proj_years,\s*\d+", "n_proj_years,10", text)
     text = re.sub(r"liability_mode,[^\r\n]*", f"liability_mode,{mode}", text)
@@ -309,7 +329,7 @@ def test_main_writes_report(tmp_path, monkeypatch, mode):
 
 def test_main_writes_report_without_policies(tmp_path, monkeypatch):
     _set_up_run(tmp_path, monkeypatch, "unit_linked")
-    policies = tmp_path / "Input" / "Unit_Linked_Policies.csv"
+    policies = tmp_path / FIXTURE_INPUT / "Unit_Linked_Policies.csv"
     header = policies.read_text(encoding="utf-8-sig").splitlines()[0]
     policies.write_text(header + "\n", encoding="utf-8")
 
@@ -321,6 +341,7 @@ def test_main_writes_report_without_policies(tmp_path, monkeypatch):
     data = _report_data((tmp_path / "Output" / "Report.html").read_text(encoding="utf-8"))
     assert data["mode"] == "unit_linked"
     assert data["policies"] == []
+    assert data["policies_total"] == 0
     assert data["paid_out"] == 0.0
     assert all(check["passed"] for check in data["checks"])
 
@@ -328,7 +349,7 @@ def test_main_writes_report_without_policies(tmp_path, monkeypatch):
 def test_main_stops_when_the_assets_run_out(tmp_path, monkeypatch):
     _set_up_run(tmp_path, monkeypatch, "unit_linked")
     # Policy values twenty times the assets: the payouts sell the whole portfolio within a few years
-    policies = tmp_path / "Input" / "Unit_Linked_Policies.csv"
+    policies = tmp_path / FIXTURE_INPUT / "Unit_Linked_Policies.csv"
     policies.write_text(
         "Policy_ID,Birth_Date,Is_Female,Is_Guaranteed,Premium,MV,GV\n"
         "1001,15/03/1970,1,0,5000,2400000,0\n"
