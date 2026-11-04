@@ -199,20 +199,6 @@ class FixedCouponBond:
         delta: timedelta = self.maturity_date - modelling_date
         return delta.days
 
-    def gross_redemption_yield(self):
-        """
-        Placeholder for the gross redemption yield calculation. Not implemented yet.
-
-        Parameters
-        ----------
-        self: FixedCouponBond instance
-
-        Returns
-        -------
-        None
-        """
-        pass
-
     def price_bond(self, coupons: Dict[date, float], notional: Dict[date, float], valuation_date: date, proj_period: int, curves: Curves, spread: float) -> float:
         """
         Calculate the price of a bond with defined coupon and notional payments using the
