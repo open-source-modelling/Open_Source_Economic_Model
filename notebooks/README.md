@@ -10,7 +10,7 @@ This directory contains maintained notebooks and their rendered PDFs. Keeping ex
 | [`examples/`](examples/) | Notebooks focused on presenting or summarizing model output |
 | [`data/`](data/) | The inputs every notebook reads, and the results of a run on them |
 
-The [`Documentation/`](../Documentation/) directory contains the maintained methodology document. Liability-specific working material remains in [`Liability_Dev/`](../Liability_Dev/).
+The [`Documentation/`](../Documentation/) directory contains the maintained methodology documents, including the unit-linked methodology and its visual guide.
 
 ## Conventions
 

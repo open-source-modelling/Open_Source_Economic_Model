@@ -109,7 +109,7 @@ flowchart TB
 | `Input/` | Portfolio CSVs, parameters, curves, liabilities, UL inputs |
 | `unit_tests/` | pytest suite (imports `osem.*`) — update when changing public behaviour |
 | `Documentation/Unit_Linked_Methodology.md` | Unit-linked methodology (MVP) |
-| `Liability_Dev/Unit_Linked_Methodology.html` | Visual UL methodology guide |
+| `Documentation/Unit_Linked_Methodology.html` | Visual UL methodology guide |
 
 ### `ALM.ini` sections
 
@@ -421,7 +421,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 
 Do not duplicate full methodology here. Refer to:
 
-- `Documentation/Unit_Linked_Methodology.md` / `Liability_Dev/Unit_Linked_Methodology.html` — unit-linked MVP
+- `Documentation/Unit_Linked_Methodology.md` / `Documentation/Unit_Linked_Methodology.html` — unit-linked MVP
 - `Documentation/OSEM_Documentation_draft.ipynb` — same content as notebook
 - `notebooks/prototypes/` — maintained topic-specific deep dives and their rendered PDFs
 - `notebooks/examples/` — maintained example-output notebooks and their rendered PDFs

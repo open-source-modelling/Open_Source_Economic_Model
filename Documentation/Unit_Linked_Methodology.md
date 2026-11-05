@@ -16,7 +16,7 @@ time_frac = (current_date − previous_date).days / 365.25
 Fund parameters (`premium_growth`, `admin_fee`, `lapse_rate`) and mortality rates `q` are defined
 on an annual basis and converted to the elapsed period using `time_frac` (see formulas below).
 
-Visual guide: [`Liability_Dev/Unit_Linked_Methodology.html`](../Liability_Dev/Unit_Linked_Methodology.html)
+Visual guide: [`Unit_Linked_Methodology.html`](Unit_Linked_Methodology.html)
 
 ## Liability modes
 
