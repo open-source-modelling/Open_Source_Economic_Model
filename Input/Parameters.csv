@@ -5,7 +5,6 @@ country,Slovenia
 n_proj_years,30
 Precision,1.00E-10
 Tau,0.0001
-compounding,-1
 Modelling_Date,29/04/2023
 liability_mode,unit_linked
 random_seed,42

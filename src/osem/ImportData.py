@@ -367,15 +367,14 @@ def get_settings(filename: str) -> Settings:
         for row in reader:
             read_dict[row["Parameter"]] = row["Value"]
 
-        # Rows not read below are ignored, so an older Parameters.csv that still has a run_type
-        # row loads; run_type was never used and has been removed
+        # Rows not read below are ignored, so an older Parameters.csv that still has run_type or
+        # compounding rows loads; neither was used, and both have been removed
         setting = Settings(EIOPA_param_file=read_dict["EIOPA_param_file"],
                            EIOPA_curves_file=read_dict["EIOPA_curves_file"],
                            country=read_dict["country"],
                            n_proj_years=int(read_dict["n_proj_years"]),
                            precision=float(read_dict["Precision"]),
                            tau=float(read_dict["Tau"]),
-                           compounding=int(read_dict["compounding"]),
                            modelling_date=datetime.strptime(read_dict["Modelling_Date"], '%d/%m/%Y').date(),
                            liability_mode=read_dict.get("liability_mode", "cashflow").strip(),
                            random_seed=int(read_dict.get("random_seed", "42")))

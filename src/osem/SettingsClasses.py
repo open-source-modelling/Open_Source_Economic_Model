@@ -12,7 +12,6 @@ class Settings:
     n_proj_years: int
     precision: float
     tau: float
-    compounding: int
     modelling_date: date
     liability_mode: str = "cashflow"
     random_seed: int = 42

@@ -14,7 +14,6 @@ def _settings(modelling_date: date, n_proj_years: int) -> Settings:
         n_proj_years=n_proj_years,
         precision=1e-10,
         tau=0.0001,
-        compounding=-1,
         modelling_date=modelling_date,
     )
 
