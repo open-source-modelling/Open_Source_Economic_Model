@@ -43,7 +43,6 @@ def test_get_settings_liability_mode_present(tmp_path):
         "EIOPA_param_file,Input/Param_no_VA.csv\n"
         "EIOPA_curves_file,Input/Curves_no_VA.csv\n"
         "country,Slovenia\n"
-        "run_type,Risk Neutral\n"
         "n_proj_years,50\n"
         "Precision,1E-10\n"
         "Tau,0.0001\n"
@@ -64,7 +63,6 @@ def test_get_settings_liability_mode_defaults_to_cashflow(tmp_path):
         "EIOPA_param_file,Input/Param_no_VA.csv\n"
         "EIOPA_curves_file,Input/Curves_no_VA.csv\n"
         "country,Slovenia\n"
-        "run_type,Risk Neutral\n"
         "n_proj_years,50\n"
         "Precision,1E-10\n"
         "Tau,0.0001\n"
@@ -73,4 +71,23 @@ def test_get_settings_liability_mode_defaults_to_cashflow(tmp_path):
     )
     settings = get_settings(str(params_file))
     assert settings.liability_mode == "cashflow"
+
+
+def test_get_settings_ignores_run_type(tmp_path):
+    params_file = tmp_path / "Parameters.csv"
+    params_file.write_text(  # a Parameters.csv written before run_type was removed
+        "Parameter,Value\n"
+        "EIOPA_param_file,Input/Param_no_VA.csv\n"
+        "EIOPA_curves_file,Input/Curves_no_VA.csv\n"
+        "country,Slovenia\n"
+        "run_type, Risk Neutral\n"
+        "n_proj_years,50\n"
+        "Precision,1E-10\n"
+        "Tau,0.0001\n"
+        "compounding,-1\n"
+        "Modelling_Date,29/04/2023\n"
+    )
+    settings = get_settings(str(params_file))
+    assert settings.n_proj_years == 50
+    assert not hasattr(settings, "run_type")
 

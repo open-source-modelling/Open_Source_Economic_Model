@@ -11,7 +11,6 @@ def _settings(modelling_date: date, n_proj_years: int) -> Settings:
         EIOPA_param_file="Input/Param_no_VA.csv",
         EIOPA_curves_file="Input/Curves_no_VA.csv",
         country="Slovenia",
-        run_type="Risk Neutral",
         n_proj_years=n_proj_years,
         precision=1e-10,
         tau=0.0001,

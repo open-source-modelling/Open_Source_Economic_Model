@@ -2,7 +2,6 @@ Parameter,Value
 EIOPA_param_file,notebooks/data/Input/Param_no_VA.csv
 EIOPA_curves_file,notebooks/data/Input/Curves_no_VA.csv
 country,Slovenia
-run_type, Risk Neutral
 n_proj_years,50
 Precision,1E-10
 Tau,0.0001

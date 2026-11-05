@@ -367,10 +367,11 @@ def get_settings(filename: str) -> Settings:
         for row in reader:
             read_dict[row["Parameter"]] = row["Value"]
 
+        # Rows not read below are ignored, so an older Parameters.csv that still has a run_type
+        # row loads; run_type was never used and has been removed
         setting = Settings(EIOPA_param_file=read_dict["EIOPA_param_file"],
                            EIOPA_curves_file=read_dict["EIOPA_curves_file"],
                            country=read_dict["country"],
-                           run_type=read_dict["run_type"],
                            n_proj_years=int(read_dict["n_proj_years"]),
                            precision=float(read_dict["Precision"]),
                            tau=float(read_dict["Tau"]),
