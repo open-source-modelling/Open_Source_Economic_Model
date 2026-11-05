@@ -352,6 +352,7 @@ Do not introduce PascalCase or camelCase for a new function or method, even to v
 - **pytest** with `@pytest.fixture` for instruments, curves, portfolios.
 - Tests named `test_<behaviour>`; fixtures build objects inline with realistic dates and `Frequency` enums.
 - Update `unit_tests/` when changing public behaviour.
+- GitHub Actions (`.github/workflows/tests.yml`) runs `pytest` from the repository root on every push to `main` and every pull request: on Ubuntu with Python 3.10 and 3.13, and on Windows with Python 3.13. Keep the code working at both ends of the Python and pandas ranges in `pyproject.toml`, and keep paths free of Windows-only separators and file-name case mismatches, which pass on Windows but fail on Linux.
 - `pytest` does not run the notebooks. When changing what a public function returns, also search `notebooks/` for its callers.
 - Tests read the small fixture in `unit_tests/fixed_settings` (its `ALM.ini` and `Input` folder), never the project's `Input/` folder, so they do not change when the live inputs are retuned. The end-to-end runs in `test_Report.py` copy it into a temporary folder and take a few seconds each. Its 5 policies hold 720,000 and its assets about 817,000, so a unit-linked run lasts the 10 test years; keep them in that balance when editing either.
 - A change to the live `Input/` files does not reach the notebooks or the tests. A change to an input format, such as a new column, does: make it in `notebooks/data/Input` and `unit_tests/fixed_settings/Input` too, then rerun `make_results.py` and the notebooks.

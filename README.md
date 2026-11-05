@@ -13,6 +13,10 @@
   </b>
 </h1>
 
+<p align="center">
+  <a href="https://github.com/open-source-modelling/Open_Source_Economic_Model/actions/workflows/tests.yml"><img src="https://github.com/open-source-modelling/Open_Source_Economic_Model/actions/workflows/tests.yml/badge.svg" alt="Tests"/></a>
+</p>
+
 </br>
 
 Financial institutions such as life insurers or pension funds have a fiduciary duty to manage long-term commitments to their customers. They initially collect premiums/contributions from their clients, and in exchange promise to provide a guarantee or a higher return at a further date. A large part of risk management in such companies is focused on making sure that the invested assets are managed in such a way as to guarantee the honouring of all commitments (pensions, annuities, insurance claims etc.). One such tool is an asset-liability model. Such models try to simulate three things simultaneously:
